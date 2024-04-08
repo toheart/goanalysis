@@ -240,7 +240,7 @@ func (p *ProgramAnalysis) SetTree() error {
 		if pNode, ok = p.tree.Nodes[caller.String()]; !ok {
 			pNode = &FuncNode{
 				Key:  caller.String(),
-				Pkg:  caller.Func.Pkg.String(),
+				Pkg:  caller.Func.Pkg.Pkg.Path(),
 				Name: caller.Func.RelString(caller.Func.Pkg.Pkg),
 			}
 			p.tree.Nodes[pNode.Key] = pNode
@@ -248,15 +248,14 @@ func (p *ProgramAnalysis) SetTree() error {
 		if qNode, ok = p.tree.Nodes[callee.String()]; !ok {
 			qNode = &FuncNode{
 				Key:  callee.String(),
-				Pkg:  callee.Func.Pkg.String(),
+				Pkg:  callee.Func.Pkg.Pkg.Path(),
 				Name: callee.Func.RelString(callee.Func.Pkg.Pkg),
 			}
 			p.tree.Nodes[qNode.Key] = qNode
 		}
 
-		if strings.HasSuffix(caller.String(), "main") {
+		if strings.HasSuffix(caller.String(), "main") && p.tree.MainKey == "" {
 			p.tree.MainKey = caller.String()
-			fmt.Printf("mainId: %s \n", p.tree.MainKey)
 		}
 		pNode.Children = append(pNode.Children, qNode.Key)
 		qNode.Parent = append(qNode.Parent, pNode.Key)

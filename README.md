@@ -1,3 +1,4 @@
+
 # goanalysis
 
 根据不同的项目, 可选择不同的分析算法。 具体多尝试。
@@ -25,4 +26,6 @@ Flags:
 goanalysis analysis ./example
 ```
 
+## 示例
+![image](./example/default.png)
 

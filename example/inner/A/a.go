@@ -31,3 +31,12 @@ func (a CallA) PrintB() {
 	b.PrintB()
 	fmt.Printf("CallA call B : %s \n", a.name)
 }
+
+// 递归测试
+func RecursionA(i int, n int) int {
+	if i == n {
+		return i
+	}
+
+	return i + RecursionA(i+1, n)
+}

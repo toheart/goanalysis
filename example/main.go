@@ -1,6 +1,9 @@
 package main
 
-import "example/inner/A"
+import (
+	"example/inner/A"
+	"fmt"
+)
 
 /**
 @file:
@@ -13,4 +16,5 @@ func main() {
 	// callA
 	a := A.NewCallA("tly")
 	a.PrintB()
+	fmt.Println(A.RecursionA(1, 10))
 }
