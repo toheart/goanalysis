@@ -1,4 +1,4 @@
-package functrace
+package main
 
 import (
 	"bytes"
