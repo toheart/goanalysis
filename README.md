@@ -8,7 +8,7 @@
 Usage:
   goanalysis analysis [options] <programDir> [flags]
 
-Flags:
+Flags: 
   -a, --algo string         The algorithm used to construct the call graph. Possible values inlcude: "vta", "static", "cha", "rta", default: "vta" (default "vta")
       --cacheFlag           Whether to enable caching, default true (default true)
   -c, --cachePath string    FuncNode cache output path,default: ./cache.json (default "./cachePath.json")

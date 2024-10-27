@@ -105,6 +105,7 @@ func (p *ProgramAnalysis) LoadCache() error {
 }
 
 func (p *ProgramAnalysis) Analysis() error {
+
 	// 1. 加载项目代码所有的package名称
 	initial, _ := packages.Load(&packages.Config{
 		Mode: packages.NeedName |
@@ -262,6 +263,9 @@ func (p *ProgramAnalysis) SetTree() error {
 		fmt.Printf("%s to %s \n", caller, callee)
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 	err = p.SaveCache()
 	return err
 }
