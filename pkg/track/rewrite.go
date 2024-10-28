@@ -21,7 +21,7 @@ import (
 @description:
 **/
 
-const _defaultImport = "github.com/toheart/golearn/observability/functrace"
+const _defaultImport = "github.com/toheart/goanalysis/pkg/functrace"
 
 var debug = false
 
@@ -143,7 +143,7 @@ func (r *Rewrite) ImportFunctrace() {
 	}
 	// 如果没有导入包, 则将functrace包导入
 	if !importFlag {
-		astutil.AddImport(r.fset, r.f, "github.com/toheart/golearn/observability/functrace")
+		astutil.AddImport(r.fset, r.f, _defaultImport)
 	}
 }
 
@@ -177,8 +177,7 @@ func (r *Rewrite) HasSameDefer(decl *ast.FuncDecl) bool {
 }
 
 func (r *Rewrite) RewriteFile() {
-	// 插入import
-	r.ImportFunctrace()
+	flag := false
 	// 插入defer函数
 	for _, item := range r.f.Decls {
 		funcDel, ok := item.(*ast.FuncDecl)
@@ -193,6 +192,11 @@ func (r *Rewrite) RewriteFile() {
 		deferStmt := r.genDefer(elts)
 		// 将defer语句添加到函数体的开头
 		funcDel.Body.List = append([]ast.Stmt{deferStmt}, funcDel.Body.List...)
+		flag = true
+	}
+	if flag {
+		// 插入import
+		r.ImportFunctrace()
 	}
 	buf := &bytes.Buffer{}
 	err := format.Node(buf, r.fset, r.f)
