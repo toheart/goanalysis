@@ -1,4 +1,4 @@
-package main
+package functrace
 
 import (
 	"bytes"
@@ -58,13 +58,13 @@ func (t *TraceInstance) enterTrace(id uint64, name string, params ...interface{}
 
 	indents := ""
 	for i := 0; i < indent; i++ {
-		indents += "\t"
+		indents += "*"
 	}
 	var output string
 	for _, item := range params {
 		output += fmt.Sprintf("%s, ", item)
 	}
-	t.log.Info("enterTrace", "gid", id, "link", fmt.Sprintf("%s->%s", indents, name), "params", output)
+	t.log.Info(fmt.Sprintf("%s->%s", indents, name), "gid", id, "params", output)
 }
 
 func (t *TraceInstance) exitTrace(id uint64, name string) {
@@ -76,9 +76,9 @@ func (t *TraceInstance) exitTrace(id uint64, name string) {
 
 	indents := ""
 	for i := 0; i < indent; i++ {
-		indents += "\t"
+		indents += "*"
 	}
-	t.log.Info("enterTrace", "gid", id, "link", fmt.Sprintf("%s<-%s", indents, name))
+	t.log.Info(fmt.Sprintf("%s<-%s", indents, name), "gid", id)
 }
 
 func getGID() uint64 {

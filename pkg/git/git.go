@@ -1,9 +1,5 @@
 package git
 
-import (
-	"github.com/toheart/goanalysis"
-)
-
 /**
 @file:
 @author: levi.Tang
@@ -22,5 +18,5 @@ type GitInfo struct {
 }
 
 func a() {
-	main.Trace()
+
 }
