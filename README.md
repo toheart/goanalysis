@@ -29,3 +29,49 @@ goanalysis analysis ./example
 ## 示例
 ![image](./example/default.png)
 
+
+## 代码跟踪
+```shell
+Usage:                                 
+  goanalysis track <programDir> [flags]
+```
+示例
+输出日志：
+```text
+time=2024-10-28T23:12:07.398+08:00 level=INFO msg=->example/inner/B.init.0 gid=1 params="[[]], "
+time=2024-10-28T23:12:07.415+08:00 level=INFO msg=*<-example/inner/B.init.0 gid=1
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=->example/inner/A.init.0 gid=1 params="[[]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=*->example/inner/B.CalledA gid=1 params="[[]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=**<-example/inner/B.CalledA gid=1
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=*<-example/inner/A.init.0 gid=1
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=->main.main gid=1 params="[[]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=*->example/inner/A.NewCallA gid=1 params="[[tly]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=**<-example/inner/A.NewCallA gid=1
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=*->example/inner/A.CallA.PrintB gid=1 params="[[]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=**->example/inner/B.NewCallB gid=1 params="[[levi]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=***<-example/inner/B.NewCallB gid=1
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=**->example/inner/B.CallB.PrintB gid=1 params="[[]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=***<-example/inner/B.CallB.PrintB gid=1
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=**<-example/inner/A.CallA.PrintB gid=1
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=*->example/inner/A.RecursionA gid=1 params="[[%!s(int=1) %!s(int=10)]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=**->example/inner/A.RecursionA gid=1 params="[[%!s(int=2) %!s(int=10)]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=***->example/inner/A.RecursionA gid=1 params="[[%!s(int=3) %!s(int=10)]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=****->example/inner/A.RecursionA gid=1 params="[[%!s(int=4) %!s(int=10)]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=*****->example/inner/A.RecursionA gid=1 params="[[%!s(int=5) %!s(int=10)]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=******->example/inner/A.RecursionA gid=1 params="[[%!s(int=6) %!s(int=10)]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=*******->example/inner/A.RecursionA gid=1 params="[[%!s(int=7) %!s(int=10)]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=********->example/inner/A.RecursionA gid=1 params="[[%!s(int=8) %!s(int=10)]], "
+time=2024-10-28T23:12:07.416+08:00 level=INFO msg=*********->example/inner/A.RecursionA gid=1 params="[[%!s(int=9) %!s(int=10)]], "
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=**********->example/inner/A.RecursionA gid=1 params="[[%!s(int=10) %!s(int=10)]], "
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=***********<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=**********<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=*********<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=********<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=*******<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=******<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=*****<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=****<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=***<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=**<-example/inner/A.RecursionA gid=1
+time=2024-10-28T23:12:07.417+08:00 level=INFO msg=*<-main.main gid=1
+```
