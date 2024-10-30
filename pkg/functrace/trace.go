@@ -3,12 +3,12 @@ package functrace
 import (
 	"bytes"
 	"fmt"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"log/slog"
+	"reflect"
 	"runtime"
 	"strconv"
 	"sync"
-
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 /*
@@ -49,7 +49,7 @@ func NewTraceInstance() *TraceInstance {
 	return singleTrace
 }
 
-func (t *TraceInstance) enterTrace(id uint64, name string, params ...interface{}) {
+func (t *TraceInstance) enterTrace(id uint64, name string, params []interface{}) {
 	// 先设置当前缩进
 	t.Lock()
 	indent := t.m[id]
@@ -58,11 +58,29 @@ func (t *TraceInstance) enterTrace(id uint64, name string, params ...interface{}
 
 	indents := ""
 	for i := 0; i < indent; i++ {
-		indents += "*"
+		indents += "**"
 	}
 	var output string
-	for _, item := range params {
-		output += fmt.Sprintf("%s, ", item)
+	for i, item := range params {
+		// 获取 interface{} 的值
+		val := reflect.ValueOf(item)
+
+		// 处理 nil 值
+		if !val.IsValid() {
+			output += fmt.Sprintf("#%d: nil, ", i)
+			continue
+		}
+
+		switch val.Kind() {
+		case reflect.String:
+			// 如果值是字符串类型，直接返回
+			output += fmt.Sprintf("#%d: %s, ", i, val.String())
+		case reflect.Ptr, reflect.Interface:
+			// 如果值是指针或接口，尝试解引用
+			output += fmt.Sprintf("#%d: %+v, ", i, item)
+		default:
+			output += fmt.Sprintf("#%d: %s, ", i, item)
+		}
 	}
 	t.log.Info(fmt.Sprintf("%s->%s", indents, name), "gid", id, "params", output)
 }
@@ -75,8 +93,8 @@ func (t *TraceInstance) exitTrace(id uint64, name string) {
 	t.Unlock()
 
 	indents := ""
-	for i := 0; i < indent; i++ {
-		indents += "*"
+	for i := 0; i < indent-1; i++ {
+		indents += "**"
 	}
 	t.log.Info(fmt.Sprintf("%s<-%s", indents, name), "gid", id)
 }
@@ -90,7 +108,7 @@ func getGID() uint64 {
 	return n
 }
 
-func Trace(params ...interface{}) func() {
+func Trace(params []interface{}) func() {
 	pc, _, _, ok := runtime.Caller(1)
 	if !ok {
 		panic("not found caller")

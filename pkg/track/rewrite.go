@@ -118,6 +118,7 @@ func (r *Rewrite) genDefer(elts []ast.Expr) *ast.DeferStmt {
 		},
 		Elts: elts,
 	}
+
 	// 创建函数调用表达式
 	callExpr := &ast.CallExpr{
 		Fun: &ast.CallExpr{
@@ -125,7 +126,9 @@ func (r *Rewrite) genDefer(elts []ast.Expr) *ast.DeferStmt {
 				X:   ast.NewIdent("functrace"),
 				Sel: ast.NewIdent("Trace"),
 			},
-			Args: []ast.Expr{sliceParams},
+			Args: []ast.Expr{
+				sliceParams,
+			},
 		},
 	}
 	return &ast.DeferStmt{
@@ -201,6 +204,7 @@ func (r *Rewrite) RewriteFile() {
 	buf := &bytes.Buffer{}
 	err := format.Node(buf, r.fset, r.f)
 	if err != nil {
+		fmt.Printf("rewrite found err:%s \n", err)
 		return
 	}
 	if debug {
