@@ -72,12 +72,30 @@ func (t *TraceInstance) enterTrace(id uint64, name string, params []interface{})
 		}
 
 		switch val.Kind() {
+		case reflect.Func:
+			output += fmt.Sprintf("#%d: %s, ", i, runtime.FuncForPC(val.Pointer()).Name())
 		case reflect.String:
 			// 如果值是字符串类型，直接返回
 			output += fmt.Sprintf("#%d: %s, ", i, val.String())
 		case reflect.Ptr, reflect.Interface:
 			// 如果值是指针或接口，尝试解引用
 			output += fmt.Sprintf("#%d: %+v, ", i, item)
+		case reflect.Int:
+		case reflect.Int8:
+		case reflect.Int16:
+		case reflect.Int32:
+		case reflect.Int64:
+		case reflect.Uint:
+		case reflect.Uint8:
+		case reflect.Uint16:
+		case reflect.Uint32:
+		case reflect.Uint64:
+			output += fmt.Sprintf("#%d: %d, ", i, item)
+		case reflect.Float32:
+		case reflect.Float64:
+			output += fmt.Sprintf("#%d: %.4f, ", i, item)
+		case reflect.Uintptr:
+
 		default:
 			output += fmt.Sprintf("#%d: %s, ", i, item)
 		}
