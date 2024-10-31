@@ -3,11 +3,16 @@ package analysis
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/goccy/go-graphviz"
 	"go/ast"
 	"go/build"
 	"go/parser"
 	"go/token"
+	"io"
+	"log"
+	"os"
+	"strings"
+
+	"github.com/goccy/go-graphviz"
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/callgraph/cha"
 	"golang.org/x/tools/go/callgraph/rta"
@@ -16,10 +21,6 @@ import (
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"
-	"io"
-	"log"
-	"os"
-	"strings"
 )
 
 /**
@@ -260,6 +261,7 @@ func (p *ProgramAnalysis) SetTree() error {
 		}
 		pNode.Children = append(pNode.Children, qNode.Key)
 		qNode.Parent = append(qNode.Parent, pNode.Key)
+		qNode.CalledTimes += 1
 		fmt.Printf("%s to %s \n", caller, callee)
 		return nil
 	})
@@ -326,22 +328,19 @@ func (p *ProgramAnalysis) printPng() {
 		}
 		g.Close()
 	}()
-	main := p.tree.Nodes[p.tree.MainKey]
-	p.tree.ChildrenToPng(main, nil, graph)
-	// init函数的遍历
+
 	for key, value := range p.tree.Nodes {
 		// 排除已遍历程序
 		if _, ok := p.tree.isVisited[key]; ok {
 			continue
 		}
-		// 最后以为以init开始时
-		keySpl := strings.Split(key, ".")
-		initKey := keySpl[len(keySpl)-1]
-		if !strings.HasPrefix(initKey, "init") {
-			continue
+
+		// 入度为0说明是根节点
+		if value.CalledTimes == 0 {
+			p.tree.ChildrenToPng(value, nil, graph)
 		}
-		p.tree.ChildrenToPng(value, nil, graph)
 	}
+
 	// 1. write to file directly
 	if err := g.RenderFilename(graph, graphviz.PNG, p.outputPath); err != nil {
 		log.Fatal(err)
