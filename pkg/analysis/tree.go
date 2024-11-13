@@ -2,6 +2,7 @@ package analysis
 
 import (
 	"fmt"
+
 	"github.com/goccy/go-graphviz/cgraph"
 )
 
@@ -16,6 +17,8 @@ type FuncNode struct {
 	Key  string `json:"key"` // 唯一表示
 	Pkg  string `json:"pkg"`
 	Name string `json:"name"`
+
+	CalledTimes int `json:"calledTimes"` // 被调用次数 入度
 
 	Parent   []string `json:"parent"`   // 通过key来索引
 	Children []string `json:"children"` // 通过key来索引
