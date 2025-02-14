@@ -197,14 +197,14 @@ func (p *ProgramAnalysis) SetTree() error {
 		return err
 	}
 
-	var isInter = func(edge *callgraph.Edge) bool {
-		//caller := edge.Caller
-		callee := edge.Callee
-		if callee.Func.Object() != nil && !callee.Func.Object().Exported() {
-			return true
-		}
-		return false
-	}
+	//var isInter = func(edge *callgraph.Edge) bool {
+	//	//caller := edge.Caller
+	//	callee := edge.Callee
+	//	if callee.Func.Object() != nil && !callee.Func.Object().Exported() {
+	//		return true
+	//	}
+	//	return false
+	//}
 
 	var inIgnores = func(node *callgraph.Node) bool {
 		pkgPath := node.Func.String()
@@ -219,7 +219,6 @@ func (p *ProgramAnalysis) SetTree() error {
 	err := callgraph.GraphVisitEdges(p.callGraph, func(edge *callgraph.Edge) error {
 		caller := edge.Caller
 		callee := edge.Callee
-
 		if isSynthetic(edge) {
 			return nil
 		}
@@ -227,10 +226,8 @@ func (p *ProgramAnalysis) SetTree() error {
 		if inStd(caller) || inStd(callee) {
 			return nil
 		}
+		fmt.Printf("%s to %s \n", caller, callee)
 
-		if isInter(edge) {
-			return nil
-		}
 		if inIgnores(caller) || inIgnores(callee) {
 			return nil
 		}
@@ -260,7 +257,7 @@ func (p *ProgramAnalysis) SetTree() error {
 		}
 		pNode.Children = append(pNode.Children, qNode.Key)
 		qNode.Parent = append(qNode.Parent, pNode.Key)
-		fmt.Printf("%s to %s \n", caller, callee)
+
 		return nil
 	})
 	if err != nil {
