@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package analysis.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/toheart/goanalysis/api/analysis/v1;v1";
+
+// The greeting service definition.
+service Analysis {
+  // Sends a greeting
+  rpc GetAnalysis (AnalysisRequest) returns (AnalysisReply) {
+    option (google.api.http) = {
+      get: "/analysis/{name}"
+    };
+  }
+
+  rpc GetAnalysisByGID (AnalysisByGIDRequest) returns (AnalysisByGIDReply) {
+    option (google.api.http) = {
+      get: "/api/traces/{gid}"
+    };
+  }
+
+  rpc GetAllGIDs (GetAllGIDsReq) returns (GetAllGIDsReply) {
+    option (google.api.http) = {
+      get: "/api/gids"
+    };
+  }
+  rpc GetParamsByID (GetParamsByIDReq) returns (GetParamsByIDReply) {
+    option (google.api.http) = {
+      get: "/api/params/{id}"
+    };
+  }
+  rpc GenerateImage (GenerateImageReq) returns (GenerateImageReply) {
+    option (google.api.http) = {
+      get: "/api/traces/{gid}/mermaid"
+    };
+  }
+
+  rpc GetAllFunctionName (GetAllFunctionNameReq) returns (GetAllFunctionNameReply) {
+    option (google.api.http) = {
+      get: "/api/functions"
+    };
+  }
+  rpc GetGidsByFunctionName (GetGidsByFunctionNameReq) returns (GetGidsByFunctionNameReply) {
+    option (google.api.http) = {
+      post: "/api/gids/function"
+      body: "*"
+    };
+  }
+}
+
+message GetGidsByFunctionNameReq {
+  string functionName = 1;
+}
+
+message GetGidsByFunctionNameReply {
+  repeated string gids = 1;
+}
+
+message GetAllFunctionNameReq {
+}
+
+message GetAllFunctionNameReply {
+  repeated string functionNames = 1;
+}
+
+message GenerateImageReq {
+  string gid = 1;
+}
+
+message GenerateImageReply {
+  string image = 1;
+} 
+
+// The request message containing the user's name.
+message AnalysisRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message AnalysisReply {
+  string message = 1;
+}
+
+message AnalysisByGIDRequest {
+  string gid = 1;
+}
+
+message TraceParams {
+  int32 pos = 1;
+  string param = 2;
+}
+
+message AnalysisByGIDReply {
+message TraceData {
+  int32 id = 1;
+  string name = 2;
+  int32 gid = 3;
+  int32 indent = 4;
+  repeated TraceParams params = 5;
+  int32 paramCount = 6;
+  string timeCost = 7;
+}
+  repeated TraceData trace_data = 1;
+}
+
+message GetAllGIDsReq { 
+}
+
+message GetAllGIDsReply {
+  repeated uint64 gids = 1;
+}
+
+message GetParamsByIDReq {
+  int32 id = 1;
+}
+
+message GetParamsByIDReply {
+  repeated TraceParams params = 1;
+}

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package analysis.v1;
+
+option go_package = "github.com/toheart/goanalysis/api/analysis/v1;v1";
+
+enum ErrorReason {
+  GREETER_UNSPECIFIED = 0;
+  USER_NOT_FOUND = 1;
+}
