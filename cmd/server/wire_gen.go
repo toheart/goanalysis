@@ -7,17 +7,13 @@
 package server
 
 import (
-	"github.com/toheart/goanalysis/internal/biz"
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/toheart/goanalysis/internal/biz/analysis"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
 	"github.com/toheart/goanalysis/internal/server"
 	"github.com/toheart/goanalysis/internal/service"
-	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/log"
-)
-
-import (
-	_ "go.uber.org/automaxprocs"
 )
 
 // Injectors from wire.go:
@@ -28,11 +24,10 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*
 	if err != nil {
 		return nil, nil, err
 	}
-	greeterRepo := data.NewGreeterRepo(dataData, logger)
-	greeterUsecase := biz.NewGreeterUsecase(greeterRepo, logger)
-	greeterService := service.NewGreeterService(greeterUsecase)
-	grpcServer := server.NewGRPCServer(confServer, greeterService, logger)
-	httpServer := server.NewHTTPServer(confServer, greeterService, logger)
+	analysisBiz := analysis.NewAnalysisBiz(dataData)
+	analysisService := service.NewAnalysisService(analysisBiz)
+	grpcServer := server.NewGRPCServer(confServer, analysisService, logger)
+	httpServer := server.NewHTTPServer(confServer, analysisService, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
 		cleanup()

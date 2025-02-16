@@ -3,17 +3,16 @@
 
 openapi: 3.0.3
 info:
-    title: Greeter API
+    title: Analysis API
     description: The greeting service definition.
     version: 0.0.1
 paths:
-    /helloworld/{name}:
+    /analysis/{name}:
         get:
             tags:
-                - Greeter
-                - subgroup
+                - Analysis
             description: Sends a greeting
-            operationId: Greeter_SayHello
+            operationId: Analysis_GetAnalysis
             parameters:
                 - name: name
                   in: path
@@ -26,14 +25,187 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/helloworld.v1.HelloReply'
+                                $ref: '#/components/schemas/analysis.v1.AnalysisReply'
+    /api/functions:
+        get:
+            tags:
+                - Analysis
+            operationId: Analysis_GetAllFunctionName
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetAllFunctionNameReply'
+    /api/gids:
+        get:
+            tags:
+                - Analysis
+            operationId: Analysis_GetAllGIDs
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetAllGIDsReply'
+    /api/gids/function:
+        post:
+            tags:
+                - Analysis
+            operationId: Analysis_GetGidsByFunctionName
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetGidsByFunctionNameReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetGidsByFunctionNameReply'
+    /api/params/{id}:
+        get:
+            tags:
+                - Analysis
+            operationId: Analysis_GetParamsByID
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetParamsByIDReply'
+    /api/traces/{gid}:
+        get:
+            tags:
+                - Analysis
+            operationId: Analysis_GetAnalysisByGID
+            parameters:
+                - name: gid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.AnalysisByGIDReply'
+    /api/traces/{gid}/mermaid:
+        get:
+            tags:
+                - Analysis
+            operationId: Analysis_GenerateImage
+            parameters:
+                - name: gid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GenerateImageReply'
 components:
     schemas:
-        helloworld.v1.HelloReply:
+        analysis.v1.AnalysisByGIDReply:
+            type: object
+            properties:
+                traceData:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.AnalysisByGIDReply_TraceData'
+        analysis.v1.AnalysisByGIDReply_TraceData:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int32
+                name:
+                    type: string
+                gid:
+                    type: integer
+                    format: int32
+                indent:
+                    type: integer
+                    format: int32
+                params:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.TraceParams'
+                paramCount:
+                    type: integer
+                    format: int32
+                timeCost:
+                    type: string
+        analysis.v1.AnalysisReply:
             type: object
             properties:
                 message:
                     type: string
             description: The response message containing the greetings
+        analysis.v1.GenerateImageReply:
+            type: object
+            properties:
+                image:
+                    type: string
+        analysis.v1.GetAllFunctionNameReply:
+            type: object
+            properties:
+                functionNames:
+                    type: array
+                    items:
+                        type: string
+        analysis.v1.GetAllGIDsReply:
+            type: object
+            properties:
+                gids:
+                    type: array
+                    items:
+                        type: string
+        analysis.v1.GetGidsByFunctionNameReply:
+            type: object
+            properties:
+                gids:
+                    type: array
+                    items:
+                        type: string
+        analysis.v1.GetGidsByFunctionNameReq:
+            type: object
+            properties:
+                functionName:
+                    type: string
+        analysis.v1.GetParamsByIDReply:
+            type: object
+            properties:
+                params:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.TraceParams'
+        analysis.v1.TraceParams:
+            type: object
+            properties:
+                pos:
+                    type: integer
+                    format: int32
+                param:
+                    type: string
 tags:
-    - name: Greeter
+    - name: Analysis

@@ -7,13 +7,12 @@ toolchain go1.23.6
 require (
 	github.com/go-kratos/kratos/v2 v2.8.3
 	github.com/google/wire v0.6.0
-	go.uber.org/automaxprocs v1.5.1
 	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.1
 )
 
-require go.etcd.io/bbolt v1.4.0 // indirect
+require github.com/felixge/httpsnoop v1.0.3 // indirect
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
@@ -23,10 +22,12 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/form/v4 v4.2.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/spf13/cobra v1.8.1 // indirect
+	github.com/mattn/go-sqlite3 v1.14.24
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.6 // indirect
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect

@@ -27,15 +27,7 @@ message Server {
 
 message Data {
   message Database {
-    string driver = 1;
-    string source = 2;
-  }
-  message Redis {
-    string network = 1;
-    string addr = 2;
-    google.protobuf.Duration read_timeout = 3;
-    google.protobuf.Duration write_timeout = 4;
+    string source =  1;
   }
   Database database = 1;
-  Redis redis = 2;
 }

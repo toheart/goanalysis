@@ -3,14 +3,14 @@
 
 // The build tag makes sure the stub is not built in the final build.
 
-package main
+package server
 
 import (
-	"goanalysis/internal/biz"
-	"goanalysis/internal/conf"
-	"goanalysis/internal/data"
-	"goanalysis/internal/server"
-	"goanalysis/internal/service"
+	"github.com/toheart/goanalysis/internal/biz"
+	"github.com/toheart/goanalysis/internal/conf"
+	"github.com/toheart/goanalysis/internal/data"
+	"github.com/toheart/goanalysis/internal/server"
+	"github.com/toheart/goanalysis/internal/service"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
