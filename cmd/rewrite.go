@@ -10,11 +10,11 @@ import (
 
 var rewriteCmd = &cobra.Command{
 	Use:   "rewrite --dir [directory]",
-	Short: "重写命令",
+	Short: "rewrite code, you can use --dir to specify the directory",
 	Run: func(cmd *cobra.Command, args []string) {
 		dir := cmd.Flag("dir").Value.String()
 		if dir == "" {
-			fmt.Println("请指定目录")
+			fmt.Println("please specify the directory")
 			return
 		}
 		rewrite.RewriteDir(dir)
@@ -22,10 +22,6 @@ var rewriteCmd = &cobra.Command{
 }
 
 func init() {
-	rewriteCmd.Flags().StringP("dir", "d", "", "指定目录")
-	rootCmd.AddCommand(rewriteCmd)
-}
-
-func init() {
+	rewriteCmd.Flags().StringP("dir", "d", "", "specify the directory")
 	rootCmd.AddCommand(rewriteCmd)
 }

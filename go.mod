@@ -12,12 +12,15 @@ require (
 	google.golang.org/protobuf v1.34.1
 )
 
-require github.com/felixge/httpsnoop v1.0.3 // indirect
+require (
+	github.com/felixge/httpsnoop v1.0.3 // indirect
+	golang.org/x/mod v0.23.0 // indirect
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/go-kratos/aegis v0.2.0 // indirect
+	github.com/go-kratos/aegis v0.2.0 // indirectzzz
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/form/v4 v4.2.1 // indirect

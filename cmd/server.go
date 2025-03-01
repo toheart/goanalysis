@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"flag"
@@ -29,6 +29,7 @@ var (
 
 func init() {
 	flag.StringVar(&flagconf, "conf", "./configs", "config path, eg: -conf config.yaml")
+	rootCmd.AddCommand(ServerCmd)
 }
 
 func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
@@ -47,7 +48,7 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
 
 var ServerCmd = &cobra.Command{
 	Use:   "server",
-	Short: "启动服务器",
+	Short: "start the server",
 	Run: func(cmd *cobra.Command, args []string) {
 		// 启动服务器的逻辑
 		logger := log.With(log.NewStdLogger(os.Stdout),
@@ -75,7 +76,7 @@ var ServerCmd = &cobra.Command{
 			panic(err)
 		}
 
-		app, cleanup, err := wireApp(bc.Server, bc.Data, logger)
+		app, cleanup, err := wireApp(bc.Server, bc.Biz, logger)
 		if err != nil {
 			panic(err)
 		}

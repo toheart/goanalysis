@@ -4,20 +4,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/toheart/goanalysis/cmd/server"
-
 	"github.com/spf13/cobra"
 )
-
-func init() {
-	rootCmd.AddCommand(server.ServerCmd)
-}
 
 var rootCmd = &cobra.Command{
 	Use:   "goanalysis",
 	Short: "goanalysis is a tool for analyzing Go applications",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Welcome to goanalysis!")
+		fmt.Println("Usage: goanalysis [command] [options]")
+		fmt.Println("Available commands:")
+		fmt.Println("  callgraph - Generate call graph")
+		fmt.Println("  rewrite - Rewrite code")
+		fmt.Println("  server - Start the server")
 	},
 }
 

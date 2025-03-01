@@ -34,10 +34,6 @@ var (
 	singleTrace *TraceInstance
 )
 
-func init() {
-	NewTraceInstance()
-}
-
 // TraceInstance is a singleton structure that manages function tracing.
 type TraceInstance struct {
 	sync.Mutex
@@ -192,6 +188,7 @@ func getGID() uint64 {
 
 // Trace is a decorator that traces function entry and exit.
 func Trace(params []interface{}) func() {
+	NewTraceInstance()
 	pc, _, _, ok := runtime.Caller(1)
 	if !ok {
 		panic("not found caller")
