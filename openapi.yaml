@@ -26,6 +26,19 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.AnalysisReply'
+    /api/check/db:
+        get:
+            tags:
+                - Analysis
+            description: CheckDatabase checks if the trace database exists
+            operationId: Analysis_CheckDatabase
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.CheckDatabaseResponse'
     /api/functions:
         get:
             tags:
@@ -43,6 +56,17 @@ paths:
             tags:
                 - Analysis
             operationId: Analysis_GetAllGIDs
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: limit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
             responses:
                 "200":
                     description: OK
@@ -105,6 +129,24 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.AnalysisByGIDReply'
+    /api/traces/{gid}/graph:
+        get:
+            tags:
+                - Analysis
+            operationId: Analysis_GetTraceGraph
+            parameters:
+                - name: gid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetTraceGraphReply'
     /api/traces/{gid}/mermaid:
         get:
             tags:
@@ -123,6 +165,24 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GenerateImageReply'
+    /api/verify/path:
+        post:
+            tags:
+                - Analysis
+            operationId: Analysis_VerifyProjectPath
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.VerifyProjectPathReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.VerifyProjectPathReply'
 components:
     schemas:
         analysis.v1.AnalysisByGIDReply:
@@ -161,6 +221,11 @@ components:
                 message:
                     type: string
             description: The response message containing the greetings
+        analysis.v1.CheckDatabaseResponse:
+            type: object
+            properties:
+                exists:
+                    type: boolean
         analysis.v1.GenerateImageReply:
             type: object
             properties:
@@ -176,10 +241,20 @@ components:
         analysis.v1.GetAllGIDsReply:
             type: object
             properties:
-                gids:
+                body:
                     type: array
                     items:
-                        type: string
+                        $ref: '#/components/schemas/analysis.v1.GetAllGIDsReply_Body'
+                total:
+                    type: integer
+                    format: int32
+        analysis.v1.GetAllGIDsReply_Body:
+            type: object
+            properties:
+                gid:
+                    type: string
+                initialFunc:
+                    type: string
         analysis.v1.GetGidsByFunctionNameReply:
             type: object
             properties:
@@ -199,6 +274,36 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/analysis.v1.TraceParams'
+        analysis.v1.GetTraceGraphReply:
+            type: object
+            properties:
+                nodes:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.GraphNode'
+                edges:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.GraphEdge'
+        analysis.v1.GraphEdge:
+            type: object
+            properties:
+                source:
+                    type: string
+                target:
+                    type: string
+                label:
+                    type: string
+        analysis.v1.GraphNode:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                callCount:
+                    type: integer
+                    format: int32
         analysis.v1.TraceParams:
             type: object
             properties:
@@ -206,6 +311,16 @@ components:
                     type: integer
                     format: int32
                 param:
+                    type: string
+        analysis.v1.VerifyProjectPathReply:
+            type: object
+            properties:
+                verified:
+                    type: boolean
+        analysis.v1.VerifyProjectPathReq:
+            type: object
+            properties:
+                path:
                     type: string
 tags:
     - name: Analysis

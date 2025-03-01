@@ -87,10 +87,15 @@ func (r *Rewrite) genTraceParams(funcType *ast.FuncType) []ast.Expr {
 	var params []string
 	for _, item := range funcType.Params.List {
 		for _, j := range item.Names {
+			if j.Name == "_" {
+				continue
+			}
 			params = append(params, j.Name)
 		}
 	}
-
+	if len(params) == 0 {
+		return nil
+	}
 	var elts []ast.Expr
 	for _, param := range params {
 		elts = append(elts, &ast.BasicLit{

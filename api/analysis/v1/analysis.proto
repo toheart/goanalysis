@@ -48,6 +48,34 @@ service Analysis {
       body: "*"
     };
   }
+  rpc VerifyProjectPath (VerifyProjectPathReq) returns (VerifyProjectPathReply) {
+    option (google.api.http) = {
+      post: "/api/verify/path"
+      body: "*"
+    };
+  }
+
+  // CheckDatabase checks if the trace database exists
+  rpc CheckDatabase(CheckDatabaseRequest) returns (CheckDatabaseResponse) {
+    option (google.api.http) = {
+      get: "/api/check/db"
+    };
+  }
+
+  rpc GetTraceGraph(GetTraceGraphReq) returns (GetTraceGraphReply) {
+    option (google.api.http) = {
+      get: "/api/traces/{gid}/graph"
+    };
+  }
+}
+
+
+message VerifyProjectPathReq {
+  string path = 1;
+}
+
+message VerifyProjectPathReply {
+  bool verified = 1;
 }
 
 message GetGidsByFunctionNameReq {
@@ -105,11 +133,18 @@ message TraceData {
   repeated TraceData trace_data = 1;
 }
 
-message GetAllGIDsReq { 
+message GetAllGIDsReq {
+  int32 page = 1; // 当前页
+  int32 limit = 2; // 每页条目数
 }
 
 message GetAllGIDsReply {
-  repeated uint64 gids = 1;
+  message Body{
+    uint64 gid = 1;
+    string initialFunc = 2;
+  }
+  repeated Body body = 1;
+  int32 total = 2; // 总的 GID 数量
 }
 
 message GetParamsByIDReq {
@@ -118,4 +153,31 @@ message GetParamsByIDReq {
 
 message GetParamsByIDReply {
   repeated TraceParams params = 1;
+}
+
+message CheckDatabaseRequest {}
+
+message CheckDatabaseResponse {
+  bool exists = 1;
+}
+
+message GraphNode {
+  string id = 1;
+  string name = 2;
+  int32 call_count = 3;
+}
+
+message GraphEdge {
+  string source = 1;
+  string target = 2;
+  string label = 3;
+}
+
+message GetTraceGraphReq {
+  string gid = 1;
+}
+
+message GetTraceGraphReply {
+  repeated GraphNode nodes = 1;
+  repeated GraphEdge edges = 2;
 }

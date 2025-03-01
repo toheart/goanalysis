@@ -4,7 +4,7 @@
 //go:build !wireinject
 // +build !wireinject
 
-package server
+package main
 
 import (
 	"github.com/go-kratos/kratos/v2"
@@ -19,17 +19,13 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
-	dataData, cleanup, err := data.NewData(confData, logger)
-	if err != nil {
-		return nil, nil, err
-	}
-	analysisBiz := analysis.NewAnalysisBiz(dataData)
+func wireApp(confServer *conf.Server, biz *conf.Biz, logger log.Logger) (*kratos.App, func(), error) {
+	dataData := data.NewData(logger)
+	analysisBiz := analysis.NewAnalysisBiz(biz, dataData, logger)
 	analysisService := service.NewAnalysisService(analysisBiz)
 	grpcServer := server.NewGRPCServer(confServer, analysisService, logger)
 	httpServer := server.NewHTTPServer(confServer, analysisService, logger)
 	app := newApp(logger, grpcServer, httpServer)
 	return app, func() {
-		cleanup()
 	}, nil
 }

@@ -40,6 +40,9 @@ api:
 	       --openapi_out=fq_schema_naming=true,default_response=false:. \
 	       $(API_PROTO_FILES)
 
+debug:
+	dlv debug --headless --listen :2346 --api-version 2 --accept-multiclient ./cmd -- server
+
 .PHONY: build
 # build
 build:

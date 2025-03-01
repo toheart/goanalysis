@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import TraceViewer from '../components/TraceViewer.vue';
 import TraceDetails from '../components/TraceDetails.vue';
-import MermaidViewer from '../components/MermaidViewer.vue';
+import MermaidViewer from '../components/TraceGraph.vue';
+import StaticAnalysis from '../components/StaticAnalysis.vue'
 
 const routes = [
   {
@@ -19,6 +20,11 @@ const routes = [
     name: 'MermaidViewer',
     component: MermaidViewer,
   },
+  {
+    path: '/static-analysis',
+    name: 'StaticAnalysis',
+    component: StaticAnalysis
+  }
 ];
 
 const router = createRouter({

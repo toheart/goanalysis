@@ -7,7 +7,7 @@ import "google/protobuf/duration.proto";
 
 message Bootstrap {
   Server server = 1;
-  Data data = 2;
+  Biz biz = 2;
 }
 
 message Server {
@@ -25,9 +25,6 @@ message Server {
   GRPC grpc = 2;
 }
 
-message Data {
-  message Database {
-    string source =  1;
-  }
-  Database database = 1;
+message Biz {
+  string staticDBpath = 1;
 }
