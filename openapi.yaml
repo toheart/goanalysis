@@ -258,10 +258,20 @@ components:
         analysis.v1.GetGidsByFunctionNameReply:
             type: object
             properties:
-                gids:
+                body:
                     type: array
                     items:
-                        type: string
+                        $ref: '#/components/schemas/analysis.v1.GetGidsByFunctionNameReply_Body'
+                total:
+                    type: integer
+                    format: int32
+        analysis.v1.GetGidsByFunctionNameReply_Body:
+            type: object
+            properties:
+                gid:
+                    type: string
+                initialFunc:
+                    type: string
         analysis.v1.GetGidsByFunctionNameReq:
             type: object
             properties:

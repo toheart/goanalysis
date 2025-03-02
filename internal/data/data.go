@@ -1,6 +1,8 @@
 package data
 
 import (
+	"sync"
+
 	"github.com/toheart/goanalysis/internal/data/sqllite"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -13,6 +15,7 @@ var ProviderSet = wire.NewSet(NewData)
 
 // Data .
 type Data struct {
+	sync.RWMutex
 	traceDB    map[string]*sqllite.TraceDB
 	funcNodeDB *sqllite.FuncTree
 	log        *log.Helper
@@ -28,7 +31,12 @@ func NewData(logger log.Logger) *Data {
 }
 
 func (d *Data) GetTraceDB(dbPath string) (*sqllite.TraceDB, error) {
-	if d.traceDB[dbPath] == nil {
+	d.RLock()
+	traceDB := d.traceDB[dbPath]
+	d.RUnlock()
+	if traceDB == nil {
+		d.Lock()
+		defer d.Unlock()
 		d.log.Infof("get trace db: %s", dbPath)
 		traceDB, err := sqllite.NewTraceDB(dbPath)
 		if err != nil {
@@ -36,16 +44,22 @@ func (d *Data) GetTraceDB(dbPath string) (*sqllite.TraceDB, error) {
 		}
 		d.traceDB[dbPath] = traceDB
 	}
-	return d.traceDB[dbPath], nil
+	return traceDB, nil
 }
 
 func (d *Data) GetFuncNodeDB(dbPath string) (*sqllite.FuncTree, error) {
-	if d.funcNodeDB == nil {
+	d.RLock()
+	funcNodeDB := d.funcNodeDB
+	d.RUnlock()
+	if funcNodeDB == nil {
+		d.Lock()
+		defer d.Unlock()
+		d.log.Infof("get func node db: %s", dbPath)
 		funcNodeDB, err := sqllite.NewFuncNodeDB(dbPath)
 		if err != nil {
 			return nil, err
 		}
 		d.funcNodeDB = funcNodeDB
 	}
-	return d.funcNodeDB, nil
+	return funcNodeDB, nil
 }

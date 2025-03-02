@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -165,7 +166,22 @@ func (s *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 	if err != nil {
 		return nil, err
 	}
-	return &v1.GetGidsByFunctionNameReply{Gids: gids}, nil
+	reply := &v1.GetGidsByFunctionNameReply{}
+	for _, gid := range gids {
+		gidUint, err := strconv.ParseUint(gid, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		initialFunc, err := s.uc.GetInitialFunc(gidUint)
+		if err != nil {
+			return nil, err
+		}
+		reply.Body = append(reply.Body, &v1.GetGidsByFunctionNameReply_Body{
+			Gid:         gidUint,
+			InitialFunc: initialFunc,
+		})
+	}
+	return reply, nil
 }
 
 func getLastSegment(name string) string {

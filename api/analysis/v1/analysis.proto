@@ -83,7 +83,12 @@ message GetGidsByFunctionNameReq {
 }
 
 message GetGidsByFunctionNameReply {
-  repeated string gids = 1;
+    message Body{
+    uint64 gid = 1;
+    string initialFunc = 2;
+  }
+  repeated Body body = 1;
+  int32 total = 2; // 总的 GID 数量
 }
 
 message GetAllFunctionNameReq {

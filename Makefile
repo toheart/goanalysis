@@ -1,6 +1,6 @@
 GOHOSTOS:=$(shell go env GOHOSTOS)
 GOPATH:=$(shell go env GOPATH)
-VERSION=$(shell git describe --tags --always)
+# VERSION=$(shell git describe --tags --always)
 
 ifeq ($(GOHOSTOS), windows)
 	Git_Bash="$(subst \,/,$(subst cmd\git.exe,bin\bash.exe,$(shell where git)))"
@@ -47,6 +47,14 @@ debug:
 # build
 build:
 	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
+
+package-linux:
+	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./cmd
+	tar -czvf goanalysis-linux-${VERSION}.tar.gz ./goanalysis ./configs ./frontweb/dist
+
+package-windows:
+	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis.exe ./cmd
+	tar -czvf goanalysis-windows-${VERSION}.tar.gz ./goanalysis.exe ./configs ./frontweb/dist
 
 .PHONY: generate
 # generate

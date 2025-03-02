@@ -15,6 +15,7 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3" // 引入 sqlite3 驱动
+	"github.com/sourcegraph/conc/pool"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -27,7 +28,10 @@ import (
 *
 */
 // EnableFlag defines the environment variable to enable trace functionality with optional database logging.
-const EnableFlag = "EnableFlag"
+const (
+	EnableFlag  = "EnableFlag"
+	IgnoreNames = "log,context"
+)
 
 var (
 	once        sync.Once
@@ -38,9 +42,18 @@ var (
 type TraceInstance struct {
 	sync.Mutex
 	indentations map[uint64]int
-	enableDB     bool
 	log          *slog.Logger
-	db           *sql.DB // 修改为 sql.DB
+	db           *sql.DB          // 修改为 sql.DB
+	closed       bool             // 添加标志位表示是否已关闭
+	insertChan   chan dbOperation // 添加通道用于异步数据库操作
+	updateChan   chan dbOperation // 添加通道用于异步数据库操作
+}
+
+// dbOperation 定义数据库操作
+type dbOperation struct {
+	query    string
+	args     []interface{}
+	resultCh chan int64 // 用于返回操作结果的通道
 }
 
 type TraceParams struct {
@@ -55,6 +68,9 @@ func NewTraceInstance() *TraceInstance {
 		singleTrace = &TraceInstance{
 			indentations: make(map[uint64]int),
 			log:          initializeLogger(),
+			closed:       false,
+			insertChan:   make(chan dbOperation, 20), // 创建带缓冲的通道
+			updateChan:   make(chan dbOperation, 20), // 创建带缓冲的通道
 		}
 		var dbName string
 		index := 0
@@ -71,17 +87,70 @@ func NewTraceInstance() *TraceInstance {
 		}
 		if err != nil {
 			singleTrace.log.Error("Unable to open database", "error", err)
+			return
 		}
+
+		// 测试数据库连接
+		if err = singleTrace.db.Ping(); err != nil {
+			singleTrace.log.Error("Unable to connect to database", "error", err)
+			return
+		}
+
 		_, err = singleTrace.db.Exec("CREATE TABLE IF NOT EXISTS TraceData (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, gid INTEGER, indent INTEGER, params TEXT, timeCost TEXT)") // 创建表
 		if err != nil {
 			singleTrace.log.Error("Unable to create table", "error", err)
+			return
 		}
 		_, err = singleTrace.db.Exec("CREATE INDEX IF NOT EXISTS idx_gid ON TraceData (gid)") // 对Gid创建索引
 		if err != nil {
 			singleTrace.log.Error("Unable to create index on gid", "error", err)
+			return
 		}
+
+		// 启动异步处理数据库操作的协程
+		go singleTrace.processDBInsert()
+		go singleTrace.processDBUpdate()
 	})
 	return singleTrace
+}
+
+func (t *TraceInstance) processDBInsert() {
+	p := pool.New().WithMaxGoroutines(10)
+	for op := range t.insertChan {
+		p.Go(func() {
+			result, err := t.db.Exec(op.query, op.args...)
+			if err != nil {
+				t.log.Error("Failed to execute insert query", "error", err)
+				return
+			}
+			lastInsertId, err := result.LastInsertId()
+			if err != nil {
+				t.log.Error("Failed to get last insert ID", "error", err)
+				return
+			}
+			op.resultCh <- lastInsertId
+		})
+	}
+	p.Wait()
+}
+
+func (t *TraceInstance) processDBUpdate() {
+	p := pool.New().WithMaxGoroutines(10)
+	for op := range t.updateChan {
+		p.Go(func() {
+			lastInsertId := <-op.resultCh
+			op.args = append(op.args, lastInsertId)
+			result, err := t.db.Exec(op.query, op.args...)
+			if err != nil {
+				t.log.Error("Failed to execute update query", "error", err)
+				return
+			}
+			t.log.Info("update query success", "lastInsertId", lastInsertId, "result", result)
+			close(op.resultCh)
+		})
+	}
+
+	p.Wait()
 }
 
 func initializeLogger() *slog.Logger {
@@ -94,36 +163,37 @@ func initializeLogger() *slog.Logger {
 }
 
 // enterTrace logs the entry of a function call and stores necessary trace details.
-func (t *TraceInstance) enterTrace(id uint64, name string, params []interface{}) int64 {
+func (t *TraceInstance) enterTrace(id uint64, name string, params []interface{}) (resultCh chan int64, startTime time.Time) {
+	startTime = time.Now() // 记录开始时间
+	t.log.Info("enterTrace start", "id", id, "name", name, "startTime", startTime)
 	t.Lock()
+	t.log.Info("enterTrace Lock", "id", id, "name", name, "startTime", startTime)
 	indent := t.incrementIndent(id)
 	t.Unlock()
-
+	t.log.Info("enterTrace end", "id", id, "name", name, "startTime", startTime)
 	indents := generateIndentString(indent)
 	traceParams := prepareParamsOutput(params)
-
+	// 创建一个通道来接收异步操作的结果
+	resultCh = make(chan int64, 1)
 	// 将 traceParams 转换为 JSON 字符串
 	paramsJSON, err := json.Marshal(traceParams)
 	if err != nil {
 		t.log.Error("Unable to marshal params to JSON", "error", err)
-		return 0
+		return nil, startTime
 	}
 
-	// 使用 sqlite3 插入数据
-	var lastInsertId int64
-	res, err := t.db.Exec("INSERT INTO TraceData (name, gid, indent, params) VALUES (?, ?, ?, ?)", name, id, indent, paramsJSON)
-	if err != nil {
-		t.log.Error("Unable to insert data", "error", err)
-		return 0
-	}
-	lastInsertId, err = res.LastInsertId() // 获取刚才插入的自增id
-	if err != nil {
-		t.log.Error("Unable to get last insert id", "error", err)
-		return 0
+	// 异步执行数据库插入
+	t.insertChan <- dbOperation{
+		query:    "INSERT INTO TraceData (name, gid, indent, params) VALUES (?, ?, ?, ?)",
+		args:     []interface{}{name, id, indent, paramsJSON},
+		resultCh: resultCh,
 	}
 
-	t.log.Info(fmt.Sprintf("%s->%s", indents, name), "gid", id, "params", string(paramsJSON), "lastInsertId", lastInsertId)
-	return lastInsertId
+	// 记录日志，但不等待数据库操作完成
+	t.log.Info(fmt.Sprintf("%s->%s", indents, name), "gid", id, "params", string(paramsJSON))
+
+	// 返回通道，让调用者决定是否等待结果
+	return resultCh, startTime
 }
 
 func (t *TraceInstance) incrementIndent(id uint64) int {
@@ -136,10 +206,10 @@ func generateIndentString(indent int) string {
 	return strings.Repeat("**", indent)
 }
 
-func prepareParamsOutput(params []interface{}) []TraceParams {
-	var traceParams []TraceParams
+func prepareParamsOutput(params []interface{}) []*TraceParams {
+	var traceParams []*TraceParams
 	for i, item := range params {
-		traceParams = append(traceParams, TraceParams{
+		traceParams = append(traceParams, &TraceParams{
 			Pos:   i,
 			Param: formatParam(i, item),
 		})
@@ -156,17 +226,21 @@ func formatParam(index int, item interface{}) string {
 }
 
 // exitTrace logs the exit of a function call and decrements the trace indentation.
-func (t *TraceInstance) exitTrace(id uint64, name string, startTime time.Time, lastInsertId int64) {
+func (t *TraceInstance) exitTrace(id uint64, name string, startTime time.Time, resultCh chan int64) {
+	t.log.Info("exitTrace", "id", id, "name", name, "startTime", startTime)
 	t.Lock()
+	t.log.Info("exitTrace Lock", "id", id, "name", name, "startTime", startTime)
 	indent := t.decrementIndent(id)
 	t.Unlock()
 
+	duration := time.Since(startTime)
 	indents := generateIndentString(indent - 1)
-	t.log.Info(fmt.Sprintf("%s<-%s", indents, name), "gid", id, "timeCost(ms)", time.Since(startTime).String())
-	// 更新时间
-	_, err := t.db.Exec("UPDATE TraceData SET timeCost = ? WHERE id = ?", time.Since(startTime).String(), lastInsertId)
-	if err != nil {
-		t.log.Error("Unable to update time cost", "error", err)
+	t.log.Info(fmt.Sprintf("%s<-%s", indents, name), "gid", id, "timeCost(ms)", duration.String())
+
+	t.updateChan <- dbOperation{
+		query:    "UPDATE TraceData SET timeCost = ? WHERE id = ?",
+		args:     []interface{}{duration.String()},
+		resultCh: resultCh,
 	}
 }
 
@@ -188,7 +262,7 @@ func getGID() uint64 {
 
 // Trace is a decorator that traces function entry and exit.
 func Trace(params []interface{}) func() {
-	NewTraceInstance()
+	instance := NewTraceInstance()
 	pc, _, _, ok := runtime.Caller(1)
 	if !ok {
 		panic("not found caller")
@@ -202,12 +276,24 @@ func Trace(params []interface{}) func() {
 		return func() {}
 	}
 
-	lastInsertId := singleTrace.enterTrace(id, name, params)
-	return func() { singleTrace.exitTrace(id, name, time.Now(), lastInsertId) }
+	lastInsertId, startTime := instance.enterTrace(id, name, params)
+	return func() { instance.exitTrace(id, name, startTime, lastInsertId) }
 }
 
 func skipFunction(name string) bool {
-	return strings.Contains(name, "Config")
+	ignoreEnv := os.Getenv("IgnoreNames")
+	var ignoreNames []string
+	if ignoreEnv != "" {
+		ignoreNames = strings.Split(ignoreEnv, ",")
+	} else {
+		ignoreNames = strings.Split(IgnoreNames, ",")
+	}
+	for _, ignoreName := range ignoreNames {
+		if strings.Contains(strings.ToLower(name), ignoreName) {
+			return true
+		}
+	}
+	return false
 }
 
 // Output formats trace parameters based on their type for logging.
@@ -227,4 +313,33 @@ func Output(item interface{}, val reflect.Value) string {
 	default:
 		return fmt.Sprintf("%s", item)
 	}
+}
+
+// Close closes the database connection and releases resources.
+func (t *TraceInstance) Close() error {
+	t.Lock()
+	defer t.Unlock()
+
+	if t.closed {
+		return nil
+	}
+
+	t.closed = true
+
+	// 关闭数据库操作通道
+	close(t.insertChan)
+	close(t.updateChan)
+
+	if t.db != nil {
+		return t.db.Close()
+	}
+	return nil
+}
+
+// CloseTraceInstance closes the singleton trace instance.
+func CloseTraceInstance() error {
+	if singleTrace != nil {
+		return singleTrace.Close()
+	}
+	return nil
 }

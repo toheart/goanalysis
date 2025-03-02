@@ -87,16 +87,25 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="result in filteredGIDs" :key="result.GID">
+          <tr v-for="result in filteredGIDs" :key="result.GID || index">
             <td>{{ result.GID }}</td>
             <td>{{ result.InitialFunc }}</td>
             <td>
-              <router-link :to="{ name: 'TraceDetails', params: { gid: result.GID } }" class="btn btn-primary me-2">
-                查看
-              </router-link>
-              <router-link :to="{ name: 'MermaidViewer', params: { gid: result.GID } }" class="btn btn-success">
-                生成图片
-              </router-link>
+              <template v-if="result.GID">
+                <router-link 
+                  :to="{ name: 'TraceDetails', params: { gid: result.GID } }" 
+                  class="btn btn-primary me-2"
+                >
+                  查看
+                </router-link>
+                <router-link 
+                  :to="{ name: 'MermaidViewer', params: { gid: result.GID } }" 
+                  class="btn btn-success"
+                >
+                  生成图片
+                </router-link>
+              </template>
+              <span v-else class="text-danger">无效的GID</span>
             </td>
           </tr>
         </tbody>
@@ -129,9 +138,11 @@ export default {
       currentPage: 1,
       itemsPerPage: 10, // 每页显示的 GID 数量
       totalPages: 0, // 总页数
+      isComponentMounted: false, // 添加组件挂载状态标志
     };
   },
   mounted() {
+    this.isComponentMounted = true;
     // 检查本地存储中是否有已验证的路径
     const savedPath = localStorage.getItem('verifiedProjectPath');
     if (savedPath) {
@@ -139,6 +150,10 @@ export default {
       this.isPathVerified = true;
       this.initializeData();
     }
+  },
+  beforeUnmount() {
+    // 组件卸载前设置标志
+    this.isComponentMounted = false;
   },
   methods: {
     async verifyPath() {
@@ -221,28 +236,59 @@ export default {
         this.filteredFunctionNames = this.functionNames.filter(name =>
           name.toLowerCase().includes(searchTerm)
         );
-        this.fetchGIDsByFunctionName();
+        // 使用 nextTick 确保 DOM 更新后再执行查询
+        this.$nextTick(() => {
+          this.fetchGIDsByFunctionName();
+        });
       } else {
         this.filteredFunctionNames = [];
-        this.filteredGIDs = this.gids;
+        this.fetchGIDs(); // 如果没有函数名，则获取所有 GIDs
       }
     },
 
     selectFunction(name) {
       this.functionName = name;
       this.filteredFunctionNames = [];
-      this.searchByFunctionName();
+      // 使用 nextTick 确保 DOM 更新后再执行查询
+      this.$nextTick(() => {
+        this.fetchGIDsByFunctionName();
+      });
     },
 
     async fetchGIDsByFunctionName() {
+      if (!this.isComponentMounted) return;
+      
       try {
         const response = await axios.post('/api/gids/function', {
           functionName: this.functionName,
           path: this.projectPath
         });
-        this.filteredGIDs = response.data.gids || [];
+        
+        if (!this.isComponentMounted) return;
+        
+        // 确保数据格式正确并且每个项目都有 GID 属性
+        if (response.data && response.data.body) {
+          this.filteredGIDs = response.data.body.map(item => {
+            // 确保每个项目都有 GID 和 InitialFunc 属性
+            return {
+              GID: item.gid || item.GID || '',
+              InitialFunc: item.initialFunc || item.InitialFunc || this.functionName
+            };
+          }).filter(item => item.GID); // 过滤掉没有 GID 的项目
+          
+          this.totalPages = Math.ceil(this.filteredGIDs.length / this.itemsPerPage);
+          this.currentPage = 1;
+        } else {
+          this.filteredGIDs = [];
+          this.totalPages = 0;
+          this.currentPage = 1;
+        }
       } catch (error) {
+        if (!this.isComponentMounted) return;
+        
         alert('搜索函数相关GIDs失败: ' + error.message);
+        this.filteredGIDs = [];
+        this.totalPages = 0;
       }
     },
 
