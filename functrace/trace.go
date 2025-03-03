@@ -45,15 +45,13 @@ type TraceInstance struct {
 	log          *slog.Logger
 	db           *sql.DB          // 修改为 sql.DB
 	closed       bool             // 添加标志位表示是否已关闭
-	insertChan   chan dbOperation // 添加通道用于异步数据库操作
 	updateChan   chan dbOperation // 添加通道用于异步数据库操作
 }
 
 // dbOperation 定义数据库操作
 type dbOperation struct {
-	query    string
-	args     []interface{}
-	resultCh chan int64 // 用于返回操作结果的通道
+	query string
+	args  []interface{}
 }
 
 type TraceParams struct {
@@ -69,7 +67,6 @@ func NewTraceInstance() *TraceInstance {
 			indentations: make(map[uint64]int),
 			log:          initializeLogger(),
 			closed:       false,
-			insertChan:   make(chan dbOperation, 20), // 创建带缓冲的通道
 			updateChan:   make(chan dbOperation, 20), // 创建带缓冲的通道
 		}
 		var dbName string
@@ -108,45 +105,21 @@ func NewTraceInstance() *TraceInstance {
 		}
 
 		// 启动异步处理数据库操作的协程
-		go singleTrace.processDBInsert()
 		go singleTrace.processDBUpdate()
 	})
 	return singleTrace
-}
-
-func (t *TraceInstance) processDBInsert() {
-	p := pool.New().WithMaxGoroutines(10)
-	for op := range t.insertChan {
-		p.Go(func() {
-			result, err := t.db.Exec(op.query, op.args...)
-			if err != nil {
-				t.log.Error("Failed to execute insert query", "error", err)
-				return
-			}
-			lastInsertId, err := result.LastInsertId()
-			if err != nil {
-				t.log.Error("Failed to get last insert ID", "error", err)
-				return
-			}
-			op.resultCh <- lastInsertId
-		})
-	}
-	p.Wait()
 }
 
 func (t *TraceInstance) processDBUpdate() {
 	p := pool.New().WithMaxGoroutines(10)
 	for op := range t.updateChan {
 		p.Go(func() {
-			lastInsertId := <-op.resultCh
-			op.args = append(op.args, lastInsertId)
 			result, err := t.db.Exec(op.query, op.args...)
 			if err != nil {
 				t.log.Error("Failed to execute update query", "error", err)
 				return
 			}
-			t.log.Info("update query success", "lastInsertId", lastInsertId, "result", result)
-			close(op.resultCh)
+			t.log.Info("update query success", "result", result)
 		})
 	}
 
@@ -163,7 +136,7 @@ func initializeLogger() *slog.Logger {
 }
 
 // enterTrace logs the entry of a function call and stores necessary trace details.
-func (t *TraceInstance) enterTrace(id uint64, name string, params []interface{}) (resultCh chan int64, startTime time.Time) {
+func (t *TraceInstance) enterTrace(id uint64, name string, params []interface{}) (lastInsertId int64, startTime time.Time) {
 	startTime = time.Now() // 记录开始时间
 	t.log.Info("enterTrace start", "id", id, "name", name, "startTime", startTime)
 	t.Lock()
@@ -173,27 +146,27 @@ func (t *TraceInstance) enterTrace(id uint64, name string, params []interface{})
 	t.log.Info("enterTrace end", "id", id, "name", name, "startTime", startTime)
 	indents := generateIndentString(indent)
 	traceParams := prepareParamsOutput(params)
-	// 创建一个通道来接收异步操作的结果
-	resultCh = make(chan int64, 1)
 	// 将 traceParams 转换为 JSON 字符串
 	paramsJSON, err := json.Marshal(traceParams)
 	if err != nil {
 		t.log.Error("Unable to marshal params to JSON", "error", err)
-		return nil, startTime
+		return 0, startTime
 	}
 
-	// 异步执行数据库插入
-	t.insertChan <- dbOperation{
-		query:    "INSERT INTO TraceData (name, gid, indent, params) VALUES (?, ?, ?, ?)",
-		args:     []interface{}{name, id, indent, paramsJSON},
-		resultCh: resultCh,
+	result, err := t.db.Exec("INSERT INTO TraceData (name, gid, indent, params) VALUES (?, ?, ?, ?)", name, id, indent, paramsJSON)
+	if err != nil {
+		t.log.Error("Failed to execute insert query", "error", err)
+		return
 	}
-
+	lastInsertId, err = result.LastInsertId()
+	if err != nil {
+		t.log.Error("Failed to get last insert ID", "error", err)
+		return
+	}
 	// 记录日志，但不等待数据库操作完成
 	t.log.Info(fmt.Sprintf("%s->%s", indents, name), "gid", id, "params", string(paramsJSON))
-
 	// 返回通道，让调用者决定是否等待结果
-	return resultCh, startTime
+	return lastInsertId, startTime
 }
 
 func (t *TraceInstance) incrementIndent(id uint64) int {
@@ -226,7 +199,7 @@ func formatParam(index int, item interface{}) string {
 }
 
 // exitTrace logs the exit of a function call and decrements the trace indentation.
-func (t *TraceInstance) exitTrace(id uint64, name string, startTime time.Time, resultCh chan int64) {
+func (t *TraceInstance) exitTrace(id uint64, name string, startTime time.Time, lastInsertId int64) {
 	t.log.Info("exitTrace", "id", id, "name", name, "startTime", startTime)
 	t.Lock()
 	t.log.Info("exitTrace Lock", "id", id, "name", name, "startTime", startTime)
@@ -238,9 +211,8 @@ func (t *TraceInstance) exitTrace(id uint64, name string, startTime time.Time, r
 	t.log.Info(fmt.Sprintf("%s<-%s", indents, name), "gid", id, "timeCost(ms)", duration.String())
 
 	t.updateChan <- dbOperation{
-		query:    "UPDATE TraceData SET timeCost = ? WHERE id = ?",
-		args:     []interface{}{duration.String()},
-		resultCh: resultCh,
+		query: "UPDATE TraceData SET timeCost = ? WHERE id = ?",
+		args:  []interface{}{duration.String(), lastInsertId},
 	}
 }
 
@@ -326,8 +298,6 @@ func (t *TraceInstance) Close() error {
 
 	t.closed = true
 
-	// 关闭数据库操作通道
-	close(t.insertChan)
 	close(t.updateChan)
 
 	if t.db != nil {
