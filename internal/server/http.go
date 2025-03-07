@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/rs/cors"
 )
 
 var _ transport.Server = (*HttpServer)(nil)
@@ -44,9 +45,19 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, services ...iface.InitGrpc
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 	mux := runtime.NewServeMux()
+
+	// 创建一个支持CORS的处理器
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // 允许所有来源，生产环境中应该限制为特定域名
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "Authorization", "X-CSRF-Token"},
+		AllowCredentials: true,
+		MaxAge:           86400, // 预检请求结果缓存24小时
+	}).Handler(mux)
+
 	h.server = &http.Server{
 		Addr:    c.Http.Addr,
-		Handler: mux,
+		Handler: corsHandler, // 使用CORS处理器包装mux
 	}
 	for _, item := range services {
 		if err := item.RegisterHttp(mux, c.Grpc.Addr, opts); err != nil {
