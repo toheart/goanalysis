@@ -10,6 +10,7 @@ import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/toheart/goanalysis/internal/biz/analysis"
+	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
 	"github.com/toheart/goanalysis/internal/server"
@@ -21,11 +22,15 @@ import (
 // wireApp init kratos application.
 func wireApp(confServer *conf.Server, biz *conf.Biz, logger log.Logger) (*kratos.App, func(), error) {
 	dataData := data.NewData(logger)
+	staticAnalysisBiz := staticanalysis.NewStaticAnalysisBiz(biz, dataData, logger)
+	staticAnalysisService := service.NewStaticAnalysisService(staticAnalysisBiz, logger)
 	analysisBiz := analysis.NewAnalysisBiz(biz, dataData, logger)
-	analysisService := service.NewAnalysisService(analysisBiz)
-	grpcServer := server.NewGRPCServer(confServer, analysisService, logger)
-	httpServer := server.NewHTTPServer(confServer, analysisService, logger)
-	app := newApp(logger, grpcServer, httpServer)
+	analysisService := service.NewAnalysisService(analysisBiz, logger)
+	v := service.NewHttpServiceList(staticAnalysisService, analysisService)
+	httpServer := server.NewHTTPServer(confServer, logger, v...)
+	grpcServer := server.NewGRPCServer(confServer, logger, v...)
+	v2 := server.NewServerList(httpServer, grpcServer)
+	app := newApp(logger, v2)
 	return app, func() {
 	}, nil
 }

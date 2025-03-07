@@ -27,4 +27,8 @@ message Server {
 
 message Biz {
   string staticDBpath = 1;
+  // GitLab相关配置
+  string gitlab_token = 2;     // GitLab访问令牌
+  string gitlab_url = 3;       // GitLab服务器URL
+  string gitlab_clone_dir = 4; // GitLab仓库克隆目录
 }

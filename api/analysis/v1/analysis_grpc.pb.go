@@ -29,6 +29,13 @@ const (
 	Analysis_VerifyProjectPath_FullMethodName     = "/analysis.v1.Analysis/VerifyProjectPath"
 	Analysis_CheckDatabase_FullMethodName         = "/analysis.v1.Analysis/CheckDatabase"
 	Analysis_GetTraceGraph_FullMethodName         = "/analysis.v1.Analysis/GetTraceGraph"
+	Analysis_GetTracesByParentFunc_FullMethodName = "/analysis.v1.Analysis/GetTracesByParentFunc"
+	Analysis_GetAllParentFuncNames_FullMethodName = "/analysis.v1.Analysis/GetAllParentFuncNames"
+	Analysis_GetChildFunctions_FullMethodName     = "/analysis.v1.Analysis/GetChildFunctions"
+	Analysis_GetHotFunctions_FullMethodName       = "/analysis.v1.Analysis/GetHotFunctions"
+	Analysis_GetGoroutineStats_FullMethodName     = "/analysis.v1.Analysis/GetGoroutineStats"
+	Analysis_GetFunctionAnalysis_FullMethodName   = "/analysis.v1.Analysis/GetFunctionAnalysis"
+	Analysis_GetFunctionCallGraph_FullMethodName  = "/analysis.v1.Analysis/GetFunctionCallGraph"
 )
 
 // AnalysisClient is the client API for Analysis service.
@@ -47,6 +54,20 @@ type AnalysisClient interface {
 	// CheckDatabase checks if the trace database exists
 	CheckDatabase(ctx context.Context, in *CheckDatabaseRequest, opts ...grpc.CallOption) (*CheckDatabaseResponse, error)
 	GetTraceGraph(ctx context.Context, in *GetTraceGraphReq, opts ...grpc.CallOption) (*GetTraceGraphReply, error)
+	// GetTracesByParentFunc 根据父函数名称获取函数调用
+	GetTracesByParentFunc(ctx context.Context, in *GetTracesByParentFuncReq, opts ...grpc.CallOption) (*GetTracesByParentFuncReply, error)
+	// GetAllParentFuncNames 获取所有的父函数名称
+	GetAllParentFuncNames(ctx context.Context, in *GetAllParentFuncNamesReq, opts ...grpc.CallOption) (*GetAllParentFuncNamesReply, error)
+	// GetChildFunctions 获取函数的子函数
+	GetChildFunctions(ctx context.Context, in *GetChildFunctionsReq, opts ...grpc.CallOption) (*GetChildFunctionsReply, error)
+	// GetHotFunctions 获取热点函数分析数据
+	GetHotFunctions(ctx context.Context, in *GetHotFunctionsReq, opts ...grpc.CallOption) (*GetHotFunctionsReply, error)
+	// GetGoroutineStats 获取Goroutine统计信息
+	GetGoroutineStats(ctx context.Context, in *GetGoroutineStatsReq, opts ...grpc.CallOption) (*GetGoroutineStatsReply, error)
+	// GetFunctionAnalysis 获取函数调用关系分析
+	GetFunctionAnalysis(ctx context.Context, in *GetFunctionAnalysisReq, opts ...grpc.CallOption) (*GetFunctionAnalysisReply, error)
+	// GetFunctionCallGraph 获取函数调用关系图
+	GetFunctionCallGraph(ctx context.Context, in *GetFunctionCallGraphReq, opts ...grpc.CallOption) (*GetFunctionCallGraphReply, error)
 }
 
 type analysisClient struct {
@@ -147,6 +168,69 @@ func (c *analysisClient) GetTraceGraph(ctx context.Context, in *GetTraceGraphReq
 	return out, nil
 }
 
+func (c *analysisClient) GetTracesByParentFunc(ctx context.Context, in *GetTracesByParentFuncReq, opts ...grpc.CallOption) (*GetTracesByParentFuncReply, error) {
+	out := new(GetTracesByParentFuncReply)
+	err := c.cc.Invoke(ctx, Analysis_GetTracesByParentFunc_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetAllParentFuncNames(ctx context.Context, in *GetAllParentFuncNamesReq, opts ...grpc.CallOption) (*GetAllParentFuncNamesReply, error) {
+	out := new(GetAllParentFuncNamesReply)
+	err := c.cc.Invoke(ctx, Analysis_GetAllParentFuncNames_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetChildFunctions(ctx context.Context, in *GetChildFunctionsReq, opts ...grpc.CallOption) (*GetChildFunctionsReply, error) {
+	out := new(GetChildFunctionsReply)
+	err := c.cc.Invoke(ctx, Analysis_GetChildFunctions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetHotFunctions(ctx context.Context, in *GetHotFunctionsReq, opts ...grpc.CallOption) (*GetHotFunctionsReply, error) {
+	out := new(GetHotFunctionsReply)
+	err := c.cc.Invoke(ctx, Analysis_GetHotFunctions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetGoroutineStats(ctx context.Context, in *GetGoroutineStatsReq, opts ...grpc.CallOption) (*GetGoroutineStatsReply, error) {
+	out := new(GetGoroutineStatsReply)
+	err := c.cc.Invoke(ctx, Analysis_GetGoroutineStats_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetFunctionAnalysis(ctx context.Context, in *GetFunctionAnalysisReq, opts ...grpc.CallOption) (*GetFunctionAnalysisReply, error) {
+	out := new(GetFunctionAnalysisReply)
+	err := c.cc.Invoke(ctx, Analysis_GetFunctionAnalysis_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetFunctionCallGraph(ctx context.Context, in *GetFunctionCallGraphReq, opts ...grpc.CallOption) (*GetFunctionCallGraphReply, error) {
+	out := new(GetFunctionCallGraphReply)
+	err := c.cc.Invoke(ctx, Analysis_GetFunctionCallGraph_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalysisServer is the server API for Analysis service.
 // All implementations must embed UnimplementedAnalysisServer
 // for forward compatibility
@@ -163,6 +247,20 @@ type AnalysisServer interface {
 	// CheckDatabase checks if the trace database exists
 	CheckDatabase(context.Context, *CheckDatabaseRequest) (*CheckDatabaseResponse, error)
 	GetTraceGraph(context.Context, *GetTraceGraphReq) (*GetTraceGraphReply, error)
+	// GetTracesByParentFunc 根据父函数名称获取函数调用
+	GetTracesByParentFunc(context.Context, *GetTracesByParentFuncReq) (*GetTracesByParentFuncReply, error)
+	// GetAllParentFuncNames 获取所有的父函数名称
+	GetAllParentFuncNames(context.Context, *GetAllParentFuncNamesReq) (*GetAllParentFuncNamesReply, error)
+	// GetChildFunctions 获取函数的子函数
+	GetChildFunctions(context.Context, *GetChildFunctionsReq) (*GetChildFunctionsReply, error)
+	// GetHotFunctions 获取热点函数分析数据
+	GetHotFunctions(context.Context, *GetHotFunctionsReq) (*GetHotFunctionsReply, error)
+	// GetGoroutineStats 获取Goroutine统计信息
+	GetGoroutineStats(context.Context, *GetGoroutineStatsReq) (*GetGoroutineStatsReply, error)
+	// GetFunctionAnalysis 获取函数调用关系分析
+	GetFunctionAnalysis(context.Context, *GetFunctionAnalysisReq) (*GetFunctionAnalysisReply, error)
+	// GetFunctionCallGraph 获取函数调用关系图
+	GetFunctionCallGraph(context.Context, *GetFunctionCallGraphReq) (*GetFunctionCallGraphReply, error)
 	mustEmbedUnimplementedAnalysisServer()
 }
 
@@ -199,6 +297,27 @@ func (UnimplementedAnalysisServer) CheckDatabase(context.Context, *CheckDatabase
 }
 func (UnimplementedAnalysisServer) GetTraceGraph(context.Context, *GetTraceGraphReq) (*GetTraceGraphReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTraceGraph not implemented")
+}
+func (UnimplementedAnalysisServer) GetTracesByParentFunc(context.Context, *GetTracesByParentFuncReq) (*GetTracesByParentFuncReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTracesByParentFunc not implemented")
+}
+func (UnimplementedAnalysisServer) GetAllParentFuncNames(context.Context, *GetAllParentFuncNamesReq) (*GetAllParentFuncNamesReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllParentFuncNames not implemented")
+}
+func (UnimplementedAnalysisServer) GetChildFunctions(context.Context, *GetChildFunctionsReq) (*GetChildFunctionsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChildFunctions not implemented")
+}
+func (UnimplementedAnalysisServer) GetHotFunctions(context.Context, *GetHotFunctionsReq) (*GetHotFunctionsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetHotFunctions not implemented")
+}
+func (UnimplementedAnalysisServer) GetGoroutineStats(context.Context, *GetGoroutineStatsReq) (*GetGoroutineStatsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGoroutineStats not implemented")
+}
+func (UnimplementedAnalysisServer) GetFunctionAnalysis(context.Context, *GetFunctionAnalysisReq) (*GetFunctionAnalysisReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionAnalysis not implemented")
+}
+func (UnimplementedAnalysisServer) GetFunctionCallGraph(context.Context, *GetFunctionCallGraphReq) (*GetFunctionCallGraphReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionCallGraph not implemented")
 }
 func (UnimplementedAnalysisServer) mustEmbedUnimplementedAnalysisServer() {}
 
@@ -393,6 +512,132 @@ func _Analysis_GetTraceGraph_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Analysis_GetTracesByParentFunc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTracesByParentFuncReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetTracesByParentFunc(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetTracesByParentFunc_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetTracesByParentFunc(ctx, req.(*GetTracesByParentFuncReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetAllParentFuncNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllParentFuncNamesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetAllParentFuncNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetAllParentFuncNames_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetAllParentFuncNames(ctx, req.(*GetAllParentFuncNamesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetChildFunctions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChildFunctionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetChildFunctions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetChildFunctions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetChildFunctions(ctx, req.(*GetChildFunctionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetHotFunctions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetHotFunctionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetHotFunctions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetHotFunctions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetHotFunctions(ctx, req.(*GetHotFunctionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetGoroutineStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGoroutineStatsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetGoroutineStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetGoroutineStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetGoroutineStats(ctx, req.(*GetGoroutineStatsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetFunctionAnalysis_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFunctionAnalysisReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetFunctionAnalysis(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetFunctionAnalysis_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetFunctionAnalysis(ctx, req.(*GetFunctionAnalysisReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetFunctionCallGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFunctionCallGraphReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetFunctionCallGraph(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetFunctionCallGraph_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetFunctionCallGraph(ctx, req.(*GetFunctionCallGraphReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Analysis_ServiceDesc is the grpc.ServiceDesc for Analysis service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -439,6 +684,34 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTraceGraph",
 			Handler:    _Analysis_GetTraceGraph_Handler,
+		},
+		{
+			MethodName: "GetTracesByParentFunc",
+			Handler:    _Analysis_GetTracesByParentFunc_Handler,
+		},
+		{
+			MethodName: "GetAllParentFuncNames",
+			Handler:    _Analysis_GetAllParentFuncNames_Handler,
+		},
+		{
+			MethodName: "GetChildFunctions",
+			Handler:    _Analysis_GetChildFunctions_Handler,
+		},
+		{
+			MethodName: "GetHotFunctions",
+			Handler:    _Analysis_GetHotFunctions_Handler,
+		},
+		{
+			MethodName: "GetGoroutineStats",
+			Handler:    _Analysis_GetGoroutineStats_Handler,
+		},
+		{
+			MethodName: "GetFunctionAnalysis",
+			Handler:    _Analysis_GetFunctionAnalysis_Handler,
+		},
+		{
+			MethodName: "GetFunctionCallGraph",
+			Handler:    _Analysis_GetFunctionCallGraph_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

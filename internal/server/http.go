@@ -1,68 +1,66 @@
 package server
 
 import (
-	v1 "github.com/toheart/goanalysis/api/analysis/v1"
-	"github.com/toheart/goanalysis/internal/conf"
-	"github.com/toheart/goanalysis/internal/service"
+	"context"
+	"net/http"
 
-	nhttp "net/http"
-	"os"
-	"path/filepath"
+	"github.com/go-kratos/kratos/v2/transport"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/toheart/goanalysis/internal/conf"
+	"github.com/toheart/goanalysis/internal/server/iface"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	"github.com/go-kratos/kratos/v2/transport/http"
-	"github.com/gorilla/handlers"
 )
 
+var _ transport.Server = (*HttpServer)(nil)
+
+type HttpServer struct {
+	server *http.Server
+	log    *log.Helper
+}
+
+func (h *HttpServer) Start(ctx context.Context) error {
+	h.log.Infof("start http gateway server: %s", h.server.Addr)
+	return h.server.ListenAndServe()
+}
+
+func (h *HttpServer) Stop(ctx context.Context) error {
+	h.log.Infof("Shutting down the http gateway server")
+	if err := h.server.Shutdown(ctx); err != nil {
+		h.log.Errorf("Failed to shutdown http gateway server: %v", err)
+	}
+	return nil
+}
+
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, analysis *service.AnalysisService, logger log.Logger) *http.Server {
-	var opts = []http.ServerOption{
-		http.Middleware(
-			recovery.Recovery(),
-		),
-		http.Filter(handlers.CORS(
-			handlers.AllowedOrigins([]string{"*"}),
-			handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
-			handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
-		)),
+func NewHTTPServer(c *conf.Server, logger log.Logger, services ...iface.InitGrpcHttp) *HttpServer {
+	h := &HttpServer{
+		log: log.NewHelper(log.With(logger, "module", "http")),
 	}
-	if c.Http.Network != "" {
-		opts = append(opts, http.Network(c.Http.Network))
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
-	if c.Http.Addr != "" {
-		opts = append(opts, http.Address(c.Http.Addr))
+	mux := runtime.NewServeMux()
+	h.server = &http.Server{
+		Addr:    c.Http.Addr,
+		Handler: mux,
 	}
-	if c.Http.Timeout != nil {
-		opts = append(opts, http.Timeout(c.Http.Timeout.AsDuration()))
+	for _, item := range services {
+		if err := item.RegisterHttp(mux, c.Grpc.Addr, opts); err != nil {
+			panic(err)
+		}
 	}
-	srv := http.NewServer(opts...)
-
-	// 注册API服务
-	v1.RegisterAnalysisHTTPServer(srv, analysis)
-
-	// 添加前端静态文件服务
-	frontendDir := "./frontweb/dist"
-	if _, err := os.Stat(frontendDir); !os.IsNotExist(err) {
-		fileServer := nhttp.FileServer(nhttp.Dir(frontendDir))
-		srv.HandlePrefix("/", nhttp.HandlerFunc(func(w nhttp.ResponseWriter, r *nhttp.Request) {
-			// 检查请求的路径是否存在
-			path := filepath.Join(frontendDir, r.URL.Path)
-			_, err := os.Stat(path)
-
-			// 如果文件不存在且不是API路径，则返回index.html（处理SPA路由）
-			if os.IsNotExist(err) && !isAPIPath(r.URL.Path) {
-				nhttp.ServeFile(w, r, filepath.Join(frontendDir, "index.html"))
-				return
-			}
-
-			fileServer.ServeHTTP(w, r)
-		}))
-	} else {
-		log.NewHelper(logger).Warnf("%s not found", frontendDir)
+	// 添加Prometheus 接口
+	err := mux.HandlePath("GET", "/metrics", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		promhttp.Handler().ServeHTTP(w, r)
+	})
+	if err != nil {
+		panic(err)
 	}
-
-	return srv
+	return h
 }
 
 // isAPIPath 判断是否为API路径

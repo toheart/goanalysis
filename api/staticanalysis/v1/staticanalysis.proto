@@ -1,0 +1,233 @@
+syntax = "proto3";
+
+package staticanalysis.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/toheart/goanalysis/api/staticanalysis/v1;v1";
+
+// 静态分析服务定义
+service StaticAnalysis {
+  // 获取静态分析数据库文件列表
+  rpc GetStaticDbFiles(GetStaticDbFilesRequest) returns (GetStaticDbFilesResponse) {
+    option (google.api.http) = {
+      get: "/api/static/dbfiles"
+    };
+  }
+
+  // 分析指定路径的项目并生成callgraph
+  rpc AnalyzeProjectPath(AnalyzeProjectPathRequest) returns (AnalyzeProjectPathResponse) {
+    option (google.api.http) = {
+      post: "/api/static/analyze/path"
+      body: "*"
+    };
+  }
+
+  // 分析指定数据库文件
+  rpc AnalyzeDbFile(AnalyzeDbFileRequest) returns (AnalyzeDbFileResponse) {
+    option (google.api.http) = {
+      post: "/api/static/analyze"
+      body: "*"
+    };
+  }
+
+  // 获取热点函数分析数据
+  rpc GetHotFunctions(GetHotFunctionsReq) returns (GetHotFunctionsReply) {
+    option (google.api.http) = {
+      get: "/api/static/hot-functions"
+    };
+  }
+
+  // 获取函数调用关系分析
+  rpc GetFunctionAnalysis(GetFunctionAnalysisReq) returns (GetFunctionAnalysisReply) {
+    option (google.api.http) = {
+      post: "/api/static/function/analysis"
+      body: "*"
+    };
+  }
+
+  // 获取函数调用关系图
+  rpc GetFunctionCallGraph(GetFunctionCallGraphReq) returns (GetFunctionCallGraphReply) {
+    option (google.api.http) = {
+      get: "/api/static/function/{function_name}/graph"
+      additional_bindings {
+        get: "/api/static/function/graph"
+        response_body: "*"
+      }
+    };
+  }
+
+  // 获取GitLab仓库列表
+  rpc ListGitLabRepositories(ListGitLabRepositoriesRequest) returns (ListGitLabRepositoriesResponse) {
+    option (google.api.http) = {
+      get: "/api/static/gitlab/repositories"
+    };
+  }
+
+  // 克隆GitLab仓库
+  rpc CloneGitLabRepository(CloneGitLabRepositoryRequest) returns (CloneGitLabRepositoryResponse) {
+    option (google.api.http) = {
+      post: "/api/static/gitlab/clone"
+      body: "*"
+    };
+  }
+}
+
+// 获取静态分析数据库文件列表请求
+message GetStaticDbFilesRequest {
+}
+
+// 静态分析数据库文件信息
+message DbFileInfo {
+  string path = 1;
+  string name = 2;
+  int64 size = 3;
+  string create_time = 4;
+}
+
+// 获取静态分析数据库文件列表响应
+message GetStaticDbFilesResponse {
+  repeated DbFileInfo files = 1;
+}
+
+// 分析项目路径请求
+message AnalyzeProjectPathRequest {
+  string path = 1;
+}
+
+// 分析项目路径响应
+message AnalyzeProjectPathResponse {
+  bool success = 1;
+  string message = 2;
+  string db_path = 3;
+}
+
+// 分析数据库文件请求
+message AnalyzeDbFileRequest {
+  string db_path = 1;
+}
+
+// 包依赖关系
+message PackageDependency {
+  string source = 1;
+  string target = 2;
+  int32 count = 3;
+}
+
+// 热点函数
+message HotFunction {
+  string name = 1;
+  int32 call_count = 2;
+}
+
+// 分析数据库文件响应
+message AnalyzeDbFileResponse {
+  int32 total_functions = 1;
+  int32 total_calls = 2;
+  int32 total_packages = 3;
+  repeated PackageDependency package_dependencies = 4;
+  repeated HotFunction hot_functions = 5;
+}
+
+// 获取热点函数的请求
+message GetHotFunctionsReq {
+  string sort_by = 1; // 排序方式: "calls" 或 "time"
+}
+
+// 获取热点函数的响应
+message GetHotFunctionsReply {
+  message HotFunction {
+    string name = 1;     // 函数名称
+    string package = 2;  // 包名
+    int32 call_count = 3; // 调用次数
+    string total_time = 4; // 总耗时
+    string avg_time = 5;   // 平均耗时
+  }
+  repeated HotFunction functions = 1; // 热点函数列表
+}
+
+// 获取函数调用关系分析的请求
+message GetFunctionAnalysisReq {
+  string functionName = 1; // 函数名称
+  string type = 2;         // 查询类型: "caller" 或 "callee"
+  string path = 3;         // 项目路径
+}
+
+// 获取函数调用关系分析的响应
+message GetFunctionAnalysisReply {
+  message FunctionNode {
+    string id = 1;           // 节点ID
+    string name = 2;         // 函数名称
+    string package = 3;      // 包名
+    int32 call_count = 4;    // 调用次数
+    string avg_time = 5;     // 平均耗时
+    repeated FunctionNode children = 6; // 子节点
+  }
+  
+  repeated FunctionNode callData = 1; // 调用关系数据
+}
+
+// 获取函数调用关系图的请求
+message GetFunctionCallGraphReq {
+  string function_name = 1; // 函数名称
+  int32 depth = 2;          // 调用深度，默认为2
+  string direction = 3;     // 方向: "caller"(调用者), "callee"(被调用), "both"(双向)
+}
+
+// 获取函数调用关系图的响应
+message GetFunctionCallGraphReply {
+  message GraphNode {
+    string id = 1;           // 节点ID
+    string name = 2;         // 函数名称
+    string package = 3;      // 包名
+    int32 call_count = 4;    // 调用次数
+    string avg_time = 5;     // 平均耗时
+    string node_type = 6;    // 节点类型: "root", "caller", "callee"
+  }
+  
+  message GraphEdge {
+    string source = 1;       // 源节点ID
+    string target = 2;       // 目标节点ID
+    string label = 3;        // 边标签
+    string edge_type = 4;    // 边类型: "caller_to_root", "root_to_callee"
+  }
+  
+  repeated GraphNode nodes = 1; // 图节点
+  repeated GraphEdge edges = 2; // 图边
+}
+
+// GitLab仓库信息
+message GitLabRepository {
+  int32 id = 1;                // 仓库ID
+  string name = 2;             // 仓库名称
+  string full_name = 3;        // 完整名称
+  string description = 4;      // 描述
+  string default_branch = 5;   // 默认分支
+  string web_url = 6;          // Web URL
+  string ssh_url = 7;          // SSH URL
+  string http_url = 8;         // HTTP URL
+  string visibility = 9;       // 可见性
+  string last_activity = 10;   // 最后活动时间
+}
+
+// 获取GitLab仓库列表请求
+message ListGitLabRepositoriesRequest {
+}
+
+// 获取GitLab仓库列表响应
+message ListGitLabRepositoriesResponse {
+  repeated GitLabRepository repositories = 1;
+}
+
+// 克隆GitLab仓库请求
+message CloneGitLabRepositoryRequest {
+  string repo_url = 1;  // 仓库URL
+  string branch = 2;    // 分支名称
+}
+
+// 克隆GitLab仓库响应
+message CloneGitLabRepositoryResponse {
+  bool success = 1;     // 是否成功
+  string message = 2;   // 消息
+  string target_dir = 3; // 目标目录
+} 

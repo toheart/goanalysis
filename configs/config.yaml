@@ -6,5 +6,7 @@ server:
     addr: 0.0.0.0:9000
     timeout: 1s
 biz:
-  callgraphDB:
-    source: ./db/callgraph.db
+  staticDBpath: ./store
+  gitlab_token: "your_gitlab_token"  # 替换为实际的GitLab访问令牌
+  gitlab_url: "https://gitlab.com/api/v4"  # GitLab API URL
+  gitlab_clone_dir: "./gitlab_repos"  # GitLab仓库克隆目录

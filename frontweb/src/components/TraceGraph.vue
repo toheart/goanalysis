@@ -1,12 +1,12 @@
 <template>
-  <div class="container mt-5">
-    <h1 class="text-center">goroutine({{gid}})调用图展示:</h1>
+  <div class="trace-graph container mt-5">
+    <h1 class="page-title text-center mb-4">Goroutine ({{ gid }}) 调用图</h1>
     
     <!-- 使用向导提示 -->
     <div v-if="showGuide" class="guide-overlay">
       <div class="guide-content">
-        <h4>使用指南</h4>
-        <ul>
+        <h4><i class="bi bi-info-circle me-2"></i>使用指南</h4>
+        <ul class="guide-list">
           <li><i class="bi bi-mouse"></i> <strong>拖拽:</strong> 点击空白处并拖动可移动整个图</li>
           <li><i class="bi bi-zoom-in"></i> <strong>缩放:</strong> 使用鼠标滚轮放大或缩小</li>
           <li><i class="bi bi-hand-index-thumb"></i> <strong>选择:</strong> 点击节点查看详细信息</li>
@@ -17,55 +17,140 @@
     </div>
     
     <!-- 控制面板 -->
-    <div class="control-panel mb-3">
-      <div class="btn-group me-2" role="group">
-        <button class="btn btn-outline-primary" @click="resetView">重置视图</button>
-        <button class="btn btn-outline-primary" @click="fitView">适应屏幕</button>
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>图形控制</h5>
       </div>
-      
-      <!-- 修改布局下拉菜单 - 使用简单的按钮组替代下拉菜单 -->
-      <div class="btn-group me-2" role="group">
-        <button class="btn btn-outline-primary" @click="changeLayout('dagre')">层次布局</button>
-        <button class="btn btn-outline-primary" @click="changeLayout('cose')">力导向布局</button>
-        <button class="btn btn-outline-primary" @click="changeLayout('grid')">网格布局</button>
-        <button class="btn btn-outline-primary" @click="changeLayout('concentric')">同心圆布局</button>
-      </div>
-      
-      <button class="btn btn-outline-info me-2" @click="showGuide = true">
-        <i class="bi bi-question-circle"></i> 帮助
-      </button>
-      
-      <div class="form-check form-switch d-inline-block">
-        <input class="form-check-input" type="checkbox" id="edgeLabelsSwitch" v-model="showEdgeLabels">
-        <label class="form-check-label" for="edgeLabelsSwitch">显示边标签</label>
+      <div class="card-body">
+        <div class="control-panel">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="control-group">
+                <label class="form-label">视图控制</label>
+                <div class="btn-group w-100">
+                  <button class="btn btn-outline-primary" @click="resetView" title="重置视图">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>重置
+                  </button>
+                  <button class="btn btn-outline-primary" @click="fitView" title="适应屏幕">
+                    <i class="bi bi-fullscreen me-1"></i>适应
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-4">
+              <div class="control-group">
+                <label class="form-label">布局选择</label>
+                <select class="form-select" v-model="currentLayout" @change="changeLayout(currentLayout)">
+                  <option value="dagre">层次布局</option>
+                  <option value="cose">力导向布局</option>
+                  <option value="grid">网格布局</option>
+                  <option value="concentric">同心圆布局</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="col-md-4">
+              <div class="control-group">
+                <label class="form-label">显示选项</label>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="edgeLabelsSwitch" v-model="showEdgeLabels">
+                  <label class="form-check-label" for="edgeLabelsSwitch">显示边标签</label>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="nodeLabelsSwitch" v-model="showNodeLabels">
+                  <label class="form-check-label" for="nodeLabelsSwitch">显示节点标签</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     
     <!-- 图形容器 -->
-    <div id="cy" class="cy-container highlighted-container" ref="cyContainer">
-      <!-- 加载指示器 -->
-      <div v-if="loading" class="loading-overlay">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">加载中...</span>
+    <div class="card mb-4">
+      <div class="card-body p-0">
+        <div id="cy" class="cy-container" ref="cyContainer">
+          <!-- 加载指示器 -->
+          <div v-if="loading" class="loading-overlay">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">加载中...</span>
+            </div>
+            <p class="mt-2">正在生成调用图...</p>
+          </div>
+          
+          <!-- 拖拽提示 -->
+          <div v-if="!loading && showDragHint" class="drag-hint">
+            <i class="bi bi-arrows-move"></i> 点击并拖动可移动图形
+          </div>
         </div>
-        <p class="mt-2">正在生成调用图...</p>
-      </div>
-      
-      <!-- 拖拽提示 -->
-      <div v-if="!loading && showDragHint" class="drag-hint">
-        <i class="bi bi-arrows-move"></i> 点击并拖动可移动图形
       </div>
     </div>
     
     <!-- 节点详情面板 -->
-    <div v-if="selectedNode" class="node-details mt-3 p-3">
-      <h5>函数详情</h5>
-      <p><strong>名称:</strong> <code>{{ selectedNode.name }}</code></p>
-      <p><strong>调用次数:</strong> {{ selectedNode.callCount || 0 }}</p>
+    <div v-if="selectedNode" class="card mb-4 node-details">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>函数详情</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>函数名称:</strong></p>
+            <pre class="function-name">{{ selectedNode.name }}</pre>
+          </div>
+          <div class="col-md-6">
+            <div class="row">
+              <div class="col-6">
+                <div class="stat-card">
+                  <div class="stat-label">调用次数</div>
+                  <div class="stat-value">{{ selectedNode.callCount || 0 }}</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="stat-card">
+                  <div class="stat-label">耗时</div>
+                  <div class="stat-value">{{ selectedNode.timeCost || 'N/A' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
-    <div class="mt-3">
-      <router-link :to="{ name: 'TraceViewer' }" class="btn btn-primary">返回</router-link>
+    <!-- 图形统计信息 -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title"><i class="bi bi-diagram-3 me-2"></i>节点数量</h5>
+            <p class="display-4">{{ nodeCount }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title"><i class="bi bi-arrow-left-right me-2"></i>边数量</h5>
+            <p class="display-4">{{ edgeCount }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title"><i class="bi bi-layers me-2"></i>最大深度</h5>
+            <p class="display-4">{{ maxDepth }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-3 text-center">
+      <router-link :to="{ name: 'TraceViewer' }" class="btn btn-primary">
+        <i class="bi bi-arrow-left me-1"></i>返回列表
+      </router-link>
     </div>
   </div>
 </template>
@@ -91,10 +176,14 @@ export default {
       selectedNode: null,
       currentLayout: 'dagre',
       showEdgeLabels: true,
+      showNodeLabels: true,
       loading: true,
       showGuide: true,
       showDragHint: true,
-      dragHintTimer: null
+      dragHintTimer: null,
+      nodeCount: 0,
+      edgeCount: 0,
+      maxDepth: 0
     };
   },
   mounted() {
@@ -116,6 +205,9 @@ export default {
       if (this.cy) {
         this.cy.edges().style('text-opacity', newVal ? 1 : 0);
       }
+    },
+    showNodeLabels() {
+      this.updateNodeStyles();
     }
   },
   methods: {
@@ -361,6 +453,48 @@ export default {
       if (this.cy) {
         this.cy.fit();
       }
+    },
+    
+    // 更新统计信息
+    updateStats() {
+      if (this.cy) {
+        this.nodeCount = this.cy.nodes().length;
+        this.edgeCount = this.cy.edges().length;
+        
+        // 计算最大深度 - 从根节点到最远叶子节点的最长路径
+        const roots = this.cy.nodes().roots();
+        if (roots.length > 0) {
+          let maxDepth = 0;
+          roots.forEach(root => {
+            const bfs = this.cy.elements().bfs({
+              roots: root,
+              directed: true
+            });
+            const depths = {};
+            bfs.path.forEach(ele => {
+              if (ele.isNode()) {
+                const parent = ele.incomers().nodes();
+                depths[ele.id()] = parent.length > 0 ? depths[parent.id()] + 1 : 0;
+                maxDepth = Math.max(maxDepth, depths[ele.id()]);
+              }
+            });
+          });
+          this.maxDepth = maxDepth;
+        }
+      }
+    },
+    
+    // 修改节点样式
+    updateNodeStyles() {
+      if (this.cy) {
+        this.cy.style()
+          .selector('node')
+          .style({
+            'label': this.showNodeLabels ? 'data(label)' : '',
+            'text-opacity': this.showNodeLabels ? 1 : 0
+          })
+          .update();
+      }
     }
   }
 };
@@ -368,98 +502,32 @@ export default {
 
 <style scoped>
 .cy-container {
-  width: 100%;
-  height: 600px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  background-color: #f9f9f9;
+  height: 70vh;
   position: relative;
-}
-
-.highlighted-container {
-  border: 2px solid #4285f4;
-  box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
-  transition: all 0.3s ease;
-}
-
-.highlighted-container:hover {
-  box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
-}
-
-.control-panel {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border-radius: 5px;
-  margin-bottom: 15px;
-}
-
-.node-details {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-}
-
-.guide-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.guide-content {
   background-color: white;
-  padding: 30px;
-  border-radius: 10px;
-  max-width: 500px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.guide-content h4 {
-  margin-bottom: 20px;
-  color: #4285f4;
-}
-
-.guide-content ul {
+.guide-list {
   list-style-type: none;
   padding-left: 0;
-  margin-bottom: 25px;
 }
 
-.guide-content li {
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
+.guide-list li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #eee;
 }
 
-.guide-content i {
-  margin-right: 10px;
-  color: #4285f4;
-  font-size: 1.2em;
+.guide-list li:last-child {
+  border-bottom: none;
+}
+
+.guide-list i {
+  margin-right: 0.5rem;
+  color: var(--primary-color);
+}
+
+.control-group {
+  margin-bottom: 1rem;
 }
 
 .drag-hint {
@@ -467,46 +535,51 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(66, 133, 244, 0.9);
+  background-color: rgba(0, 0, 0, 0.7);
   color: white;
-  padding: 10px 20px;
-  border-radius: 30px;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 5;
-  animation: pulse 2s infinite;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  font-size: 0.9rem;
+  pointer-events: none;
+  opacity: 0.8;
 }
 
-.drag-hint i {
-  margin-right: 8px;
-  font-size: 1.2em;
+.function-name {
+  background-color: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  overflow-x: auto;
+  margin-bottom: 0;
 }
 
-@keyframes pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.05);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
+.stat-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  height: 100%;
 }
 
-/* 添加一个新的样式，使控制面板在小屏幕上可以滚动 */
-@media (max-width: 992px) {
-  .control-panel {
-    flex-wrap: wrap;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding: 10px 5px;
+.stat-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+  .control-panel .row {
+    flex-direction: column;
   }
   
-  .btn-group {
-    margin-bottom: 5px;
+  .control-panel .col-md-4 {
+    margin-bottom: 1rem;
   }
 }
 </style> 

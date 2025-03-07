@@ -6,6 +6,8 @@ import router from './router'
 import 'bootstrap/dist/css/bootstrap.min.css'
 // 引入 Bootstrap JS
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+// 引入全局自定义样式
+import './assets/styles.css'
 
 // 如果需要全局注册 Cytoscape 插件
 import cytoscape from 'cytoscape';

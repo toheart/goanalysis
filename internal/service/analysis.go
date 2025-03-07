@@ -3,75 +3,113 @@ package service
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/go-kratos/kratos/v2/log"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/toheart/goanalysis/api/analysis/v1"
 	"github.com/toheart/goanalysis/internal/biz/analysis"
 	"github.com/toheart/goanalysis/internal/biz/entity"
+	"google.golang.org/grpc"
 )
 
 // GreeterService is a greeter service.
 type AnalysisService struct {
 	v1.UnimplementedAnalysisServer
 
-	uc *analysis.AnalysisBiz
+	uc  *analysis.AnalysisBiz
+	log *log.Helper
 }
 
 // NewGreeterService new a greeter service.
-func NewAnalysisService(uc *analysis.AnalysisBiz) *AnalysisService {
-	return &AnalysisService{uc: uc}
+func NewAnalysisService(uc *analysis.AnalysisBiz, logger log.Logger) *AnalysisService {
+	return &AnalysisService{uc: uc, log: log.NewHelper(logger)}
+}
+
+func (a *AnalysisService) RegisterGrpc(svr *grpc.Server) {
+	v1.RegisterAnalysisServer(svr, a)
+}
+
+func (a *AnalysisService) RegisterHttp(mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) error {
+	return v1.RegisterAnalysisHandlerFromEndpoint(context.Background(), mux, endpoint, opts)
 }
 
 // SayHello implements helloworld.GreeterServer.
-func (s *AnalysisService) GetAnalysis(ctx context.Context, in *v1.AnalysisRequest) (*v1.AnalysisReply, error) {
+func (a *AnalysisService) GetAnalysis(ctx context.Context, in *v1.AnalysisRequest) (*v1.AnalysisReply, error) {
 	return &v1.AnalysisReply{Message: "Hello " + in.Name}, nil
 }
 
-func (s *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisByGIDRequest) (*v1.AnalysisByGIDReply, error) {
-	traces, err := s.uc.GetTracesByGID(in.Gid)
+func (a *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisByGIDRequest) (*v1.AnalysisByGIDReply, error) {
+	traces, err := a.uc.GetTracesByGID(in.Gid)
 	if err != nil {
 		return nil, err
 	}
 
 	reply := &v1.AnalysisByGIDReply{}
 	for _, trace := range traces {
-		reply.TraceData = append(reply.TraceData, &v1.AnalysisByGIDReply_TraceData{
-			Id:         int32(trace.ID),
-			Name:       trace.Name,
-			Gid:        int32(trace.GID),
-			Indent:     int32(trace.Indent),
-			ParamCount: int32(len(trace.Params)),
-			TimeCost:   trace.TimeCost,
-		})
+		traceData := &v1.AnalysisByGIDReply_TraceData{
+			Id:             int32(trace.ID),
+			Name:           trace.Name,
+			Gid:            int32(trace.GID),
+			Indent:         int32(trace.Indent),
+			ParamCount:     int32(len(trace.Params)),
+			TimeCost:       trace.TimeCost,
+			ParentFuncname: trace.ParentFuncname,
+		}
+
+		reply.TraceData = append(reply.TraceData, traceData)
 	}
 	return reply, nil
 }
 
-func (s *AnalysisService) GetAllGIDs(ctx context.Context, in *v1.GetAllGIDsReq) (*v1.GetAllGIDsReply, error) {
+func (a *AnalysisService) GetAllGIDs(ctx context.Context, in *v1.GetAllGIDsReq) (*v1.GetAllGIDsReply, error) {
 	page := in.Page
 	limit := in.Limit
+	includeMetrics := in.IncludeMetrics
 	reply := &v1.GetAllGIDsReply{}
-	gids, err := s.uc.GetAllGIDs(int(page), int(limit))
+	gids, err := a.uc.GetAllGIDs(int(page), int(limit))
 	if err != nil {
 		return nil, err
 	}
 
 	for _, gid := range gids {
-		initialFunc, err := s.uc.GetInitialFunc(gid)
+		initialFunc, err := a.uc.GetInitialFunc(gid)
 		if err != nil {
 			return nil, err
 		}
-		reply.Body = append(reply.Body, &v1.GetAllGIDsReply_Body{
+
+		body := &v1.GetAllGIDsReply_Body{
 			Gid:         gid,
 			InitialFunc: initialFunc,
-		})
+		}
+
+		// 如果需要包含调用深度和执行时间
+		if includeMetrics {
+			// 获取调用深度
+			depth, err := a.uc.GetGoroutineCallDepth(gid)
+			if err != nil {
+				// 如果获取失败，使用默认值
+				body.Depth = 0
+			} else {
+				body.Depth = int32(depth)
+			}
+
+			// 获取执行时间
+			execTime, err := a.uc.GetGoroutineExecutionTime(gid)
+			if err != nil {
+				// 如果获取失败，使用默认值
+				body.ExecutionTime = "N/A"
+			} else {
+				body.ExecutionTime = execTime
+			}
+		}
+
+		reply.Body = append(reply.Body, body)
 	}
 
-	total, err := s.uc.GetTotalGIDs()
+	// 获取总数
+	total, err := a.uc.GetTotalGIDs()
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +118,12 @@ func (s *AnalysisService) GetAllGIDs(ctx context.Context, in *v1.GetAllGIDsReq) 
 	return reply, nil
 }
 
-func (s *AnalysisService) GetParamsByID(ctx context.Context, in *v1.GetParamsByIDReq) (*v1.GetParamsByIDReply, error) {
-	params, err := s.uc.GetParamsByID(in.Id)
+func (a *AnalysisService) GetParamsByID(ctx context.Context, in *v1.GetParamsByIDReq) (*v1.GetParamsByIDReply, error) {
+	params, err := a.uc.GetParamsByID(in.Id)
 	if err != nil {
 		return nil, err
 	}
+
 	reply := &v1.GetParamsByIDReply{}
 	for _, param := range params {
 		reply.Params = append(reply.Params, &v1.TraceParams{
@@ -95,92 +134,129 @@ func (s *AnalysisService) GetParamsByID(ctx context.Context, in *v1.GetParamsByI
 	return reply, nil
 }
 
-func (s *AnalysisService) GenerateImage(ctx context.Context, in *v1.GenerateImageReq) (*v1.GenerateImageReply, error) {
-	traces, err := s.uc.GetTracesByGID(in.Gid)
+func (a *AnalysisService) GenerateImage(ctx context.Context, in *v1.GenerateImageReq) (*v1.GenerateImageReply, error) {
+	traces, err := a.uc.GetTracesByGID(in.Gid)
 	if err != nil {
 		return nil, err
 	}
-	mermaid := ""
-	stack := make([]*entity.TraceData, 0) // 用于存储父节点
-	existd := make(map[string]bool)
+
+	// 构建Mermaid图表
+	var mermaidText strings.Builder
+	mermaidText.WriteString("graph TD\n")
+
+	// 使用栈来跟踪调用关系
+	stack := make([]entity.TraceData, 0)
+
 	for _, trace := range traces {
-		// 根据 indent 判断父子关系
+		// 根据缩进级别调整栈
 		for len(stack) > 0 && stack[len(stack)-1].Indent >= trace.Indent {
 			stack = stack[:len(stack)-1] // 弹出栈顶元素
 		}
 
+		// 添加节点
+		nodeID := fmt.Sprintf("n%d", trace.ID)
+		nodeName := sanitizeMermaidText(trace.Name)
+		mermaidText.WriteString(fmt.Sprintf("    %s[\"%s\"]\n", nodeID, nodeName))
+
+		// 如果有父节点，添加边
 		if len(stack) > 0 {
-			// 当前 trace 是子节点
-			parentName := getLastSegment(stack[len(stack)-1].Name)
-			childName := getLastSegment(trace.Name)
-
-			// 处理函数名，避免出现方括号导致前端无法加载
-			parentNameSafe := sanitizeMermaidText(removeParentheses(stack[len(stack)-1].Name))
-			childNameSafe := sanitizeMermaidText(removeParentheses(trace.Name))
-
-			edge := fmt.Sprintf("    %s[\"%s\"] --> %s[\"%s\"];\n",
-				parentName, parentNameSafe,
-				childName, childNameSafe)
-
-			if !existd[edge] {
-				existd[edge] = true
-				mermaid += edge
-			}
+			parentID := fmt.Sprintf("n%d", stack[len(stack)-1].ID)
+			mermaidText.WriteString(fmt.Sprintf("    %s --> |%s| %s\n", parentID, trace.TimeCost, nodeID))
 		}
 
-		// 将当前 trace 压入栈中
-		stack = append(stack, &entity.TraceData{
-			ID:       trace.ID,
-			Name:     trace.Name,
-			GID:      trace.GID,
-			Indent:   trace.Indent,
-			TimeCost: trace.TimeCost,
-		})
+		// 将当前节点压入栈
+		stack = append(stack, trace)
 	}
 
-	mermaid = "graph TD;\n" + mermaid
-
-	return &v1.GenerateImageReply{Image: mermaid}, nil
+	return &v1.GenerateImageReply{
+		Image: mermaidText.String(),
+	}, nil
 }
 
-// sanitizeMermaidText 处理可能导致 Mermaid 语法错误的特殊字符
 func sanitizeMermaidText(text string) string {
-	// 替换方括号，这些在 Mermaid 中有特殊含义
-	text = strings.ReplaceAll(text, "[", "(")
-	text = strings.ReplaceAll(text, "]", ")")
-	// 处理其他可能导致问题的字符
+	// 替换可能导致Mermaid语法问题的字符
 	text = strings.ReplaceAll(text, "\"", "'")
 	return text
 }
 
-func (s *AnalysisService) GetAllFunctionName(ctx context.Context, in *v1.GetAllFunctionNameReq) (*v1.GetAllFunctionNameReply, error) {
-	functionNames, err := s.uc.GetAllFunctionName()
+func (a *AnalysisService) GetAllFunctionName(ctx context.Context, in *v1.GetAllFunctionNameReq) (*v1.GetAllFunctionNameReply, error) {
+	functionNames, err := a.uc.GetAllFunctionName()
 	if err != nil {
 		return nil, err
 	}
 	return &v1.GetAllFunctionNameReply{FunctionNames: functionNames}, nil
 }
 
-func (s *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetGidsByFunctionNameReq) (*v1.GetGidsByFunctionNameReply, error) {
-	gids, err := s.uc.GetGidsByFunctionName(in.FunctionName)
+func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetGidsByFunctionNameReq) (*v1.GetGidsByFunctionNameReply, error) {
+	// 获取函数名称
+	functionName := in.FunctionName
+	includeMetrics := in.IncludeMetrics
+
+	// 获取所有GID
+	allGids, err := a.uc.GetAllGIDs(0, 1000) // 假设最多1000个GID
 	if err != nil {
 		return nil, err
 	}
-	reply := &v1.GetGidsByFunctionNameReply{}
-	for _, gid := range gids {
-		gidUint, err := strconv.ParseUint(gid, 10, 64)
+
+	// 过滤包含指定函数的GID
+	var matchingGids []uint64
+	for _, gid := range allGids {
+		traces, err := a.uc.GetTracesByGID(strconv.FormatUint(gid, 10))
 		if err != nil {
-			return nil, err
+			continue
 		}
-		initialFunc, err := s.uc.GetInitialFunc(gidUint)
-		if err != nil {
-			return nil, err
+
+		// 检查是否包含指定函数
+		for _, trace := range traces {
+			// 简化函数名称进行比较
+			simplifiedName := getLastSegment(removeParentheses(trace.Name))
+			if simplifiedName == functionName {
+				matchingGids = append(matchingGids, gid)
+				break
+			}
 		}
-		reply.Body = append(reply.Body, &v1.GetGidsByFunctionNameReply_Body{
-			Gid:         gidUint,
-			InitialFunc: initialFunc,
-		})
 	}
+
+	// 构建响应
+	reply := &v1.GetGidsByFunctionNameReply{}
+	for _, gid := range matchingGids {
+		initialFunc, err := a.uc.GetInitialFunc(gid)
+		if err != nil {
+			continue
+		}
+
+		body := &v1.GetGidsByFunctionNameReply_Body{
+			Gid:         gid,
+			InitialFunc: initialFunc,
+		}
+
+		// 如果需要包含调用深度和执行时间
+		if includeMetrics {
+			// 获取调用深度
+			depth, err := a.uc.GetGoroutineCallDepth(gid)
+			if err != nil {
+				// 如果获取失败，使用默认值
+				body.Depth = 0
+			} else {
+				body.Depth = int32(depth)
+			}
+
+			// 获取执行时间
+			execTime, err := a.uc.GetGoroutineExecutionTime(gid)
+			if err != nil {
+				// 如果获取失败，使用默认值
+				body.ExecutionTime = "N/A"
+			} else {
+				body.ExecutionTime = execTime
+			}
+		}
+
+		reply.Body = append(reply.Body, body)
+	}
+
+	// 获取总数
+	reply.Total = int32(len(matchingGids))
+
 	return reply, nil
 }
 
@@ -190,8 +266,10 @@ func getLastSegment(name string) string {
 }
 
 func removeParentheses(name string) string {
-	name = strings.ReplaceAll(name, "(", "")
-	name = strings.ReplaceAll(name, ")", "")
+	idx := strings.Index(name, "(")
+	if idx > 0 {
+		return name[:idx]
+	}
 	return name
 }
 
@@ -207,65 +285,16 @@ func (s *AnalysisService) CheckDatabase(ctx context.Context, req *v1.CheckDataba
 	}, nil
 }
 
-type DbFile struct {
-	Path       string    `json:"path"`
-	Name       string    `json:"name"`
-	Size       int64     `json:"size"`
-	CreateTime time.Time `json:"createTime"`
-}
-
-type AnalysisResult struct {
-	TotalFunctions int `json:"totalFunctions"`
-	TotalCalls     int `json:"totalCalls"`
-	TotalPackages  int `json:"totalPackages"`
-	// 可以添加更多分析结果字段
-}
-
-// GetDbFiles 获取数据库文件列表
-func (s *AnalysisService) GetDbFiles() ([]DbFile, error) {
-	dbPath := s.uc.GetStaticDBPath()
-	files, err := os.ReadDir(dbPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var dbFiles []DbFile
-	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".db" {
-			info, err := file.Info()
-			if err != nil {
-				continue
-			}
-
-			dbFiles = append(dbFiles, DbFile{
-				Path:       filepath.Join(dbPath, file.Name()),
-				Name:       file.Name(),
-				Size:       info.Size(),
-				CreateTime: info.ModTime(),
-			})
-		}
-	}
-
-	return dbFiles, nil
-}
-
-// AnalyzeDb 分析指定的数据库文件
-func (s *AnalysisService) AnalyzeDb(dbPath string) (*AnalysisResult, error) {
-	// 验证文件是否存在
-	if _, err := os.Stat(dbPath); err != nil {
-		return nil, err
-	}
-
-	// TODO: 实现实际的数据库分析逻辑
-	// 这里需要根据您的具体需求实现分析逻辑
-
-	// 示例返回
-	return &AnalysisResult{
-		TotalFunctions: 100,
-		TotalCalls:     500,
-		TotalPackages:  20,
-	}, nil
-}
+// 以下是需要保留的动态分析相关方法，但需要移除静态分析相关的方法
+// 保留的方法：
+// - GetTraceGraph
+// - GetTracesByParentFunc
+// - GetAllParentFuncNames
+// - GetChildFunctions
+// - GetHotFunctions
+// - GetGoroutineStats
+// - GetFunctionAnalysis
+// - GetFunctionCallGraph
 
 // 定义图形数据的结构
 type GraphNode struct {
@@ -285,8 +314,8 @@ type GraphData struct {
 	Edges []GraphEdge `json:"edges"`
 }
 
-func (s *AnalysisService) GetTraceGraph(ctx context.Context, in *v1.GetTraceGraphReq) (*v1.GetTraceGraphReply, error) {
-	traces, err := s.uc.GetTracesByGID(in.Gid)
+func (a *AnalysisService) GetTraceGraph(ctx context.Context, in *v1.GetTraceGraphReq) (*v1.GetTraceGraphReply, error) {
+	traces, err := a.uc.GetTracesByGID(in.Gid)
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +371,7 @@ func buildGraphFromTraces(traces []entity.TraceData) *GraphData {
 	}
 
 	// 添加所有节点
-	for id, _ := range nodeMap {
+	for id := range nodeMap {
 		for _, trace := range traces {
 			if fmt.Sprintf("n%d", trace.ID) == id {
 				graphData.Nodes = append(graphData.Nodes, GraphNode{
@@ -381,4 +410,197 @@ func convertToProtoEdges(edges []GraphEdge) []*v1.GraphEdge {
 		}
 	}
 	return protoEdges
+}
+
+// GetTracesByParentFunc 根据父函数名称获取函数调用
+func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetTracesByParentFuncReq) (*v1.GetTracesByParentFuncReply, error) {
+	traces, err := a.uc.GetTracesByParentFunc(in.ParentFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &v1.GetTracesByParentFuncReply{}
+	for _, trace := range traces {
+		traceData := &v1.GetTracesByParentFuncReply_TraceData{
+			Id:             int32(trace.ID),
+			Name:           trace.Name,
+			Gid:            int32(trace.GID),
+			Indent:         int32(trace.Indent),
+			ParamCount:     int32(len(trace.Params)),
+			TimeCost:       trace.TimeCost,
+			ParentFuncname: trace.ParentFuncname,
+		}
+
+		reply.TraceData = append(reply.TraceData, traceData)
+	}
+	return reply, nil
+}
+
+// GetAllParentFuncNames 获取所有的父函数名称
+func (a *AnalysisService) GetAllParentFuncNames(ctx context.Context, in *v1.GetAllParentFuncNamesReq) (*v1.GetAllParentFuncNamesReply, error) {
+	parentFuncNames, err := a.uc.GetAllParentFuncNames()
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &v1.GetAllParentFuncNamesReply{
+		ParentFuncNames: parentFuncNames,
+	}
+	return reply, nil
+}
+
+// GetChildFunctions 获取函数的子函数
+func (a *AnalysisService) GetChildFunctions(ctx context.Context, in *v1.GetChildFunctionsReq) (*v1.GetChildFunctionsReply, error) {
+	childFunctions, err := a.uc.GetChildFunctions(in.FuncName)
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &v1.GetChildFunctionsReply{
+		ChildFunctions: childFunctions,
+	}
+	return reply, nil
+}
+
+// GetHotFunctions 获取热点函数分析数据
+func (a *AnalysisService) GetHotFunctions(ctx context.Context, req *v1.GetHotFunctionsReq) (*v1.GetHotFunctionsReply, error) {
+	hotFunctions, err := a.uc.GetHotFunctions(req.SortBy)
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &v1.GetHotFunctionsReply{
+		Functions: make([]*v1.GetHotFunctionsReply_HotFunction, 0, len(hotFunctions)),
+	}
+
+	for _, hf := range hotFunctions {
+		reply.Functions = append(reply.Functions, &v1.GetHotFunctionsReply_HotFunction{
+			Name:      hf.Name,
+			Package:   hf.Package,
+			CallCount: int32(hf.CallCount),
+			TotalTime: hf.TotalTime,
+			AvgTime:   hf.AvgTime,
+		})
+	}
+
+	return reply, nil
+}
+
+// GetGoroutineStats 获取Goroutine统计信息
+func (a *AnalysisService) GetGoroutineStats(ctx context.Context, req *v1.GetGoroutineStatsReq) (*v1.GetGoroutineStatsReply, error) {
+	stats, err := a.uc.GetGoroutineStats()
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.GetGoroutineStatsReply{
+		Active:   int32(stats.Active),
+		AvgTime:  stats.AvgTime,
+		MaxDepth: int32(stats.MaxDepth),
+	}, nil
+}
+
+// GetFunctionAnalysis 获取函数调用关系分析
+func (a *AnalysisService) GetFunctionAnalysis(ctx context.Context, req *v1.GetFunctionAnalysisReq) (*v1.GetFunctionAnalysisReply, error) {
+	// 验证项目路径
+	if req.Path != "" {
+		a.uc.SetCurrDB(req.Path)
+	}
+
+	// 获取函数调用关系
+	nodes, err := a.uc.GetFunctionAnalysis(req.FunctionName, req.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetFunctionAnalysisReply{
+		CallData: convertToProtoFunctionNodes(nodes),
+	}
+
+	return reply, nil
+}
+
+// 将实体FunctionNode转换为proto FunctionNode
+func convertToProtoFunctionNodes(nodes []entity.FunctionNode) []*v1.GetFunctionAnalysisReply_FunctionNode {
+	var result []*v1.GetFunctionAnalysisReply_FunctionNode
+
+	for _, node := range nodes {
+		protoNode := convertToProtoFunctionNode(node)
+		result = append(result, protoNode)
+	}
+
+	return result
+}
+
+// 将单个实体FunctionNode转换为proto FunctionNode
+func convertToProtoFunctionNode(node entity.FunctionNode) *v1.GetFunctionAnalysisReply_FunctionNode {
+	protoNode := &v1.GetFunctionAnalysisReply_FunctionNode{
+		Id:        node.ID,
+		Name:      node.Name,
+		Package:   node.Package,
+		CallCount: int32(node.CallCount),
+		AvgTime:   node.AvgTime,
+		Children:  make([]*v1.GetFunctionAnalysisReply_FunctionNode, 0, len(node.Children)),
+	}
+
+	// 递归转换子节点
+	for _, child := range node.Children {
+		childNode := convertToProtoFunctionNode(child)
+		protoNode.Children = append(protoNode.Children, childNode)
+	}
+
+	return protoNode
+}
+
+// GetFunctionCallGraph 获取函数调用关系图
+func (a *AnalysisService) GetFunctionCallGraph(ctx context.Context, req *v1.GetFunctionCallGraphReq) (*v1.GetFunctionCallGraphReply, error) {
+	// 设置默认值
+	depth := int(req.Depth)
+	if depth <= 0 {
+		depth = 2 // 默认深度为2
+	}
+
+	direction := req.Direction
+	if direction == "" {
+		direction = "both" // 默认双向
+	}
+
+	// 获取函数调用关系图
+	graph, err := a.uc.GetFunctionCallGraph(req.FunctionName, depth, direction)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetFunctionCallGraphReply{
+		Nodes: make([]*v1.GetFunctionCallGraphReply_GraphNode, 0, len(graph.Nodes)),
+		Edges: make([]*v1.GetFunctionCallGraphReply_GraphEdge, 0, len(graph.Edges)),
+	}
+
+	// 转换节点
+	for _, node := range graph.Nodes {
+		protoNode := &v1.GetFunctionCallGraphReply_GraphNode{
+			Id:        node.ID,
+			Name:      node.Name,
+			Package:   node.Package,
+			CallCount: int32(node.CallCount),
+			AvgTime:   node.AvgTime,
+			NodeType:  node.NodeType,
+		}
+		reply.Nodes = append(reply.Nodes, protoNode)
+	}
+
+	// 转换边
+	for _, edge := range graph.Edges {
+		protoEdge := &v1.GetFunctionCallGraphReply_GraphEdge{
+			Source:   edge.Source,
+			Target:   edge.Target,
+			Label:    edge.Label,
+			EdgeType: edge.EdgeType,
+		}
+		reply.Edges = append(reply.Edges, protoEdge)
+	}
+
+	return reply, nil
 }
