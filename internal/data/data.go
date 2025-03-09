@@ -17,7 +17,7 @@ var ProviderSet = wire.NewSet(NewData)
 type Data struct {
 	sync.RWMutex
 	traceDB    map[string]*sqllite.TraceDB
-	funcNodeDB *sqllite.FuncTree
+	funcNodeDB map[string]*sqllite.FuncTree
 	log        *log.Helper
 }
 
@@ -25,7 +25,7 @@ type Data struct {
 func NewData(logger log.Logger) *Data {
 	return &Data{
 		traceDB:    make(map[string]*sqllite.TraceDB),
-		funcNodeDB: nil,
+		funcNodeDB: make(map[string]*sqllite.FuncTree),
 		log:        log.NewHelper(logger),
 	}
 }
@@ -37,7 +37,11 @@ func (d *Data) GetTraceDB(dbPath string) (*sqllite.TraceDB, error) {
 	if traceDB == nil {
 		d.Lock()
 		defer d.Unlock()
-		d.log.Infof("get trace db: %s", dbPath)
+		// 双重检查
+		if traceDB, ok := d.traceDB[dbPath]; ok {
+			return traceDB, nil
+		}
+		d.log.Infof("create trace db: %s", dbPath)
 		traceDB, err := sqllite.NewTraceDB(dbPath)
 		if err != nil {
 			return nil, err
@@ -49,17 +53,23 @@ func (d *Data) GetTraceDB(dbPath string) (*sqllite.TraceDB, error) {
 
 func (d *Data) GetFuncNodeDB(dbPath string) (*sqllite.FuncTree, error) {
 	d.RLock()
-	funcNodeDB := d.funcNodeDB
+	funcNodeDB := d.funcNodeDB[dbPath]
 	d.RUnlock()
 	if funcNodeDB == nil {
 		d.Lock()
 		defer d.Unlock()
-		d.log.Infof("get func node db: %s", dbPath)
-		funcNodeDB, err := sqllite.NewFuncNodeDB(dbPath)
+		// 双重检查
+		if funcNodeDB, ok := d.funcNodeDB[dbPath]; ok {
+			return funcNodeDB, nil
+		}
+		d.log.Infof("create func node db: %s", dbPath)
+		var err error
+		funcNodeDB, err = sqllite.NewFuncNodeDB(dbPath)
 		if err != nil {
+			d.log.Errorf("get func node db failed: %s", err)
 			return nil, err
 		}
-		d.funcNodeDB = funcNodeDB
+		d.funcNodeDB[dbPath] = funcNodeDB
 	}
 	return funcNodeDB, nil
 }

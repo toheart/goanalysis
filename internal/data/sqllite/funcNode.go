@@ -67,17 +67,12 @@ func NewFuncNodeDB(dbPath string) (*FuncTree, error) {
 		return nil, fmt.Errorf("open sqlite db failed: %w", err)
 	}
 
-	// 初始化表结构
-	if err := initTables(db); err != nil {
-		return nil, fmt.Errorf("init tables failed: %w", err)
-	}
-
 	return &FuncTree{db: db}, nil
 }
 
-func initTables(db *sql.DB) error {
+func (s *FuncTree) InitTable() error {
 	// 创建函数节点表
-	_, err := db.Exec(`
+	_, err := s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS func_nodes (
 			key TEXT PRIMARY KEY,
 			pkg TEXT NOT NULL,
@@ -90,7 +85,7 @@ func initTables(db *sql.DB) error {
 	}
 
 	// 创建函数调用关系表
-	_, err = db.Exec(`
+	_, err = s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS func_edges (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			caller_key TEXT NOT NULL,
@@ -105,7 +100,7 @@ func initTables(db *sql.DB) error {
 	}
 
 	// 创建索引
-	_, err = db.Exec(`
+	_, err = s.db.Exec(`
 		CREATE INDEX IF NOT EXISTS idx_func_nodes_pkg ON func_nodes(pkg);
 		CREATE INDEX IF NOT EXISTS idx_func_edges_caller ON func_edges(caller_key);
 		CREATE INDEX IF NOT EXISTS idx_func_edges_callee ON func_edges(callee_key);
@@ -229,4 +224,56 @@ func (s *FuncTree) GetCalleeEdges(callerKey string) ([]*callgraph.FuncNode, erro
 // Close 关闭数据库连接
 func (s *FuncTree) Close() error {
 	return s.db.Close()
+}
+
+// GetAllFuncNodes 获取所有函数节点
+func (s *FuncTree) GetAllFuncNodes() ([]*callgraph.FuncNode, error) {
+	query := `SELECT key, pkg, name FROM func_nodes`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("get all func nodes failed: %w", err)
+	}
+	defer rows.Close()
+
+	var nodes []*callgraph.FuncNode
+	for rows.Next() {
+		node := &callgraph.FuncNode{}
+		err := rows.Scan(&node.Key, &node.Pkg, &node.Name)
+		if err != nil {
+			return nil, fmt.Errorf("scan func node failed: %w", err)
+		}
+		nodes = append(nodes, node)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate func nodes failed: %w", err)
+	}
+
+	return nodes, nil
+}
+
+// GetAllFuncEdges 获取所有函数调用边
+func (s *FuncTree) GetAllFuncEdges() ([]*callgraph.FuncEdge, error) {
+	query := `SELECT caller_key, callee_key FROM func_edges`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("get all func edges failed: %w", err)
+	}
+	defer rows.Close()
+
+	var edges []*callgraph.FuncEdge
+	for rows.Next() {
+		edge := &callgraph.FuncEdge{}
+		err := rows.Scan(&edge.CallerKey, &edge.CalleeKey)
+		if err != nil {
+			return nil, fmt.Errorf("scan func edge failed: %w", err)
+		}
+		edges = append(edges, edge)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate func edges failed: %w", err)
+	}
+
+	return edges, nil
 }

@@ -21,4 +21,13 @@ type DBStore interface {
 
 	// GetCalleeEdges 获取该函数调用的所有边
 	GetCalleeEdges(callerKey string) ([]*FuncNode, error)
+
+	// GetAllFuncNodes 获取所有函数节点
+	GetAllFuncNodes() ([]*FuncNode, error)
+
+	// GetAllFuncEdges 获取所有函数调用边
+	GetAllFuncEdges() ([]*FuncEdge, error)
+
+	// InitTable 初始化数据库表
+	InitTable() error
 }

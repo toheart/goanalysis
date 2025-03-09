@@ -8,11 +8,10 @@ import (
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
-	"github.com/go-kratos/kratos/v2/transport/grpc"
-	"github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/spf13/cobra"
 	"github.com/toheart/goanalysis/internal/conf"
+	"github.com/toheart/goanalysis/internal/pkg/logger"
 )
 
 // go build -ldflags "-X main.Version=x.y.z"
@@ -32,17 +31,14 @@ func init() {
 	rootCmd.AddCommand(ServerCmd)
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
+func newApp(logger log.Logger, servers []transport.Server) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
 		kratos.Version(Version),
 		kratos.Metadata(map[string]string{}),
 		kratos.Logger(logger),
-		kratos.Server(
-			gs,
-			hs,
-		),
+		kratos.Server(servers...),
 	)
 }
 
@@ -50,16 +46,6 @@ var ServerCmd = &cobra.Command{
 	Use:   "server",
 	Short: "start the server",
 	Run: func(cmd *cobra.Command, args []string) {
-		// 启动服务器的逻辑
-		logger := log.With(log.NewStdLogger(os.Stdout),
-			"ts", log.DefaultTimestamp,
-			"caller", log.DefaultCaller,
-			"service.id", id,
-			"service.name", Name,
-			"service.version", Version,
-			"trace.id", tracing.TraceID(),
-			"span.id", tracing.SpanID(),
-		)
 		c := config.New(
 			config.WithSource(
 				file.NewSource(flagconf),
@@ -76,7 +62,9 @@ var ServerCmd = &cobra.Command{
 			panic(err)
 		}
 
-		app, cleanup, err := wireApp(bc.Server, bc.Biz, logger)
+		// 启动服务器的逻辑
+		log := logger.NewLogger(bc.Logger)
+		app, cleanup, err := wireApp(bc.Server, bc.Biz, log)
 		if err != nil {
 			panic(err)
 		}
