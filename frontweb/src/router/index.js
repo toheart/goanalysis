@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import TraceViewer from '../components/TraceViewer.vue';
-import TraceDetails from '../components/TraceDetails.vue';
-import MermaidViewer from '../components/TraceGraph.vue';
-import StaticAnalysis from '../components/StaticAnalysis.vue';
+import TraceViewer from '../components/runtime/TraceViewer.vue';
+import TraceDetails from '../components/runtime/TraceDetails.vue';
+import StaticAnalysis from '../components/callgraph/StaticAnalysis.vue';
+import DbAnalysisDetail from '../components/callgraph/DbAnalysisDetail.vue';
 import WelcomePage from '../components/Welcome.vue';
-import RuntimeAnalysis from '../components/RuntimeAnalysis.vue';
-import FunctionAnalysis from '../components/FunctionAnalysis.vue';
+import RuntimeAnalysis from '../components/runtime/RuntimeAnalysis.vue';
+import FunctionAnalysis from '../components/runtime/FunctionAnalysis.vue';
+import SetLanguage from '../components/Language.vue';
 
 const routes = [
   {
@@ -20,9 +21,10 @@ const routes = [
     redirect: '/runtime-analysis',
     children: [
       {
-        path: '/runtime-analysis',
+        path: '/runtime-analysis/:projectPath?',
         name: 'RuntimeAnalysis',
         component: RuntimeAnalysis,
+        props: true
       },
       {
         path: '/function-analysis',
@@ -37,14 +39,25 @@ const routes = [
     component: TraceDetails,
   },
   {
-    path: '/mermaid/:gid',
-    name: 'MermaidViewer',
-    component: MermaidViewer,
-  },
-  {
     path: '/static-analysis',
     name: 'StaticAnalysis',
     component: StaticAnalysis
+  },
+  {
+    path: '/db-analysis/:path(.*)',
+    name: 'DbAnalysisDetail',
+    component: DbAnalysisDetail,
+    props: route => ({ 
+      dbFilePath: route.params.path,
+      dbFileName: route.query.name || '',
+      dbFileSize: parseInt(route.query.size || '0'),
+      dbFileCreateTime: route.query.createTime || ''
+    })
+  },
+  {
+    path: '/language',
+    name: 'SetLanguage',
+    component: SetLanguage
   }
 ];
 

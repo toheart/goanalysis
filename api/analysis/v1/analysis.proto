@@ -11,103 +11,103 @@ service Analysis {
   // Sends a greeting
   rpc GetAnalysis (AnalysisRequest) returns (AnalysisReply) {
     option (google.api.http) = {
-      get: "/analysis/{name}"
+      post: "/analysis/{name}"
+      body: "*"
     };
   }
 
   rpc GetAnalysisByGID (AnalysisByGIDRequest) returns (AnalysisByGIDReply) {
     option (google.api.http) = {
-      get: "/api/traces/{gid}"
+      post: "/api/runtime/traces/{gid}"
+      body: "*"
     };
   }
 
   rpc GetAllGIDs (GetAllGIDsReq) returns (GetAllGIDsReply) {
     option (google.api.http) = {
-      get: "/api/gids"
+      post: "/api/runtime/gids"
+      body: "*"
     };
   }
   rpc GetParamsByID (GetParamsByIDReq) returns (GetParamsByIDReply) {
     option (google.api.http) = {
-      get: "/api/params/{id}"
-    };
-  }
-  rpc GenerateImage (GenerateImageReq) returns (GenerateImageReply) {
-    option (google.api.http) = {
-      get: "/api/traces/{gid}/mermaid"
+      post: "/api/runtime/params/{id}"
+      body: "*"
     };
   }
 
   rpc GetAllFunctionName (GetAllFunctionNameReq) returns (GetAllFunctionNameReply) {
     option (google.api.http) = {
-      get: "/api/functions"
+      post: "/api/runtime/functions"
+      body: "*"
     };
   }
   rpc GetGidsByFunctionName (GetGidsByFunctionNameReq) returns (GetGidsByFunctionNameReply) {
     option (google.api.http) = {
-      post: "/api/gids/function"
+      post: "/api/runtime/gids/function"
       body: "*"
     };
   }
+  
+  // 将VerifyProjectPath重定向到CheckDatabase
   rpc VerifyProjectPath (VerifyProjectPathReq) returns (VerifyProjectPathReply) {
     option (google.api.http) = {
-      post: "/api/verify/path"
+      post: "/api/runtime/verify/path"
       body: "*"
     };
   }
-
-  // CheckDatabase checks if the trace database exists
-  rpc CheckDatabase(CheckDatabaseRequest) returns (CheckDatabaseResponse) {
-    option (google.api.http) = {
-      get: "/api/check/db"
-    };
-  }
-
 
   rpc GetTraceGraph(GetTraceGraphReq) returns (GetTraceGraphReply) {
     option (google.api.http) = {
-      get: "/api/traces/{gid}/graph"
+      post: "/api/runtime/traces/graph"
+      body: "*"
     };
   }
 
   // GetTracesByParentFunc 根据父函数名称获取函数调用
   rpc GetTracesByParentFunc(GetTracesByParentFuncReq) returns (GetTracesByParentFuncReply) {
     option (google.api.http) = {
-      get: "/api/traces/parent/{parent_func}"
+      post: "/api/runtime/traces/parent/{parent_func}"
+      body: "*"
     };
   }
   
   // GetAllParentFuncNames 获取所有的父函数名称
   rpc GetAllParentFuncNames(GetAllParentFuncNamesReq) returns (GetAllParentFuncNamesReply) {
     option (google.api.http) = {
-      get: "/api/functions/parent"
+      post: "/api/runtime/functions/parent"
+      body: "*"
     };
   }
   
   // GetChildFunctions 获取函数的子函数
   rpc GetChildFunctions(GetChildFunctionsReq) returns (GetChildFunctionsReply) {
     option (google.api.http) = {
-      get: "/api/functions/{func_name}/children"
+      post: "/api/runtime/functions/{func_name}/children"
+      body: "*"
     };
   }
 
   // GetHotFunctions 获取热点函数分析数据
   rpc GetHotFunctions(GetHotFunctionsReq) returns (GetHotFunctionsReply) {
     option (google.api.http) = {
-      get: "/api/hot-functions"
+      post: "/api/runtime/hot-functions"
+      body: "*"
     };
   }
   
   // GetGoroutineStats 获取Goroutine统计信息
   rpc GetGoroutineStats(GetGoroutineStatsReq) returns (GetGoroutineStatsReply) {
     option (google.api.http) = {
-      get: "/api/goroutine-stats"
+      post: "/api/runtime/goroutine-stats"
+      body: "*"
     };
   }
 
   // GetFunctionAnalysis 获取函数调用关系分析
   rpc GetFunctionAnalysis(GetFunctionAnalysisReq) returns (GetFunctionAnalysisReply) {
     option (google.api.http) = {
-      post: "/api/function/analysis"
+      post: "/api/runtime/function/analysis"
       body: "*"
     };
   }
@@ -115,11 +115,20 @@ service Analysis {
   // GetFunctionCallGraph 获取函数调用关系图
   rpc GetFunctionCallGraph(GetFunctionCallGraphReq) returns (GetFunctionCallGraphReply) {
     option (google.api.http) = {
-      get: "/api/function/{function_name}/graph"
+      post: "/api/runtime/function/{function_name}/graph"
+      body: "*"
       additional_bindings {
-        get: "/api/function/graph"
-        response_body: "*"
+        post: "/api/runtime/function/graph"
+        body: "*"
       }
+    };
+  }
+
+  // InstrumentProject 对项目进行插桩
+  rpc InstrumentProject(InstrumentProjectReq) returns (InstrumentProjectReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/instrument"
+      body: "*"
     };
   }
 }
@@ -151,6 +160,7 @@ message GetGidsByFunctionNameReply {
 }
 
 message GetAllFunctionNameReq {
+  string dbpath = 1; // 数据库路径
 }
 
 message GetAllFunctionNameReply {
@@ -159,6 +169,7 @@ message GetAllFunctionNameReply {
 
 message GenerateImageReq {
   string gid = 1;
+  string dbpath = 2; // 数据库路径
 }
 
 message GenerateImageReply {
@@ -168,6 +179,7 @@ message GenerateImageReply {
 // The request message containing the user's name.
 message AnalysisRequest {
   string name = 1;
+  string dbpath = 2; // 数据库路径
 }
 
 // The response message containing the greetings
@@ -177,6 +189,7 @@ message AnalysisReply {
 
 message AnalysisByGIDRequest {
   string gid = 1;
+  string dbpath = 2; // 数据库路径
 }
 
 message TraceParams {
@@ -202,6 +215,7 @@ message GetAllGIDsReq {
   int32 page = 1; // 当前页
   int32 limit = 2; // 每页条目数
   bool includeMetrics = 3; // 是否包含调用深度和执行时间等指标
+  string dbpath = 4; // 数据库路径
 }
 
 message GetAllGIDsReply {
@@ -217,32 +231,31 @@ message GetAllGIDsReply {
 
 message GetParamsByIDReq {
   int32 id = 1;
+  string dbpath = 2; // 数据库路径
 }
 
 message GetParamsByIDReply {
   repeated TraceParams params = 1;
 }
 
-message CheckDatabaseRequest {}
-
-message CheckDatabaseResponse {
-  bool exists = 1;
-}
-
 message GraphNode {
   string id = 1;
   string name = 2;
   int32 call_count = 3;
+  string package = 4;  // 包名
+  string time_cost = 5; // 执行耗时
 }
 
 message GraphEdge {
   string source = 1;
   string target = 2;
   string label = 3;
+  int32 count = 4;  // 调用次数
 }
 
 message GetTraceGraphReq {
   string gid = 1;
+  string dbpath = 2; // 数据库路径
 }
 
 message GetTraceGraphReply {
@@ -253,6 +266,7 @@ message GetTraceGraphReply {
 // GetTracesByParentFuncReq 根据父函数名称获取函数调用的请求
 message GetTracesByParentFuncReq {
   string parent_func = 1;
+  string dbpath = 2; // 数据库路径
 }
 
 // GetTracesByParentFuncReply 根据父函数名称获取函数调用的响应
@@ -272,6 +286,7 @@ message GetTracesByParentFuncReply {
 
 // GetAllParentFuncNamesReq 获取所有的父函数名称的请求
 message GetAllParentFuncNamesReq {
+  string dbpath = 1; // 数据库路径
 }
 
 // GetAllParentFuncNamesReply 获取所有的父函数名称的响应
@@ -282,6 +297,7 @@ message GetAllParentFuncNamesReply {
 // GetChildFunctionsReq 获取函数的子函数的请求
 message GetChildFunctionsReq {
   string func_name = 1;
+  string dbpath = 2; // 数据库路径
 }
 
 // GetChildFunctionsReply 获取函数的子函数的响应
@@ -292,6 +308,7 @@ message GetChildFunctionsReply {
 // GetHotFunctionsReq 获取热点函数的请求
 message GetHotFunctionsReq {
   string sort_by = 1; // 排序方式: "calls" 或 "time"
+  string dbpath = 2; // 数据库路径
 }
 
 // GetHotFunctionsReply 获取热点函数的响应
@@ -308,6 +325,7 @@ message GetHotFunctionsReply {
 
 // GetGoroutineStatsReq 获取Goroutine统计信息的请求
 message GetGoroutineStatsReq {
+  string dbpath = 1; // 数据库路径
 }
 
 // GetGoroutineStatsReply 获取Goroutine统计信息的响应
@@ -343,6 +361,7 @@ message GetFunctionCallGraphReq {
   string function_name = 1; // 函数名称
   int32 depth = 2;          // 调用深度，默认为2
   string direction = 3;     // 方向: "caller"(调用者), "callee"(被调用), "both"(双向)
+  string dbpath = 4;        // 数据库路径
 }
 
 // GetFunctionCallGraphReply 获取函数调用关系图的响应
@@ -421,4 +440,15 @@ message AnalyzeDbFileResponse {
   int32 total_packages = 3;
   repeated PackageDependency package_dependencies = 4;
   repeated HotFunction hot_functions = 5;
+}
+
+// 插桩请求
+message InstrumentProjectReq {
+  string path = 1; // 项目路径
+}
+
+// 插桩响应
+message InstrumentProjectReply {
+  bool success = 1; // 是否成功
+  string message = 2; // 消息
 }

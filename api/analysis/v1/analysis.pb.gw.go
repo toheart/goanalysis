@@ -10,6 +10,7 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 
@@ -24,744 +25,545 @@ import (
 )
 
 // Suppress "imported and not used" errors
-var _ codes.Code
-var _ io.Reader
-var _ status.Status
-var _ = runtime.String
-var _ = utilities.NewDoubleArray
-var _ = metadata.Join
+var (
+	_ codes.Code
+	_ io.Reader
+	_ status.Status
+	_ = errors.New
+	_ = runtime.String
+	_ = utilities.NewDoubleArray
+	_ = metadata.Join
+)
 
 func request_Analysis_GetAnalysis_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AnalysisRequest
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq AnalysisRequest
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["name"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
-
 	protoReq.Name, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
 	}
-
 	msg, err := client.GetAnalysis(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetAnalysis_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AnalysisRequest
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq AnalysisRequest
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["name"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
-
 	protoReq.Name, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
 	}
-
 	msg, err := server.GetAnalysis(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_GetAnalysisByGID_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AnalysisByGIDRequest
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq AnalysisByGIDRequest
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["gid"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["gid"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "gid")
 	}
-
 	protoReq.Gid, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "gid", err)
 	}
-
 	msg, err := client.GetAnalysisByGID(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetAnalysisByGID_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AnalysisByGIDRequest
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq AnalysisByGIDRequest
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["gid"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["gid"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "gid")
 	}
-
 	protoReq.Gid, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "gid", err)
 	}
-
 	msg, err := server.GetAnalysisByGID(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_Analysis_GetAllGIDs_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Analysis_GetAllGIDs_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAllGIDsReq
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
+	var (
+		protoReq GetAllGIDsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Analysis_GetAllGIDs_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := client.GetAllGIDs(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetAllGIDs_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAllGIDsReq
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
+	var (
+		protoReq GetAllGIDsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Analysis_GetAllGIDs_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := server.GetAllGIDs(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_GetParamsByID_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetParamsByIDReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetParamsByIDReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["id"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["id"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
-
 	protoReq.Id, err = runtime.Int32(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
-
 	msg, err := client.GetParamsByID(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetParamsByID_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetParamsByIDReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetParamsByIDReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["id"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["id"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
 	}
-
 	protoReq.Id, err = runtime.Int32(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
-
 	msg, err := server.GetParamsByID(ctx, &protoReq)
 	return msg, metadata, err
-
-}
-
-func request_Analysis_GenerateImage_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GenerateImageReq
-	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["gid"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "gid")
-	}
-
-	protoReq.Gid, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "gid", err)
-	}
-
-	msg, err := client.GenerateImage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_Analysis_GenerateImage_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GenerateImageReq
-	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["gid"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "gid")
-	}
-
-	protoReq.Gid, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "gid", err)
-	}
-
-	msg, err := server.GenerateImage(ctx, &protoReq)
-	return msg, metadata, err
-
 }
 
 func request_Analysis_GetAllFunctionName_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAllFunctionNameReq
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetAllFunctionNameReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := client.GetAllFunctionName(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetAllFunctionName_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAllFunctionNameReq
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetAllFunctionNameReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := server.GetAllFunctionName(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_GetGidsByFunctionName_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetGidsByFunctionNameReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetGidsByFunctionNameReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetGidsByFunctionName(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetGidsByFunctionName_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetGidsByFunctionNameReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetGidsByFunctionNameReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetGidsByFunctionName(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_VerifyProjectPath_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq VerifyProjectPathReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq VerifyProjectPathReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.VerifyProjectPath(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_VerifyProjectPath_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq VerifyProjectPathReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq VerifyProjectPathReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.VerifyProjectPath(ctx, &protoReq)
 	return msg, metadata, err
-
-}
-
-func request_Analysis_CheckDatabase_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CheckDatabaseRequest
-	var metadata runtime.ServerMetadata
-
-	msg, err := client.CheckDatabase(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_Analysis_CheckDatabase_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CheckDatabaseRequest
-	var metadata runtime.ServerMetadata
-
-	msg, err := server.CheckDatabase(ctx, &protoReq)
-	return msg, metadata, err
-
 }
 
 func request_Analysis_GetTraceGraph_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTraceGraphReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetTraceGraphReq
+		metadata runtime.ServerMetadata
 	)
-
-	val, ok = pathParams["gid"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "gid")
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
-	protoReq.Gid, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "gid", err)
-	}
-
 	msg, err := client.GetTraceGraph(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetTraceGraph_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTraceGraphReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetTraceGraphReq
+		metadata runtime.ServerMetadata
 	)
-
-	val, ok = pathParams["gid"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "gid")
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
-	protoReq.Gid, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "gid", err)
-	}
-
 	msg, err := server.GetTraceGraph(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_GetTracesByParentFunc_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTracesByParentFuncReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetTracesByParentFuncReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["parent_func"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["parent_func"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent_func")
 	}
-
 	protoReq.ParentFunc, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent_func", err)
 	}
-
 	msg, err := client.GetTracesByParentFunc(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetTracesByParentFunc_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTracesByParentFuncReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetTracesByParentFuncReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["parent_func"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["parent_func"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent_func")
 	}
-
 	protoReq.ParentFunc, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent_func", err)
 	}
-
 	msg, err := server.GetTracesByParentFunc(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_GetAllParentFuncNames_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAllParentFuncNamesReq
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetAllParentFuncNamesReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := client.GetAllParentFuncNames(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetAllParentFuncNames_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAllParentFuncNamesReq
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetAllParentFuncNamesReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := server.GetAllParentFuncNames(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_GetChildFunctions_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetChildFunctionsReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetChildFunctionsReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["func_name"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["func_name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "func_name")
 	}
-
 	protoReq.FuncName, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "func_name", err)
 	}
-
 	msg, err := client.GetChildFunctions(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetChildFunctions_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetChildFunctionsReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetChildFunctionsReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["func_name"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["func_name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "func_name")
 	}
-
 	protoReq.FuncName, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "func_name", err)
 	}
-
 	msg, err := server.GetChildFunctions(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_Analysis_GetHotFunctions_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Analysis_GetHotFunctions_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetHotFunctionsReq
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
+	var (
+		protoReq GetHotFunctionsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Analysis_GetHotFunctions_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := client.GetHotFunctions(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetHotFunctions_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetHotFunctionsReq
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
+	var (
+		protoReq GetHotFunctionsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Analysis_GetHotFunctions_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := server.GetHotFunctions(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_GetGoroutineStats_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetGoroutineStatsReq
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetGoroutineStatsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := client.GetGoroutineStats(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetGoroutineStats_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetGoroutineStatsReq
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetGoroutineStatsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	msg, err := server.GetGoroutineStats(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_Analysis_GetFunctionAnalysis_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionAnalysisReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionAnalysisReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetFunctionAnalysis(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetFunctionAnalysis_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionAnalysisReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionAnalysisReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetFunctionAnalysis(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_Analysis_GetFunctionCallGraph_0 = &utilities.DoubleArray{Encoding: map[string]int{"function_name": 0, "functionName": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
-)
-
 func request_Analysis_GetFunctionCallGraph_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionCallGraphReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetFunctionCallGraphReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["function_name"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["function_name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "function_name")
 	}
-
 	protoReq.FunctionName, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "function_name", err)
 	}
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Analysis_GetFunctionCallGraph_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := client.GetFunctionCallGraph(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetFunctionCallGraph_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionCallGraphReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetFunctionCallGraphReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["function_name"]
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["function_name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "function_name")
 	}
-
 	protoReq.FunctionName, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "function_name", err)
 	}
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Analysis_GetFunctionCallGraph_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := server.GetFunctionCallGraph(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_Analysis_GetFunctionCallGraph_1 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Analysis_GetFunctionCallGraph_1(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionCallGraphReq
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
+	var (
+		protoReq GetFunctionCallGraphReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Analysis_GetFunctionCallGraph_1); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := client.GetFunctionCallGraph(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_Analysis_GetFunctionCallGraph_1(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionCallGraphReq
-	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
+	var (
+		protoReq GetFunctionCallGraphReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Analysis_GetFunctionCallGraph_1); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	msg, err := server.GetFunctionCallGraph(ctx, &protoReq)
 	return msg, metadata, err
+}
 
+func request_Analysis_InstrumentProject_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq InstrumentProjectReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.InstrumentProject(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_InstrumentProject_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq InstrumentProjectReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.InstrumentProject(ctx, &protoReq)
+	return msg, metadata, err
 }
 
 // RegisterAnalysisHandlerServer registers the http handlers for service Analysis to "mux".
 // UnaryRPC     :call AnalysisServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterAnalysisHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, server AnalysisServer) error {
-
-	mux.Handle("GET", pattern_Analysis_GetAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysis", runtime.WithHTTPPathPattern("/analysis/{name}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysis", runtime.WithHTTPPathPattern("/analysis/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -773,20 +575,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAnalysis_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetAnalysisByGID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAnalysisByGID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysisByGID", runtime.WithHTTPPathPattern("/api/traces/{gid}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysisByGID", runtime.WithHTTPPathPattern("/api/runtime/traces/{gid}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -798,20 +595,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAnalysisByGID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetAllGIDs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAllGIDs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllGIDs", runtime.WithHTTPPathPattern("/api/gids"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllGIDs", runtime.WithHTTPPathPattern("/api/runtime/gids"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -823,20 +615,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAllGIDs_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetParamsByID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetParamsByID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetParamsByID", runtime.WithHTTPPathPattern("/api/params/{id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetParamsByID", runtime.WithHTTPPathPattern("/api/runtime/params/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -848,45 +635,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetParamsByID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GenerateImage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAllFunctionName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GenerateImage", runtime.WithHTTPPathPattern("/api/traces/{gid}/mermaid"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_Analysis_GenerateImage_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_Analysis_GenerateImage_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("GET", pattern_Analysis_GetAllFunctionName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllFunctionName", runtime.WithHTTPPathPattern("/api/functions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllFunctionName", runtime.WithHTTPPathPattern("/api/runtime/functions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -898,20 +655,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAllFunctionName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_Analysis_GetGidsByFunctionName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetGidsByFunctionName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetGidsByFunctionName", runtime.WithHTTPPathPattern("/api/gids/function"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetGidsByFunctionName", runtime.WithHTTPPathPattern("/api/runtime/gids/function"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -923,20 +675,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetGidsByFunctionName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_Analysis_VerifyProjectPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_VerifyProjectPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/VerifyProjectPath", runtime.WithHTTPPathPattern("/api/verify/path"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/VerifyProjectPath", runtime.WithHTTPPathPattern("/api/runtime/verify/path"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -948,45 +695,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_VerifyProjectPath_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_CheckDatabase_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetTraceGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/CheckDatabase", runtime.WithHTTPPathPattern("/api/check/db"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_Analysis_CheckDatabase_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_Analysis_CheckDatabase_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("GET", pattern_Analysis_GetTraceGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetTraceGraph", runtime.WithHTTPPathPattern("/api/traces/{gid}/graph"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetTraceGraph", runtime.WithHTTPPathPattern("/api/runtime/traces/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -998,20 +715,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetTraceGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetTracesByParentFunc_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetTracesByParentFunc_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetTracesByParentFunc", runtime.WithHTTPPathPattern("/api/traces/parent/{parent_func}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetTracesByParentFunc", runtime.WithHTTPPathPattern("/api/runtime/traces/parent/{parent_func}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1023,20 +735,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetTracesByParentFunc_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetAllParentFuncNames_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAllParentFuncNames_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllParentFuncNames", runtime.WithHTTPPathPattern("/api/functions/parent"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllParentFuncNames", runtime.WithHTTPPathPattern("/api/runtime/functions/parent"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1048,20 +755,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAllParentFuncNames_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetChildFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetChildFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetChildFunctions", runtime.WithHTTPPathPattern("/api/functions/{func_name}/children"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetChildFunctions", runtime.WithHTTPPathPattern("/api/runtime/functions/{func_name}/children"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1073,20 +775,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetChildFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetHotFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetHotFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetHotFunctions", runtime.WithHTTPPathPattern("/api/hot-functions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetHotFunctions", runtime.WithHTTPPathPattern("/api/runtime/hot-functions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1098,20 +795,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetHotFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetGoroutineStats_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetGoroutineStats_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetGoroutineStats", runtime.WithHTTPPathPattern("/api/goroutine-stats"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetGoroutineStats", runtime.WithHTTPPathPattern("/api/runtime/goroutine-stats"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1123,20 +815,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetGoroutineStats_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_Analysis_GetFunctionAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionAnalysis", runtime.WithHTTPPathPattern("/api/function/analysis"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionAnalysis", runtime.WithHTTPPathPattern("/api/runtime/function/analysis"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1148,20 +835,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetFunctionAnalysis_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetFunctionCallGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionCallGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/function/{function_name}/graph"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/runtime/function/{function_name}/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1173,20 +855,15 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetFunctionCallGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetFunctionCallGraph_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionCallGraph_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/function/graph"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/runtime/function/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1198,9 +875,27 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetFunctionCallGraph_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_InstrumentProject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/InstrumentProject", runtime.WithHTTPPathPattern("/api/runtime/instrument"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_InstrumentProject_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_InstrumentProject_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -1209,25 +904,24 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 // RegisterAnalysisHandlerFromEndpoint is same as RegisterAnalysisHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterAnalysisHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.Dial(endpoint, opts...)
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
-
 	return RegisterAnalysisHandler(ctx, mux, conn)
 }
 
@@ -1241,16 +935,13 @@ func RegisterAnalysisHandler(ctx context.Context, mux *runtime.ServeMux, conn *g
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "AnalysisClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "AnalysisClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "AnalysisClient" to call the correct interceptors.
+// "AnalysisClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, client AnalysisClient) error {
-
-	mux.Handle("GET", pattern_Analysis_GetAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysis", runtime.WithHTTPPathPattern("/analysis/{name}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysis", runtime.WithHTTPPathPattern("/analysis/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1261,18 +952,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAnalysis_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetAnalysisByGID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAnalysisByGID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysisByGID", runtime.WithHTTPPathPattern("/api/traces/{gid}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysisByGID", runtime.WithHTTPPathPattern("/api/runtime/traces/{gid}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1283,18 +969,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAnalysisByGID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetAllGIDs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAllGIDs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllGIDs", runtime.WithHTTPPathPattern("/api/gids"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllGIDs", runtime.WithHTTPPathPattern("/api/runtime/gids"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1305,18 +986,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAllGIDs_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetParamsByID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetParamsByID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetParamsByID", runtime.WithHTTPPathPattern("/api/params/{id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetParamsByID", runtime.WithHTTPPathPattern("/api/runtime/params/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1327,40 +1003,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetParamsByID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GenerateImage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAllFunctionName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GenerateImage", runtime.WithHTTPPathPattern("/api/traces/{gid}/mermaid"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_Analysis_GenerateImage_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_Analysis_GenerateImage_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("GET", pattern_Analysis_GetAllFunctionName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllFunctionName", runtime.WithHTTPPathPattern("/api/functions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllFunctionName", runtime.WithHTTPPathPattern("/api/runtime/functions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1371,18 +1020,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAllFunctionName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_Analysis_GetGidsByFunctionName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetGidsByFunctionName_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetGidsByFunctionName", runtime.WithHTTPPathPattern("/api/gids/function"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetGidsByFunctionName", runtime.WithHTTPPathPattern("/api/runtime/gids/function"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1393,18 +1037,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetGidsByFunctionName_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_Analysis_VerifyProjectPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_VerifyProjectPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/VerifyProjectPath", runtime.WithHTTPPathPattern("/api/verify/path"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/VerifyProjectPath", runtime.WithHTTPPathPattern("/api/runtime/verify/path"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1415,40 +1054,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_VerifyProjectPath_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_CheckDatabase_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetTraceGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/CheckDatabase", runtime.WithHTTPPathPattern("/api/check/db"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_Analysis_CheckDatabase_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_Analysis_CheckDatabase_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("GET", pattern_Analysis_GetTraceGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetTraceGraph", runtime.WithHTTPPathPattern("/api/traces/{gid}/graph"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetTraceGraph", runtime.WithHTTPPathPattern("/api/runtime/traces/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1459,18 +1071,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetTraceGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetTracesByParentFunc_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetTracesByParentFunc_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetTracesByParentFunc", runtime.WithHTTPPathPattern("/api/traces/parent/{parent_func}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetTracesByParentFunc", runtime.WithHTTPPathPattern("/api/runtime/traces/parent/{parent_func}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1481,18 +1088,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetTracesByParentFunc_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetAllParentFuncNames_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAllParentFuncNames_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllParentFuncNames", runtime.WithHTTPPathPattern("/api/functions/parent"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllParentFuncNames", runtime.WithHTTPPathPattern("/api/runtime/functions/parent"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1503,18 +1105,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetAllParentFuncNames_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetChildFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetChildFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetChildFunctions", runtime.WithHTTPPathPattern("/api/functions/{func_name}/children"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetChildFunctions", runtime.WithHTTPPathPattern("/api/runtime/functions/{func_name}/children"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1525,18 +1122,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetChildFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetHotFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetHotFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetHotFunctions", runtime.WithHTTPPathPattern("/api/hot-functions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetHotFunctions", runtime.WithHTTPPathPattern("/api/runtime/hot-functions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1547,18 +1139,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetHotFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetGoroutineStats_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetGoroutineStats_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetGoroutineStats", runtime.WithHTTPPathPattern("/api/goroutine-stats"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetGoroutineStats", runtime.WithHTTPPathPattern("/api/runtime/goroutine-stats"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1569,18 +1156,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetGoroutineStats_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_Analysis_GetFunctionAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionAnalysis", runtime.WithHTTPPathPattern("/api/function/analysis"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionAnalysis", runtime.WithHTTPPathPattern("/api/runtime/function/analysis"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1591,18 +1173,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetFunctionAnalysis_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetFunctionCallGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionCallGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/function/{function_name}/graph"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/runtime/function/{function_name}/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1613,18 +1190,13 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetFunctionCallGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_Analysis_GetFunctionCallGraph_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionCallGraph_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/function/graph"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/runtime/function/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1635,86 +1207,64 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_Analysis_GetFunctionCallGraph_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
+	mux.Handle(http.MethodPost, pattern_Analysis_InstrumentProject_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/InstrumentProject", runtime.WithHTTPPathPattern("/api/runtime/instrument"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_InstrumentProject_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_InstrumentProject_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
 var (
-	pattern_Analysis_GetAnalysis_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"analysis", "name"}, ""))
-
-	pattern_Analysis_GetAnalysisByGID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "traces", "gid"}, ""))
-
-	pattern_Analysis_GetAllGIDs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "gids"}, ""))
-
-	pattern_Analysis_GetParamsByID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"api", "params", "id"}, ""))
-
-	pattern_Analysis_GenerateImage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "traces", "gid", "mermaid"}, ""))
-
-	pattern_Analysis_GetAllFunctionName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "functions"}, ""))
-
-	pattern_Analysis_GetGidsByFunctionName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "gids", "function"}, ""))
-
-	pattern_Analysis_VerifyProjectPath_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "verify", "path"}, ""))
-
-	pattern_Analysis_CheckDatabase_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "check", "db"}, ""))
-
-	pattern_Analysis_GetTraceGraph_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "traces", "gid", "graph"}, ""))
-
-	pattern_Analysis_GetTracesByParentFunc_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "traces", "parent", "parent_func"}, ""))
-
-	pattern_Analysis_GetAllParentFuncNames_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "functions", "parent"}, ""))
-
-	pattern_Analysis_GetChildFunctions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "functions", "func_name", "children"}, ""))
-
-	pattern_Analysis_GetHotFunctions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "hot-functions"}, ""))
-
-	pattern_Analysis_GetGoroutineStats_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "goroutine-stats"}, ""))
-
-	pattern_Analysis_GetFunctionAnalysis_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "function", "analysis"}, ""))
-
-	pattern_Analysis_GetFunctionCallGraph_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "function", "function_name", "graph"}, ""))
-
-	pattern_Analysis_GetFunctionCallGraph_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "function", "graph"}, ""))
+	pattern_Analysis_GetAnalysis_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"analysis", "name"}, ""))
+	pattern_Analysis_GetAnalysisByGID_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "traces", "gid"}, ""))
+	pattern_Analysis_GetAllGIDs_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "gids"}, ""))
+	pattern_Analysis_GetParamsByID_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "params", "id"}, ""))
+	pattern_Analysis_GetAllFunctionName_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "functions"}, ""))
+	pattern_Analysis_GetGidsByFunctionName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "gids", "function"}, ""))
+	pattern_Analysis_VerifyProjectPath_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "verify", "path"}, ""))
+	pattern_Analysis_GetTraceGraph_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "traces", "graph"}, ""))
+	pattern_Analysis_GetTracesByParentFunc_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "runtime", "traces", "parent", "parent_func"}, ""))
+	pattern_Analysis_GetAllParentFuncNames_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "functions", "parent"}, ""))
+	pattern_Analysis_GetChildFunctions_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "functions", "func_name", "children"}, ""))
+	pattern_Analysis_GetHotFunctions_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "hot-functions"}, ""))
+	pattern_Analysis_GetGoroutineStats_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "goroutine-stats"}, ""))
+	pattern_Analysis_GetFunctionAnalysis_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "analysis"}, ""))
+	pattern_Analysis_GetFunctionCallGraph_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "function", "function_name", "graph"}, ""))
+	pattern_Analysis_GetFunctionCallGraph_1  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "graph"}, ""))
+	pattern_Analysis_InstrumentProject_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "instrument"}, ""))
 )
 
 var (
-	forward_Analysis_GetAnalysis_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetAnalysisByGID_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetAllGIDs_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetParamsByID_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GenerateImage_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetAllFunctionName_0 = runtime.ForwardResponseMessage
-
+	forward_Analysis_GetAnalysis_0           = runtime.ForwardResponseMessage
+	forward_Analysis_GetAnalysisByGID_0      = runtime.ForwardResponseMessage
+	forward_Analysis_GetAllGIDs_0            = runtime.ForwardResponseMessage
+	forward_Analysis_GetParamsByID_0         = runtime.ForwardResponseMessage
+	forward_Analysis_GetAllFunctionName_0    = runtime.ForwardResponseMessage
 	forward_Analysis_GetGidsByFunctionName_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_VerifyProjectPath_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_CheckDatabase_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetTraceGraph_0 = runtime.ForwardResponseMessage
-
+	forward_Analysis_VerifyProjectPath_0     = runtime.ForwardResponseMessage
+	forward_Analysis_GetTraceGraph_0         = runtime.ForwardResponseMessage
 	forward_Analysis_GetTracesByParentFunc_0 = runtime.ForwardResponseMessage
-
 	forward_Analysis_GetAllParentFuncNames_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetChildFunctions_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetHotFunctions_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetGoroutineStats_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetFunctionAnalysis_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetFunctionCallGraph_0 = runtime.ForwardResponseMessage
-
-	forward_Analysis_GetFunctionCallGraph_1 = runtime.ForwardResponseMessage
+	forward_Analysis_GetChildFunctions_0     = runtime.ForwardResponseMessage
+	forward_Analysis_GetHotFunctions_0       = runtime.ForwardResponseMessage
+	forward_Analysis_GetGoroutineStats_0     = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionAnalysis_0   = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionCallGraph_0  = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionCallGraph_1  = runtime.ForwardResponseMessage
+	forward_Analysis_InstrumentProject_0     = runtime.ForwardResponseMessage
 )

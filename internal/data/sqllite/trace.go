@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3" // 引入 sqlite3 驱动
 
-	"github.com/toheart/goanalysis/functrace"
+	"github.com/toheart/functrace"
 	"github.com/toheart/goanalysis/internal/biz/entity"
 )
 
@@ -31,8 +31,8 @@ func NewTraceDB(dbPath string) (*TraceDB, error) {
 	return &TraceDB{db: db}, nil
 }
 
-func (d *TraceDB) GetTracesByGID(gid string) ([]entity.TraceData, error) {
-	var traces []entity.TraceData
+func (d *TraceDB) GetTracesByGID(gid string) ([]functrace.TraceData, error) {
+	var traces []functrace.TraceData
 	rows, err := d.db.Query("SELECT id, name, gid, indent, params, timeCost, parentFuncname FROM TraceData WHERE gid = ?", gid) // 使用 sqlite3 查询
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (d *TraceDB) GetTracesByGID(gid string) ([]entity.TraceData, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var trace entity.TraceData
+		var trace functrace.TraceData
 		var paramsJSON string
 		var timeCost sql.NullString       // 使用 sql.NullString 处理可能的 NULL 值
 		var parentFuncname sql.NullString // 使用 sql.NullString 处理可能的 NULL 值
@@ -64,9 +64,9 @@ func (d *TraceDB) GetTracesByGID(gid string) ([]entity.TraceData, error) {
 
 		// 处理 parentFuncname 的值
 		if parentFuncname.Valid {
-			trace.ParentFuncname = parentFuncname.String // 只有在有效时才赋值
+			trace.ParentFuncName = parentFuncname.String // 只有在有效时才赋值
 		} else {
-			trace.ParentFuncname = "" // 或者设置为默认值
+			trace.ParentFuncName = "" // 或者设置为默认值
 		}
 
 		traces = append(traces, trace)
@@ -176,8 +176,8 @@ func (d *TraceDB) GetInitialFunc(gid uint64) (string, error) {
 }
 
 // GetTracesByParentFunc 根据父函数名称查询函数调用
-func (d *TraceDB) GetTracesByParentFunc(parentFunc string) ([]entity.TraceData, error) {
-	var traces []entity.TraceData
+func (d *TraceDB) GetTracesByParentFunc(parentFunc string) ([]functrace.TraceData, error) {
+	var traces []functrace.TraceData
 	rows, err := d.db.Query("SELECT id, name, gid, indent, params, timeCost, parentFuncname FROM TraceData WHERE parentFuncname = ?", parentFunc) // 使用 sqlite3 查询
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func (d *TraceDB) GetTracesByParentFunc(parentFunc string) ([]entity.TraceData, 
 	defer rows.Close()
 
 	for rows.Next() {
-		var trace entity.TraceData
+		var trace functrace.TraceData
 		var paramsJSON string
 		var timeCost sql.NullString       // 使用 sql.NullString 处理可能的 NULL 值
 		var parentFuncname sql.NullString // 使用 sql.NullString 处理可能的 NULL 值
@@ -209,9 +209,9 @@ func (d *TraceDB) GetTracesByParentFunc(parentFunc string) ([]entity.TraceData, 
 
 		// 处理 parentFuncname 的值
 		if parentFuncname.Valid {
-			trace.ParentFuncname = parentFuncname.String
+			trace.ParentFuncName = parentFuncname.String
 		} else {
-			trace.ParentFuncname = ""
+			trace.ParentFuncName = ""
 		}
 
 		traces = append(traces, trace)

@@ -37,13 +37,13 @@ func NewGitLabBiz(conf *conf.Biz, logger log.Logger) *GitLabBiz {
 
 	// 确保克隆目录存在
 	if err := os.MkdirAll(cloneDir, 0o755); err != nil {
-		log.Errorf("创建GitLab克隆目录失败: %v", err)
+		log.Errorf("Failed to create GitLab clone directory: %v", err)
 	}
 
 	// 创建GitLab客户端
 	client, err := gitlab.NewClient(token, gitlab.WithBaseURL(gitlabURL))
 	if err != nil {
-		log.Errorf("创建GitLab客户端失败: %v", err)
+		log.Errorf("Failed to create GitLab client: %v", err)
 	}
 
 	return &GitLabBiz{
@@ -58,20 +58,20 @@ func NewGitLabBiz(conf *conf.Biz, logger log.Logger) *GitLabBiz {
 
 // ListRepositories 获取有权限的GitLab仓库列表
 func (g *GitLabBiz) ListRepositories() ([]entity.Repository, error) {
-	g.log.Info("获取GitLab仓库列表")
+	g.log.Info("Getting GitLab repository list")
 
 	if g.client == nil {
-		return nil, fmt.Errorf("GitLab客户端未初始化")
+		return nil, fmt.Errorf("GitLab client not initialized")
 	}
 
 	// 获取当前用户信息
 	user, _, err := g.client.Users.CurrentUser()
 	if err != nil {
-		g.log.Errorf("获取当前用户信息失败: %v", err)
-		return nil, fmt.Errorf("获取当前用户信息失败: %v", err)
+		g.log.Errorf("Failed to get current user info: %v", err)
+		return nil, fmt.Errorf("Failed to get current user info: %v", err)
 	}
 
-	g.log.Infof("当前用户: %s", user.Username)
+	g.log.Infof("Current user: %s", user.Username)
 
 	// 获取用户有权限的项目
 	opt := &gitlab.ListProjectsOptions{
@@ -92,8 +92,8 @@ func (g *GitLabBiz) ListRepositories() ([]entity.Repository, error) {
 		opt.Page = page
 		projects, resp, err := g.client.Projects.ListProjects(opt)
 		if err != nil {
-			g.log.Errorf("获取项目列表失败: %v", err)
-			return nil, fmt.Errorf("获取项目列表失败: %v", err)
+			g.log.Errorf("Failed to get project list: %v", err)
+			return nil, fmt.Errorf("Failed to get project list: %v", err)
 		}
 
 		allProjects = append(allProjects, projects...)
@@ -123,18 +123,18 @@ func (g *GitLabBiz) ListRepositories() ([]entity.Repository, error) {
 		})
 	}
 
-	g.log.Infof("找到 %d 个仓库", len(repositories))
+	g.log.Infof("Found %d repositories", len(repositories))
 	return repositories, nil
 }
 
 // CloneRepository 克隆指定的GitLab仓库
 func (g *GitLabBiz) CloneRepository(repoURL, branch string) (string, error) {
-	g.log.Infof("克隆仓库: %s, 分支: %s", repoURL, branch)
+	g.log.Infof("Cloning repository: %s, branch: %s", repoURL, branch)
 
 	// 从URL中提取仓库名称
 	repoName := extractRepoName(repoURL)
 	if repoName == "" {
-		return "", fmt.Errorf("无法从URL提取仓库名称: %s", repoURL)
+		return "", fmt.Errorf("Cannot extract repository name from URL: %s", repoURL)
 	}
 
 	// 创建目标目录
@@ -142,14 +142,14 @@ func (g *GitLabBiz) CloneRepository(repoURL, branch string) (string, error) {
 
 	// 如果目录已存在，先删除
 	if _, err := os.Stat(targetDir); err == nil {
-		g.log.Infof("目录已存在，正在删除: %s", targetDir)
+		g.log.Infof("Directory already exists, deleting: %s", targetDir)
 		if err := os.RemoveAll(targetDir); err != nil {
-			g.log.Errorf("删除目录失败: %v", err)
-			return "", fmt.Errorf("删除目录失败: %v", err)
+			g.log.Errorf("Failed to delete directory: %v", err)
+			return "", fmt.Errorf("Failed to delete directory: %v", err)
 		}
 	}
 
-	g.log.Infof("克隆到目录: %s", targetDir)
+	g.log.Infof("Cloning to directory: %s", targetDir)
 
 	// 使用go-git克隆仓库
 	cloneOptions := &git.CloneOptions{
@@ -166,15 +166,15 @@ func (g *GitLabBiz) CloneRepository(repoURL, branch string) (string, error) {
 	_, err := git.PlainClone(targetDir, false, cloneOptions)
 	if err != nil {
 		// 如果go-git克隆失败，尝试使用git命令行
-		g.log.Warnf("使用go-git克隆失败，尝试使用git命令行: %v", err)
+		g.log.Warnf("Failed to clone using go-git, trying git command line: %v", err)
 		err = g.cloneWithGitCommand(repoURL, branch, targetDir)
 		if err != nil {
-			g.log.Errorf("克隆仓库失败: %v", err)
-			return "", fmt.Errorf("克隆仓库失败: %v", err)
+			g.log.Errorf("Failed to clone repository: %v", err)
+			return "", fmt.Errorf("Failed to clone repository: %v", err)
 		}
 	}
 
-	g.log.Infof("仓库克隆成功: %s", targetDir)
+	g.log.Infof("Repository cloned successfully: %s", targetDir)
 	return targetDir, nil
 }
 
@@ -202,8 +202,8 @@ func (g *GitLabBiz) cloneWithGitCommand(repoURL, branch, targetDir string) error
 	cmd := exec.Command("git", args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		g.log.Errorf("git命令执行失败: %v, 输出: %s", err, string(output))
-		return fmt.Errorf("git命令执行失败: %v", err)
+		g.log.Errorf("Git command execution failed: %v, output: %s", err, string(output))
+		return fmt.Errorf("Git command execution failed: %v", err)
 	}
 
 	return nil

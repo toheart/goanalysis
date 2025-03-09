@@ -22,7 +22,7 @@ import (
 @description:
 **/
 
-const _defaultImport = "github.com/toheart/goanalysis/functrace"
+const _defaultImport = "github.com/toheart/functrace"
 
 var debug = false
 
@@ -69,9 +69,11 @@ func NewRewrite(fullPath string) (*Rewrite, error) {
 		return nil, err
 	}
 
-	return &Rewrite{fullPath: fullPath,
-		fset: fset,
-		f:    f}, nil
+	return &Rewrite{
+		fullPath: fullPath,
+		fset:     fset,
+		f:        f,
+	}, nil
 }
 
 type Rewrite struct {
@@ -217,7 +219,7 @@ func (r *Rewrite) RewriteFile() {
 		fmt.Println(buf.String())
 		return
 	}
-	if err = os.WriteFile(r.fullPath, buf.Bytes(), 0666); err != nil {
+	if err = os.WriteFile(r.fullPath, buf.Bytes(), 0o666); err != nil {
 		fmt.Printf("write %s error: %v\n", r.fullPath, err)
 		return
 	}

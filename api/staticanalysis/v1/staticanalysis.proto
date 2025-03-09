@@ -15,29 +15,30 @@ service StaticAnalysis {
     };
   }
 
-  // 分析指定路径的项目并生成callgraph
+  // 获取分析任务状态
+  rpc GetAnalysisTaskStatus(GetAnalysisTaskStatusRequest) returns (GetAnalysisTaskStatusResponse) {
+    option (google.api.http) = {
+      get: "/api/static/task/{task_id}/status"
+    };
+  }
+
+  // 分析项目路径
   rpc AnalyzeProjectPath(AnalyzeProjectPathRequest) returns (AnalyzeProjectPathResponse) {
     option (google.api.http) = {
       post: "/api/static/analyze/path"
       body: "*"
     };
   }
-
-  // 分析指定数据库文件
+  
+  // 分析数据库文件
   rpc AnalyzeDbFile(AnalyzeDbFileRequest) returns (AnalyzeDbFileResponse) {
     option (google.api.http) = {
       post: "/api/static/analyze"
       body: "*"
     };
   }
-
-  // 获取热点函数分析数据
-  rpc GetHotFunctions(GetHotFunctionsReq) returns (GetHotFunctionsReply) {
-    option (google.api.http) = {
-      get: "/api/static/hot-functions"
-    };
-  }
-
+  
+  
   // 获取函数调用关系分析
   rpc GetFunctionAnalysis(GetFunctionAnalysisReq) returns (GetFunctionAnalysisReply) {
     option (google.api.http) = {
@@ -71,6 +72,54 @@ service StaticAnalysis {
       body: "*"
     };
   }
+  
+  // 分页获取包依赖关系
+  rpc GetPackageDependencies(GetPackageDependenciesRequest) returns (GetPackageDependenciesResponse) {
+    option (google.api.http) = {
+      post: "/api/static/package-dependencies"
+      body: "*"
+    };
+  }
+  
+  // 分页获取热点函数
+  rpc GetHotFunctions(GetHotFunctionsRequest) returns (GetHotFunctionsResponse) {
+    option (google.api.http) = {
+      post: "/api/static/hot-functions"
+      body: "*"
+    };
+  }
+  
+  // 模糊搜索函数
+  rpc SearchFunctions(SearchFunctionsRequest) returns (SearchFunctionsResponse) {
+    option (google.api.http) = {
+      post: "/api/static/search-functions"
+      body: "*"
+    };
+  }
+  
+  // 获取函数上游调用关系
+  rpc GetFunctionUpstream(GetFunctionUpstreamRequest) returns (GetFunctionUpstreamResponse) {
+    option (google.api.http) = {
+      post: "/api/static/function-upstream"
+      body: "*"
+    };
+  }
+  
+  // 获取函数下游调用关系
+  rpc GetFunctionDownstream(GetFunctionDownstreamRequest) returns (GetFunctionDownstreamResponse) {
+    option (google.api.http) = {
+      post: "/api/static/function-downstream"
+      body: "*"
+    };
+  }
+  
+  // 获取函数全链路调用关系
+  rpc GetFunctionFullChain(GetFunctionFullChainRequest) returns (GetFunctionFullChainResponse) {
+    option (google.api.http) = {
+      post: "/api/static/function-fullchain"
+      body: "*"
+    };
+  }
 }
 
 // 获取静态分析数据库文件列表请求
@@ -93,13 +142,27 @@ message GetStaticDbFilesResponse {
 // 分析项目路径请求
 message AnalyzeProjectPathRequest {
   string path = 1;
+  string algo = 2;         // 分析算法: "vta", "rta", "cha", "static"
+  string ignore_method = 3;  // 忽略分析特定方法
 }
 
 // 分析项目路径响应
 message AnalyzeProjectPathResponse {
   bool success = 1;
   string message = 2;
-  string db_path = 3;
+  string task_id = 3;
+}
+
+// 获取分析任务状态请求
+message GetAnalysisTaskStatusRequest {
+  string task_id = 1;
+}
+
+// 获取分析任务状态响应
+message GetAnalysisTaskStatusResponse {
+  int32 status = 1;   // 状态：0: starting, 1: processing, 2: completed, -1: failed, -2: not_found
+  string message = 2;  // 消息
+  float progress = 3;  // 进度百分比 (0-100)
 }
 
 // 分析数据库文件请求
@@ -116,8 +179,10 @@ message PackageDependency {
 
 // 热点函数
 message HotFunction {
-  string name = 1;
-  int32 call_count = 2;
+  string key = 1;         // 函数唯一标识
+  string name = 2;        // 函数名称
+  string package = 3;     // 包名
+  int32 call_count = 4;   // 调用次数
 }
 
 // 分析数据库文件响应
@@ -230,4 +295,106 @@ message CloneGitLabRepositoryResponse {
   bool success = 1;     // 是否成功
   string message = 2;   // 消息
   string target_dir = 3; // 目标目录
+}
+
+// 分页获取包依赖关系请求
+message GetPackageDependenciesRequest {
+  string db_path = 1;     // 数据库路径
+  int32 page = 2;         // 页码
+  int32 page_size = 3;    // 每页大小
+}
+
+// 分页获取包依赖关系响应
+message GetPackageDependenciesResponse {
+  repeated PackageDependency dependencies = 1; // 包依赖关系列表
+  int32 total = 2;                            // 总记录数
+  int32 page = 3;                             // 当前页码
+  int32 page_size = 4;                        // 每页大小
+  int32 page_count = 5;                       // 总页数
+}
+
+// 分页获取热点函数请求
+message GetHotFunctionsRequest {
+  string db_path = 1;     // 数据库路径
+  int32 page = 2;         // 页码
+  int32 page_size = 3;    // 每页大小
+}
+
+// 分页获取热点函数响应
+message GetHotFunctionsResponse {
+  repeated HotFunction functions = 1; // 热点函数列表
+  int32 total = 2;                   // 总记录数
+  int32 page = 3;                    // 当前页码
+  int32 page_size = 4;               // 每页大小
+  int32 page_count = 5;              // 总页数
+}
+
+// 函数信息
+message FunctionInfo {
+  string key = 1;         // 函数唯一标识
+  string name = 2;        // 函数名称
+  string package = 3;     // 包名
+  int32 call_count = 4;   // 调用次数
+}
+
+// 模糊搜索函数请求
+message SearchFunctionsRequest {
+  string db_path = 1;     // 数据库路径
+  string query = 2;       // 搜索关键词
+}
+
+// 模糊搜索函数响应
+message SearchFunctionsResponse {
+  repeated FunctionInfo functions = 1; // 匹配的函数列表
+}
+
+// 获取函数上游调用关系请求
+message GetFunctionUpstreamRequest {
+  string db_path = 1;      // 数据库路径
+  string function_key = 2; // 函数唯一标识
+}
+
+// 图节点
+message GraphNode {
+  string id = 1;           // 节点ID
+  string name = 2;         // 函数名称
+  string package = 3;      // 包名
+  int32 call_count = 4;    // 调用次数
+}
+
+// 图边
+message GraphEdge {
+  string source = 1;       // 源节点ID
+  string target = 2;       // 目标节点ID
+  int32 value = 3;         // 边权重
+}
+
+// 获取函数上游调用关系响应
+message GetFunctionUpstreamResponse {
+  repeated GraphNode nodes = 1; // 图节点
+  repeated GraphEdge edges = 2; // 图边
+}
+
+// 获取函数下游调用关系请求
+message GetFunctionDownstreamRequest {
+  string db_path = 1;      // 数据库路径
+  string function_key = 2; // 函数唯一标识
+}
+
+// 获取函数下游调用关系响应
+message GetFunctionDownstreamResponse {
+  repeated GraphNode nodes = 1; // 图节点
+  repeated GraphEdge edges = 2; // 图边
+}
+
+// 获取函数全链路调用关系请求
+message GetFunctionFullChainRequest {
+  string db_path = 1;      // 数据库路径
+  string function_key = 2; // 函数唯一标识
+}
+
+// 获取函数全链路调用关系响应
+message GetFunctionFullChainResponse {
+  repeated GraphNode nodes = 1; // 图节点
+  repeated GraphEdge edges = 2; // 图边
 } 

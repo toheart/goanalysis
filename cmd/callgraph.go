@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
@@ -15,12 +16,14 @@ import (
 	"github.com/toheart/goanalysis/internal/data"
 )
 
-var codeDir string
-var outputPath string
-var cachePath string
-var isCache bool
-var onlyMethod string
-var algo string
+var (
+	codeDir    string
+	outputPath string
+	cachePath  string
+	isCache    bool
+	onlyMethod string
+	algo       string
+)
 
 var callGraphCmd = &cobra.Command{
 	Use:   "callgraph",
@@ -62,17 +65,66 @@ var callGraphCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		c := callgraph.NewProgramAnalysis(codeDir, logger, funcNodeDB, callgraph.WithOutputDir(outputPath),
+		c := callgraph.NewProgramAnalysis(codeDir, log.NewHelper(log.With(logger, "module", "callgraph")), funcNodeDB, callgraph.WithOutputDir(outputPath),
 			callgraph.WithCacheDir(cachePath), callgraph.WithOnlyPkg(onlyMethod), callgraph.WithAlgo(algo), callgraph.WithCacheFlag(isCache))
-		// 这里可以添加生成调用图的逻辑
-		fmt.Printf("start to generate call graph for %s...\n", codeDir)
 
+		// 创建一个命令行状态通道，用于接收状态更新
+		statusChan := make(chan []byte, 100)
+
+		// 创建一个goroutine来处理状态更新
 		go func() {
-			if err := c.SetTree(); err != nil {
-				panic(err)
+			for msg := range statusChan {
+				fmt.Println(string(msg))
 			}
 		}()
-		c.SaveData(context.Background())
+
+		// 这里可以添加生成调用图的逻辑
+		fmt.Printf("开始为 %s 生成调用图...\n", codeDir)
+
+		// 使用 WaitGroup 等待所有任务完成
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		// 设置完成标志
+		var completed bool
+		var mu sync.Mutex
+
+		// 启动调用图生成
+		go func() {
+			defer wg.Done()
+			if err := c.SetTree(statusChan); err != nil {
+				errMsg := fmt.Sprintf("调用图生成失败: %v", err)
+				fmt.Println(errMsg)
+				return
+			}
+
+			// 保存数据
+			if err := c.SaveData(context.Background(), statusChan); err != nil {
+				errMsg := fmt.Sprintf("保存数据失败: %v", err)
+				fmt.Println(errMsg)
+				return
+			}
+
+			// 标记为完成
+			mu.Lock()
+			completed = true
+			mu.Unlock()
+
+			fmt.Println("分析任务完成")
+		}()
+
+		// 等待任务完成
+		wg.Wait()
+
+		// 检查是否成功完成
+		mu.Lock()
+		defer mu.Unlock()
+		if !completed {
+			fmt.Println("分析任务未成功完成")
+			os.Exit(1)
+		}
+
+		fmt.Println("调用图生成完成")
 	},
 }
 

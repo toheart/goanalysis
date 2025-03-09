@@ -8,6 +8,7 @@ import "google/protobuf/duration.proto";
 message Bootstrap {
   Server server = 1;
   Biz biz = 2;
+  Logger logger = 3;  // 添加日志配置
 }
 
 message Server {
@@ -23,6 +24,16 @@ message Server {
   }
   HTTP http = 1;
   GRPC grpc = 2;
+}
+
+message Logger {
+  string level = 1;        // 日志级别: debug, info, warn, error
+  string file_path = 2;    // 日志文件路径
+  bool console = 3;        // 是否同时输出到控制台
+  int32 max_size = 4;      // 单个日志文件最大大小(MB)
+  int32 max_age = 5;       // 日志文件保留天数
+  int32 max_backups = 6;   // 保留的旧日志文件最大数量
+  bool compress = 7;       // 是否压缩旧日志文件
 }
 
 message Biz {

@@ -147,7 +147,7 @@
 
 
 <script>
-import axios from '../axios';
+import axios from '../../axios';
 import { Modal } from 'bootstrap';
 
 export default {
@@ -163,9 +163,10 @@ export default {
       maxDepth: 0,
       totalTime: '0ms',
       functionCount: 0,
-      // 添加函数调用关系映射
-      childrenMap: new Map(), // 存储每个函数的子函数
-      parentMap: new Map()    // 存储每个函数的父函数
+      childrenMap: new Map(), // 存储函数的子函数
+      parentMap: new Map(), // 存储函数的父函数
+      expandedNodes: new Set(), // 存储展开的节点
+      dbpath: '', // 当前使用的数据库路径
     };
   },
   computed: {
@@ -236,9 +237,35 @@ export default {
       }
     },
     
+    // 获取当前数据库路径
+    getCurrentDbPath() {
+      // 如果已经设置了数据库路径，直接返回
+      if (this.dbpath) {
+        return this.dbpath;
+      }
+      
+      // 否则使用本地存储的已验证路径
+      const savedPath = localStorage.getItem('verifiedProjectPath');
+      if (savedPath) {
+        this.dbpath = savedPath;
+        return this.dbpath;
+      }
+      
+      // 如果都没有，返回空字符串
+      return '';
+    },
+    
     async fetchTraceDetails() {
       try {
-        const response = await axios.get(`/api/traces/${this.gid}`);
+        const dbpath = this.getCurrentDbPath();
+        if (!dbpath) {
+          console.error('数据库路径为空');
+          return;
+        }
+        
+        const response = await axios.post(`/api/runtime/traces/${this.gid}`, {
+          dbpath: dbpath
+        });
         this.traceData = response.data.traceData || 'No trace data available.';
         
         // 构建函数调用关系映射
@@ -292,7 +319,15 @@ export default {
     
     async viewParameters(id) {
       try {
-        const response = await axios.get(`/api/params/${id}`);
+        const dbpath = this.getCurrentDbPath();
+        if (!dbpath) {
+          console.error('数据库路径为空');
+          return;
+        }
+        
+        const response = await axios.post(`/api/runtime/params/${id}`, {
+          dbpath: dbpath
+        });
         this.parameters = response.data.params || []; // 修改为返回的参数格式
         this.showModal(); // 显示模态框
       } catch (error) {

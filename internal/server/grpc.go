@@ -88,7 +88,7 @@ func NewGRPCServer(c *conf.Server, logger log.Logger, services ...iface.InitGrpc
 	})
 	grpcPanicRecoveryHandler := func(p any) (err error) {
 		panicsTotal.Inc()
-		g.log.Errorw("msg", "recovered from panic", "panic", p, "stack", debug.Stack())
+		g.log.Errorw("msg", "recovered from panic", "panic", p, "stack", string(debug.Stack()))
 		return status.Errorf(codes.Internal, "%s", p)
 	}
 	prometheus.MustRegister(srvMetrics)

@@ -5,8 +5,18 @@ server:
   grpc:
     addr: 0.0.0.0:9000
     timeout: 1s
+
+logger:
+  level: debug                     # 日志级别: debug, info, warn, error
+  file_path: ./logs/app.log       # 日志文件路径
+  console: true                    # 同时输出到控制台
+  max_size: 100                    # 单个日志文件最大大小(MB)
+  max_age: 7                      # 日志文件保留天数
+  max_backups: 10                 # 保留的旧日志文件最大数量
+  compress: true                  # 压缩旧日志文件
+
 biz:
-  staticDBpath: ./store
-  gitlab_token: "your_gitlab_token"  # 替换为实际的GitLab访问令牌
-  gitlab_url: "https://gitlab.com/api/v4"  # GitLab API URL
-  gitlab_clone_dir: "./gitlab_repos"  # GitLab仓库克隆目录
+  staticDBpath: ./data/static.db
+  gitlab_token: ""
+  gitlab_url: ""
+  gitlab_clone_dir: "./data/repos"
