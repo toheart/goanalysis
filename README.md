@@ -1,7 +1,7 @@
 # 🔍 FuncTrace Analyzer
 
 <p align="right">
-  <a href="README.zh.md">中文版</a> |
+  <a href="README.ZH.md">中文版</a> |
   <a href="README.md">English Version</a>
 </p>
 
