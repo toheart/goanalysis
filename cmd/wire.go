@@ -3,7 +3,7 @@
 
 // The build tag makes sure the stub is not built in the final build.
 
-package main
+package cmd
 
 import (
 	"github.com/toheart/goanalysis/internal/biz"

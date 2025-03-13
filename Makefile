@@ -1,6 +1,6 @@
 GOHOSTOS:=$(shell go env GOHOSTOS)
 GOPATH:=$(shell go env GOPATH)
-# VERSION=$(shell git describe --tags --always)
+VERSION?=$(shell git describe --tags --always || echo "dev")
 
 ifeq ($(GOHOSTOS), windows)
 	Git_Bash="$(subst \,/,$(subst cmd\git.exe,bin\bash.exe,$(shell where git)))"
@@ -49,13 +49,34 @@ debug:
 build:
 	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
 
-package-linux:
-	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./cmd
-	tar -czvf goanalysis-linux-${VERSION}.tar.gz ./goanalysis ./configs ./frontweb/dist
+.PHONY: sync-frontend
+# 同步前端代码
+sync-frontend:
+	@if [ ! -d "frontweb" ]; then \
+		git clone https://github.com/toheart/goanalysis-web.git frontweb; \
+	else \
+		cd frontweb && git pull; \
+	fi
+	@echo "前端代码同步完成"
 
-package-windows:
+.PHONY: package-linux
+# 打包Linux版本
+package-linux: sync-frontend
+	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./cmd
+	mkdir -p release
+	tar -czvf release/goanalysis-linux-$(VERSION).tar.gz ./goanalysis ./configs ./frontweb/dist
+
+.PHONY: package-windows
+# 打包Windows版本
+package-windows: sync-frontend
 	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis.exe ./cmd
-	tar -czvf goanalysis-windows-${VERSION}.tar.gz ./goanalysis.exe ./configs ./frontweb/dist
+	mkdir -p release
+	tar -czvf release/goanalysis-windows-$(VERSION).tar.gz ./goanalysis.exe ./configs ./frontweb/dist
+
+.PHONY: docker
+# 构建Docker镜像
+docker:
+	docker build -t ghcr.io/toheart/goanalysis:$(VERSION) --build-arg VERSION=$(VERSION) .
 
 .PHONY: generate
 # generate

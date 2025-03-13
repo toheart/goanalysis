@@ -1,9 +1,16 @@
-FROM golang:1.19 AS builder
+FROM golang:1.23 AS builder
 
 COPY . /src
 WORKDIR /src
 
-RUN GOPROXY=https://goproxy.cn make build
+ARG VERSION=dev
+RUN GOPROXY=https://goproxy.cn make build VERSION=${VERSION}
+
+# 前端构建阶段（如果前端需要构建）
+# FROM node:18 AS frontend
+# WORKDIR /app
+# COPY frontweb/ .
+# RUN npm install && npm run build
 
 FROM debian:stable-slim
 
@@ -14,6 +21,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         && apt-get autoremove -y && apt-get autoclean -y
 
 COPY --from=builder /src/bin /app
+# 如果前端已经构建好，直接复制
+COPY frontweb/dist /app/frontweb/dist
+# 或者如果前端需要构建
+# COPY --from=frontend /app/dist /app/frontweb/dist
+
+COPY configs /app/configs
 
 WORKDIR /app
 

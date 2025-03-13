@@ -185,8 +185,6 @@ We follow [Gitflow workflow](https://www.atlassian.com/git/tutorials/comparing-w
 - **Issues**: [GitHub Issues](https://github.com/toheart/goanalysis/issues)
 - **WeChat**: [小唐云原生](https://mp.weixin.qq.com/)
 
-------
-
 <div align="center">
 	<p><strong>FuncTrace Analyzer</strong> - Powered by Go+Vue Tech Stack</p> 
 	<p><i>📌 Last Updated: 2025-03-09 CST</i></p>
