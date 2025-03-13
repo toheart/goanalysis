@@ -187,7 +187,7 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 	logHelper.Infof("SSE endpoint registered: /api/static/analysis/{taskId}")
 
 	// 定义前端目录
-	frontendDir := "./frontweb/dist"
+	frontendDir := "./web"
 	fileServer := http.FileServer(http.Dir(frontendDir))
 
 	// 创建一个处理所有请求的处理器
