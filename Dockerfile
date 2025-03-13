@@ -6,7 +6,7 @@ WORKDIR /src
 ARG VERSION=dev
 RUN GOPROXY=https://goproxy.cn make build VERSION=${VERSION}
 
-# 前端内容已经通过sync-frontend命令获取并放置在frontweb/dist目录中
+# 前端内容已经通过sync-frontend命令获取并放置在web目录中
 
 FROM debian:stable-slim
 
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /src/bin /app
 # 复制前端内容
-COPY frontweb/dist /app/frontweb/dist
+COPY web /app/web
 
 COPY configs /app/configs
 

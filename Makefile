@@ -82,14 +82,14 @@ sync-frontend:
 package-linux: sync-frontend
 	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./cmd
 	mkdir -p release
-	tar -czvf release/goanalysis-linux-$(VERSION).tar.gz ./goanalysis ./configs ./frontweb/dist
+	tar -czvf release/goanalysis-linux-$(VERSION).tar.gz ./goanalysis ./configs ./web
 
 .PHONY: package-windows
 # 打包Windows版本
 package-windows: sync-frontend
 	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis.exe ./cmd
 	mkdir -p release
-	tar -czvf release/goanalysis-windows-$(VERSION).tar.gz ./goanalysis.exe ./configs ./frontweb/dist
+	tar -czvf release/goanalysis-windows-$(VERSION).tar.gz ./goanalysis.exe ./configs ./web
 
 .PHONY: docker
 # 构建Docker镜像
