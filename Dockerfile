@@ -6,11 +6,7 @@ WORKDIR /src
 ARG VERSION=dev
 RUN GOPROXY=https://goproxy.cn make build VERSION=${VERSION}
 
-# 前端构建阶段（如果前端需要构建）
-# FROM node:18 AS frontend
-# WORKDIR /app
-# COPY frontweb/ .
-# RUN npm install && npm run build
+# 前端内容已经通过sync-frontend命令获取并放置在frontweb/dist目录中
 
 FROM debian:stable-slim
 
@@ -21,14 +17,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         && apt-get autoremove -y && apt-get autoclean -y
 
 COPY --from=builder /src/bin /app
-# 如果前端已经构建好，直接复制
+# 复制前端内容
 COPY frontweb/dist /app/frontweb/dist
-# 或者如果前端需要构建
-# COPY --from=frontend /app/dist /app/frontweb/dist
 
 COPY configs /app/configs
 
 WORKDIR /app
+
+# 添加版本信息
+ARG VERSION=dev
+ARG FRONTEND_VERSION=unknown
+LABEL org.opencontainers.image.version=${VERSION}
+LABEL org.opencontainers.image.description="Go源码分析平台 - 后端版本: ${VERSION}, 前端版本: ${FRONTEND_VERSION}"
 
 EXPOSE 8000
 EXPOSE 9000
