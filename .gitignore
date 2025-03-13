@@ -36,3 +36,7 @@ bin/
 .vscode/
 .idea/
 *.swp
+
+./web
+./bin
+./release

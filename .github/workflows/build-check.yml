@@ -1,0 +1,60 @@
+name: build-check
+
+on:
+  push:
+    branches-ignore:
+      - main  # Main branch is already covered by the main workflow
+    tags-ignore:
+      - '*'  # Ignore tag pushes
+  pull_request:
+    branches:
+      - '*'  # Run on all pull requests
+
+jobs:
+  build-check:
+    name: Build Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get all history for better version detection
+
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
+
+      - name: setup go environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: get version info
+        id: get_version
+        run: |
+          VERSION=$(git describe --tags --always || echo $(echo $GITHUB_SHA | cut -c1-8))
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building with version: $VERSION"
+
+      - name: build application
+        run: |
+          make build VERSION=$VERSION
+
+      - name: verify build artifacts
+        run: |
+          if [ ! -d "bin" ]; then
+            echo "Build directory not found!"
+            exit 1
+          fi
+          
+          # Check if any executables exist in the bin directory
+          if [ $(find bin -type f -executable | wc -l) -eq 0 ]; then
+            echo "No executable files found in bin directory!"
+            exit 1
+          fi
+          
+          echo "Build verification successful!" 

@@ -53,14 +53,14 @@ build:
 # 同步前端代码
 sync-frontend:
 	@echo "Starting to sync frontend code..."
-	@if [ ! -d "frontweb" ]; then \
-		mkdir -p frontweb; \
-	fi
+	@if [ ! -d "web" ]; then \
+		mkdir -p web; \
+	fi;
 	@echo "Getting the latest release version of the frontend..."
 	@LATEST_RELEASE=$$(curl -s https://api.github.com/repos/toheart/goanalysis-web/releases/latest | grep "tag_name" | cut -d '"' -f 4); \
 	if [ -z "$$LATEST_RELEASE" ]; then \
-		echo "Failed to get the latest release version of the frontend, exiting with error"
-		exit 1
+		echo "Failed to get the latest release version of the frontend, exiting with error" \
+		exit 1; \
 	else \
 		echo "Obtained the latest release version of the frontend: $$LATEST_RELEASE"; \
 		DOWNLOAD_URL=$$(curl -s https://api.github.com/repos/toheart/goanalysis-web/releases/latest | grep "browser_download_url.*zip" | cut -d '"' -f 4); \
@@ -69,23 +69,13 @@ sync-frontend:
 			 exit 1; \
 		else \
 			echo "Downloading release package: $$DOWNLOAD_URL"; \
-			curl -sL "$$DOWNLOAD_URL" -o frontend.zip; \
+			curl -sL "$$DOWNLOAD_URL" -o dist.zip; \
 		fi; \
-		rm -rf frontweb_temp && mkdir -p frontweb_temp; \
-		unzip -q frontend.zip -d frontweb_temp; \
-		if [ -d "frontweb_temp/dist" ]; then \
-			mkdir -p frontweb/dist && cp -r frontweb_temp/dist/* frontweb/dist/; \
-		elif [ -d "frontweb_temp/goanalysis-web-"*"/dist" ]; then \
-			DIST_DIR=$$(find frontweb_temp -name "dist" -type d | head -n 1); \
-			mkdir -p frontweb/dist && cp -r "$$DIST_DIR"/* frontweb/dist/; \
-		else \
-			echo "Compiled dist directory not found, manual compilation required"; \
-				echo "Source directory not found, unable to compile"; \
-				exit 1; \
-		fi; \
-		rm -rf frontweb_temp frontend.zip; \
-	fi
-	@echo "Frontend code sync completed, version: $$LATEST_RELEASE"
+		rm -rf dist_temp ;\
+		unzip -q dist.zip -d dist_temp &&  cp -r dist_temp/* web/;\
+		rm -rf dist_temp dist.zip; \
+	fi;
+	@echo "Frontend code sync completed."
 
 .PHONY: package-linux
 # 打包Linux版本
