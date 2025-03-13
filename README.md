@@ -85,40 +85,7 @@
 - **Description**: Cross-origin resource sharing
 - **Details**: CORS middleware configuration
 
-## ⚙️ System Architecture
 
-```
-.
-├── cmd
-│   └── server
-│      └── server.go          # Server entry
-│   └── rewrite.go           # Rewrite logic
-│   └── main.go              # Main entry
-├── internal
-│   ├── data
-│   │   └── data.go            # Database operations
-│   ├── service
-│   │   └── analysis.go        # Business logic
-│   └── server
-│       └── server.go          # Server config
-├── functrace
-│   └── trace.go               # Tracing implementation
-├── static
-│   └── analysis
-│       ├── src
-│       │   ├── components
-│       │   │   ├── MermaidViewer.vue
-│       │   │   ├── TraceDetails.vue
-│       │   │   └── TraceViewer.vue
-│       │   ├── App.vue
-│       │   └── main.js
-│       └── vue.config.js       # Vue config
-└── api
-    └── analysis
-        └── v1
-            ├── analysis.proto   # gRPC proto
-            └── analysis_grpc.pb.go # Generated code
-```
 
 ## 🚀 Quick Start
 
@@ -171,6 +138,38 @@ We follow [Gitflow workflow](https://www.atlassian.com/git/tutorials/comparing-w
 4. Update documentation
 5. Create PR to `develop` branch
 
+
+## GitHub Actions Pipeline and Docker Images  
+
+This project has configured a GitHub Actions pipeline for automatically building and publishing Docker images and packages.
+
+### Automatic Build Process
+
+When code is pushed to the `main` branch or a new tag (in the format of `v*`, such as `v1.0.0`) is created, the build process is automatically triggered:
+
+1. Checkout code
+2. Set up Go environment
+3. Retrieve version information
+4. Sync frontend code (from the latest release version of https://github.com/toheart/goanalysis-web)
+5. Build application
+6. Package Linux and Windows versions
+7. Build and push Docker image (only when pushing to a branch or tag)
+8. Create GitHub Release (only when creating a tag)
+
+### Frontend Version Synchronization
+
+The system will automatically fetch the latest release version from the https://github.com/toheart/goanalysis-web repository for building:
+
+1. Retrieve the latest release version information via GitHub API
+2. Download the corresponding release package or source code
+3. If the release package contains a compiled dist directory, use it directly
+4. If only the source code is available, it will be compiled automatically
+5. The Release notes will include the frontend version information used
+
+### Using Docker Images
+
+Docker images have been published to the GitHub Container Registry and can be pulled using the following command:
+
 ## 📜 Version History
 
 | Version | Date       | Milestone                   |
@@ -184,6 +183,7 @@ We follow [Gitflow workflow](https://www.atlassian.com/git/tutorials/comparing-w
 - **Maintainer**: [toheart](https://github.com/toheart)
 - **Issues**: [GitHub Issues](https://github.com/toheart/goanalysis/issues)
 - **WeChat**: [小唐云原生](https://mp.weixin.qq.com/)
+
 
 <div align="center">
 	<p><strong>FuncTrace Analyzer</strong> - Powered by Go+Vue Tech Stack</p> 

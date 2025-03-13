@@ -1,4 +1,4 @@
-name: build and release
+name: build-and-release
 
 on:
   push:
@@ -19,12 +19,19 @@ jobs:
       packages: write
     outputs:
       version: ${{ steps.get_version.outputs.version }}
+      frontend_version: ${{ steps.get_frontend_version.outputs.version }}
+      previous_tag: ${{ steps.get_previous_tag.outputs.previous_tag }}
 
     steps:
       - name: checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 获取所有历史记录和标签
+          fetch-depth: 0  # Get all history and tags
+
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
 
       - name: setup go environment
         uses: actions/setup-go@v5
@@ -43,9 +50,26 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: get previous tag
+        id: get_previous_tag
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            CURRENT_TAG=${GITHUB_REF#refs/tags/}
+            PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v $CURRENT_TAG | head -n 1 || echo "")
+            echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+            echo "Previous tag: $PREVIOUS_TAG"
+          fi
+
       - name: sync frontend code
+        id: get_frontend_version
         run: |
           make sync-frontend
+          # Extract frontend version
+          FRONTEND_VERSION=$(curl -s https://api.github.com/repos/toheart/goanalysis-web/releases/latest | grep "tag_name" | cut -d '"' -f 4 || echo "unknown")
+          echo "FRONTEND_VERSION=$FRONTEND_VERSION" >> $GITHUB_ENV
+          echo "version=$FRONTEND_VERSION" >> $GITHUB_OUTPUT
+          echo "Using frontend version: $FRONTEND_VERSION"
 
       - name: build application
         run: |
@@ -88,6 +112,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VERSION=${{ env.VERSION }}
+            FRONTEND_VERSION=${{ env.FRONTEND_VERSION }}
 
       - name: upload build artifacts
         uses: actions/upload-artifact@v4
@@ -106,6 +131,31 @@ jobs:
       packages: write
 
     steps:
+      - name: checkout code for changelog
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get all history and tags
+
+      - name: generate changelog
+        id: changelog
+        run: |
+          PREVIOUS_TAG="${{ needs.build.outputs.previous_tag }}"
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found, generating changelog from all commits"
+            CHANGELOG=$(git log --pretty=format:"* %s (%h) by %an" $CURRENT_TAG)
+          else
+            echo "Generating changelog between $PREVIOUS_TAG and $CURRENT_TAG"
+            CHANGELOG=$(git log --pretty=format:"* %s (%h) by %an" $PREVIOUS_TAG..$CURRENT_TAG)
+          fi
+          
+          # Save changelog to file and environment
+          echo "$CHANGELOG" > changelog.txt
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -118,4 +168,16 @@ jobs:
           files: |
             release/goanalysis-linux-${{ needs.build.outputs.version }}.tar.gz
             release/goanalysis-windows-${{ needs.build.outputs.version }}.tar.gz
-          generate_release_notes: true 
+          body: |
+            ## Release Notes
+            
+            ### Backend Version
+            - Version: ${{ needs.build.outputs.version }}
+            
+            ### Frontend Version
+            - Version: ${{ needs.build.outputs.frontend_version }}
+            
+            ### Changes since ${{ needs.build.outputs.previous_tag || 'initial version' }}
+            
+            ${{ env.CHANGELOG }}
+          generate_release_notes: false 
