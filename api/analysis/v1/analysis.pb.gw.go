@@ -290,13 +290,13 @@ func request_Analysis_GetTracesByParentFunc_0(ctx context.Context, marshaler run
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	val, ok := pathParams["parent_func"]
+	val, ok := pathParams["parent_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent_func")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent_id")
 	}
-	protoReq.ParentFunc, err = runtime.String(val)
+	protoReq.ParentId, err = runtime.Int64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent_func", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent_id", err)
 	}
 	msg, err := client.GetTracesByParentFunc(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -311,39 +311,39 @@ func local_request_Analysis_GetTracesByParentFunc_0(ctx context.Context, marshal
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	val, ok := pathParams["parent_func"]
+	val, ok := pathParams["parent_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent_func")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent_id")
 	}
-	protoReq.ParentFunc, err = runtime.String(val)
+	protoReq.ParentId, err = runtime.Int64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent_func", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent_id", err)
 	}
 	msg, err := server.GetTracesByParentFunc(ctx, &protoReq)
 	return msg, metadata, err
 }
 
-func request_Analysis_GetAllParentFuncNames_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Analysis_GetAllParentIds_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq GetAllParentFuncNamesReq
+		protoReq GetAllParentIdsReq
 		metadata runtime.ServerMetadata
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	msg, err := client.GetAllParentFuncNames(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetAllParentIds(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
 
-func local_request_Analysis_GetAllParentFuncNames_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_Analysis_GetAllParentIds_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
-		protoReq GetAllParentFuncNamesReq
+		protoReq GetAllParentIdsReq
 		metadata runtime.ServerMetadata
 	)
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	msg, err := server.GetAllParentFuncNames(ctx, &protoReq)
+	msg, err := server.GetAllParentIds(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -356,13 +356,13 @@ func request_Analysis_GetChildFunctions_0(ctx context.Context, marshaler runtime
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	val, ok := pathParams["func_name"]
+	val, ok := pathParams["parent_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "func_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent_id")
 	}
-	protoReq.FuncName, err = runtime.String(val)
+	protoReq.ParentId, err = runtime.Int64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "func_name", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent_id", err)
 	}
 	msg, err := client.GetChildFunctions(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -377,13 +377,13 @@ func local_request_Analysis_GetChildFunctions_0(ctx context.Context, marshaler r
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	val, ok := pathParams["func_name"]
+	val, ok := pathParams["parent_id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "func_name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "parent_id")
 	}
-	protoReq.FuncName, err = runtime.String(val)
+	protoReq.ParentId, err = runtime.Int64(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "func_name", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "parent_id", err)
 	}
 	msg, err := server.GetChildFunctions(ctx, &protoReq)
 	return msg, metadata, err
@@ -548,6 +548,30 @@ func local_request_Analysis_InstrumentProject_0(ctx context.Context, marshaler r
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.InstrumentProject(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_Analysis_GetUnfinishedFunctions_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetUnfinishedFunctionsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetUnfinishedFunctions(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_GetUnfinishedFunctions_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetUnfinishedFunctionsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetUnfinishedFunctions(ctx, &protoReq)
 	return msg, metadata, err
 }
 
@@ -723,7 +747,7 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetTracesByParentFunc", runtime.WithHTTPPathPattern("/api/runtime/traces/parent/{parent_func}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetTracesByParentFunc", runtime.WithHTTPPathPattern("/api/runtime/traces/parent/{parent_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -737,25 +761,25 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		}
 		forward_Analysis_GetTracesByParentFunc_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_Analysis_GetAllParentFuncNames_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAllParentIds_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllParentFuncNames", runtime.WithHTTPPathPattern("/api/runtime/functions/parent"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllParentIds", runtime.WithHTTPPathPattern("/api/runtime/functions/parent-ids"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Analysis_GetAllParentFuncNames_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Analysis_GetAllParentIds_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_Analysis_GetAllParentFuncNames_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Analysis_GetAllParentIds_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodPost, pattern_Analysis_GetChildFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -763,7 +787,7 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetChildFunctions", runtime.WithHTTPPathPattern("/api/runtime/functions/{func_name}/children"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetChildFunctions", runtime.WithHTTPPathPattern("/api/runtime/functions/{parent_id}/children"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -896,6 +920,26 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 			return
 		}
 		forward_Analysis_InstrumentProject_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetUnfinishedFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetUnfinishedFunctions", runtime.WithHTTPPathPattern("/api/runtime/unfinished-functions"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_GetUnfinishedFunctions_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetUnfinishedFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -1077,7 +1121,7 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetTracesByParentFunc", runtime.WithHTTPPathPattern("/api/runtime/traces/parent/{parent_func}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetTracesByParentFunc", runtime.WithHTTPPathPattern("/api/runtime/traces/parent/{parent_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1090,28 +1134,28 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		}
 		forward_Analysis_GetTracesByParentFunc_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_Analysis_GetAllParentFuncNames_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_Analysis_GetAllParentIds_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllParentFuncNames", runtime.WithHTTPPathPattern("/api/runtime/functions/parent"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAllParentIds", runtime.WithHTTPPathPattern("/api/runtime/functions/parent-ids"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Analysis_GetAllParentFuncNames_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Analysis_GetAllParentIds_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		forward_Analysis_GetAllParentFuncNames_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Analysis_GetAllParentIds_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 	mux.Handle(http.MethodPost, pattern_Analysis_GetChildFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetChildFunctions", runtime.WithHTTPPathPattern("/api/runtime/functions/{func_name}/children"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetChildFunctions", runtime.WithHTTPPathPattern("/api/runtime/functions/{parent_id}/children"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1226,45 +1270,64 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		}
 		forward_Analysis_InstrumentProject_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetUnfinishedFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetUnfinishedFunctions", runtime.WithHTTPPathPattern("/api/runtime/unfinished-functions"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_GetUnfinishedFunctions_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetUnfinishedFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
 var (
-	pattern_Analysis_GetAnalysis_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"analysis", "name"}, ""))
-	pattern_Analysis_GetAnalysisByGID_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "traces", "gid"}, ""))
-	pattern_Analysis_GetAllGIDs_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "gids"}, ""))
-	pattern_Analysis_GetParamsByID_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "params", "id"}, ""))
-	pattern_Analysis_GetAllFunctionName_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "functions"}, ""))
-	pattern_Analysis_GetGidsByFunctionName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "gids", "function"}, ""))
-	pattern_Analysis_VerifyProjectPath_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "verify", "path"}, ""))
-	pattern_Analysis_GetTraceGraph_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "traces", "graph"}, ""))
-	pattern_Analysis_GetTracesByParentFunc_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "runtime", "traces", "parent", "parent_func"}, ""))
-	pattern_Analysis_GetAllParentFuncNames_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "functions", "parent"}, ""))
-	pattern_Analysis_GetChildFunctions_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "functions", "func_name", "children"}, ""))
-	pattern_Analysis_GetHotFunctions_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "hot-functions"}, ""))
-	pattern_Analysis_GetGoroutineStats_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "goroutine-stats"}, ""))
-	pattern_Analysis_GetFunctionAnalysis_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "analysis"}, ""))
-	pattern_Analysis_GetFunctionCallGraph_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "function", "function_name", "graph"}, ""))
-	pattern_Analysis_GetFunctionCallGraph_1  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "graph"}, ""))
-	pattern_Analysis_InstrumentProject_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "instrument"}, ""))
+	pattern_Analysis_GetAnalysis_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"analysis", "name"}, ""))
+	pattern_Analysis_GetAnalysisByGID_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "traces", "gid"}, ""))
+	pattern_Analysis_GetAllGIDs_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "gids"}, ""))
+	pattern_Analysis_GetParamsByID_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "params", "id"}, ""))
+	pattern_Analysis_GetAllFunctionName_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "functions"}, ""))
+	pattern_Analysis_GetGidsByFunctionName_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "gids", "function"}, ""))
+	pattern_Analysis_VerifyProjectPath_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "verify", "path"}, ""))
+	pattern_Analysis_GetTraceGraph_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "traces", "graph"}, ""))
+	pattern_Analysis_GetTracesByParentFunc_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "runtime", "traces", "parent", "parent_id"}, ""))
+	pattern_Analysis_GetAllParentIds_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "functions", "parent-ids"}, ""))
+	pattern_Analysis_GetChildFunctions_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "functions", "parent_id", "children"}, ""))
+	pattern_Analysis_GetHotFunctions_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "hot-functions"}, ""))
+	pattern_Analysis_GetGoroutineStats_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "goroutine-stats"}, ""))
+	pattern_Analysis_GetFunctionAnalysis_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "analysis"}, ""))
+	pattern_Analysis_GetFunctionCallGraph_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "function", "function_name", "graph"}, ""))
+	pattern_Analysis_GetFunctionCallGraph_1   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "graph"}, ""))
+	pattern_Analysis_InstrumentProject_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "instrument"}, ""))
+	pattern_Analysis_GetUnfinishedFunctions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "unfinished-functions"}, ""))
 )
 
 var (
-	forward_Analysis_GetAnalysis_0           = runtime.ForwardResponseMessage
-	forward_Analysis_GetAnalysisByGID_0      = runtime.ForwardResponseMessage
-	forward_Analysis_GetAllGIDs_0            = runtime.ForwardResponseMessage
-	forward_Analysis_GetParamsByID_0         = runtime.ForwardResponseMessage
-	forward_Analysis_GetAllFunctionName_0    = runtime.ForwardResponseMessage
-	forward_Analysis_GetGidsByFunctionName_0 = runtime.ForwardResponseMessage
-	forward_Analysis_VerifyProjectPath_0     = runtime.ForwardResponseMessage
-	forward_Analysis_GetTraceGraph_0         = runtime.ForwardResponseMessage
-	forward_Analysis_GetTracesByParentFunc_0 = runtime.ForwardResponseMessage
-	forward_Analysis_GetAllParentFuncNames_0 = runtime.ForwardResponseMessage
-	forward_Analysis_GetChildFunctions_0     = runtime.ForwardResponseMessage
-	forward_Analysis_GetHotFunctions_0       = runtime.ForwardResponseMessage
-	forward_Analysis_GetGoroutineStats_0     = runtime.ForwardResponseMessage
-	forward_Analysis_GetFunctionAnalysis_0   = runtime.ForwardResponseMessage
-	forward_Analysis_GetFunctionCallGraph_0  = runtime.ForwardResponseMessage
-	forward_Analysis_GetFunctionCallGraph_1  = runtime.ForwardResponseMessage
-	forward_Analysis_InstrumentProject_0     = runtime.ForwardResponseMessage
+	forward_Analysis_GetAnalysis_0            = runtime.ForwardResponseMessage
+	forward_Analysis_GetAnalysisByGID_0       = runtime.ForwardResponseMessage
+	forward_Analysis_GetAllGIDs_0             = runtime.ForwardResponseMessage
+	forward_Analysis_GetParamsByID_0          = runtime.ForwardResponseMessage
+	forward_Analysis_GetAllFunctionName_0     = runtime.ForwardResponseMessage
+	forward_Analysis_GetGidsByFunctionName_0  = runtime.ForwardResponseMessage
+	forward_Analysis_VerifyProjectPath_0      = runtime.ForwardResponseMessage
+	forward_Analysis_GetTraceGraph_0          = runtime.ForwardResponseMessage
+	forward_Analysis_GetTracesByParentFunc_0  = runtime.ForwardResponseMessage
+	forward_Analysis_GetAllParentIds_0        = runtime.ForwardResponseMessage
+	forward_Analysis_GetChildFunctions_0      = runtime.ForwardResponseMessage
+	forward_Analysis_GetHotFunctions_0        = runtime.ForwardResponseMessage
+	forward_Analysis_GetGoroutineStats_0      = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionAnalysis_0    = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionCallGraph_0   = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionCallGraph_1   = runtime.ForwardResponseMessage
+	forward_Analysis_InstrumentProject_0      = runtime.ForwardResponseMessage
+	forward_Analysis_GetUnfinishedFunctions_0 = runtime.ForwardResponseMessage
 )

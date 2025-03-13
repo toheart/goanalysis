@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/toheart/functrace"
 	v1 "github.com/toheart/goanalysis/api/analysis/v1"
 	"github.com/toheart/goanalysis/internal/biz/analysis"
 	"github.com/toheart/goanalysis/internal/biz/entity"
@@ -53,13 +52,13 @@ func (a *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisB
 	reply := &v1.AnalysisByGIDReply{}
 	for _, trace := range traces {
 		traceData := &v1.AnalysisByGIDReply_TraceData{
-			Id:             int32(trace.ID),
-			Name:           trace.Name,
-			Gid:            int32(trace.GID),
-			Indent:         int32(trace.Indent),
-			ParamCount:     int32(len(trace.Params)),
-			TimeCost:       trace.TimeCost,
-			ParentFuncname: trace.ParentFuncName,
+			Id:         int32(trace.ID),
+			Name:       trace.Name,
+			Gid:        int32(trace.GID),
+			Indent:     int32(trace.Indent),
+			ParamCount: int32(len(trace.Params)),
+			TimeCost:   trace.TimeCost,
+			ParentId:   trace.ParentId,
 		}
 
 		reply.TraceData = append(reply.TraceData, traceData)
@@ -104,9 +103,20 @@ func (a *AnalysisService) GetAllGIDs(ctx context.Context, in *v1.GetAllGIDsReq) 
 			execTime, err := a.uc.GetGoroutineExecutionTime(dbpath, gid)
 			if err != nil {
 				// 如果获取失败，使用默认值
+				a.log.Errorf("get goroutine execution time for gid: %d from db: %s failed: %v", gid, dbpath, err)
 				body.ExecutionTime = "N/A"
 			} else {
 				body.ExecutionTime = execTime
+			}
+
+			// 判断goroutine是否已完成
+			isFinished, err := a.uc.IsGoroutineFinished(dbpath, gid)
+			if err != nil {
+				// 如果获取失败，默认为未完成
+				a.log.Errorf("check if goroutine is finished for gid: %d from db: %s failed: %v", gid, dbpath, err)
+				body.IsFinished = false
+			} else {
+				body.IsFinished = isFinished
 			}
 		}
 
@@ -150,7 +160,7 @@ func (a *AnalysisService) GenerateImage(ctx context.Context, in *v1.GenerateImag
 	mermaidText.WriteString("graph TD\n")
 
 	// 使用栈来跟踪调用关系
-	stack := make([]functrace.TraceData, 0)
+	stack := make([]entity.TraceData, 0)
 
 	for _, trace := range traces {
 		// 根据缩进级别调整栈
@@ -254,6 +264,16 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 				body.ExecutionTime = "N/A"
 			} else {
 				body.ExecutionTime = execTime
+			}
+
+			// 判断goroutine是否已完成
+			isFinished, err := a.uc.IsGoroutineFinished(dbpath, gid)
+			if err != nil {
+				// 如果获取失败，默认为未完成
+				a.log.Errorf("check if goroutine is finished for gid: %d from db: %s failed: %v", gid, dbpath, err)
+				body.IsFinished = false
+			} else {
+				body.IsFinished = isFinished
 			}
 		}
 
@@ -363,7 +383,7 @@ func (a *AnalysisService) GetTraceGraph(ctx context.Context, in *v1.GetTraceGrap
 	}, nil
 }
 
-func buildGraphFromTraces(traces []functrace.TraceData) *GraphData {
+func buildGraphFromTraces(traces []entity.TraceData) *GraphData {
 	// 初始化图数据结构
 	graphData := &GraphData{
 		Nodes: []GraphNode{},
@@ -382,10 +402,10 @@ func buildGraphFromTraces(traces []functrace.TraceData) *GraphData {
 	callCounts := make(map[string]int)
 
 	// 使用map来存储节点信息，便于后续构建
-	nodeInfoMap := make(map[string]functrace.TraceData)
+	nodeInfoMap := make(map[string]entity.TraceData)
 
 	// 使用栈来跟踪调用关系
-	stack := make([]functrace.TraceData, 0, 32) // 预分配一定容量以提高性能
+	stack := make([]entity.TraceData, 0, 32) // 预分配一定容量以提高性能
 
 	// 第一遍遍历：构建调用关系和统计调用次数
 	for _, trace := range traces {
@@ -493,9 +513,9 @@ func convertToProtoEdges(edges []GraphEdge) []*v1.GraphEdge {
 	return protoEdges
 }
 
-// GetTracesByParentFunc 根据父函数名称获取函数调用
+// GetTracesByParentFunc 根据父函数ID获取函数调用
 func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetTracesByParentFuncReq) (*v1.GetTracesByParentFuncReply, error) {
-	traces, err := a.uc.GetTracesByParentFunc(in.Dbpath, in.ParentFunc)
+	traces, err := a.uc.GetTracesByParentFunc(in.Dbpath, in.ParentId)
 	if err != nil {
 		return nil, err
 	}
@@ -503,13 +523,13 @@ func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetT
 	reply := &v1.GetTracesByParentFuncReply{}
 	for _, trace := range traces {
 		traceData := &v1.GetTracesByParentFuncReply_TraceData{
-			Id:             int32(trace.ID),
-			Name:           trace.Name,
-			Gid:            int32(trace.GID),
-			Indent:         int32(trace.Indent),
-			ParamCount:     int32(len(trace.Params)),
-			TimeCost:       trace.TimeCost,
-			ParentFuncname: trace.ParentFuncName,
+			Id:         int32(trace.ID),
+			Name:       trace.Name,
+			Gid:        int32(trace.GID),
+			Indent:     int32(trace.Indent),
+			ParamCount: int32(len(trace.Params)),
+			TimeCost:   trace.TimeCost,
+			ParentId:   trace.ParentId,
 		}
 
 		reply.TraceData = append(reply.TraceData, traceData)
@@ -517,20 +537,20 @@ func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetT
 	return reply, nil
 }
 
-// GetAllParentFuncNames 获取所有的父函数名称
-func (a *AnalysisService) GetAllParentFuncNames(ctx context.Context, in *v1.GetAllParentFuncNamesReq) (*v1.GetAllParentFuncNamesReply, error) {
-	parentFuncNames, err := a.uc.GetAllParentFuncNames(in.Dbpath)
+// GetAllParentIds 获取所有的父函数ID
+func (a *AnalysisService) GetAllParentIds(ctx context.Context, in *v1.GetAllParentIdsReq) (*v1.GetAllParentIdsReply, error) {
+	parentIds, err := a.uc.GetAllParentIds(in.Dbpath)
 	if err != nil {
 		return nil, err
 	}
-	return &v1.GetAllParentFuncNamesReply{
-		ParentFuncNames: parentFuncNames,
+	return &v1.GetAllParentIdsReply{
+		ParentIds: parentIds,
 	}, nil
 }
 
 // GetChildFunctions 获取函数的子函数
 func (a *AnalysisService) GetChildFunctions(ctx context.Context, in *v1.GetChildFunctionsReq) (*v1.GetChildFunctionsReply, error) {
-	childFunctions, err := a.uc.GetChildFunctions(in.Dbpath, in.FuncName)
+	childFunctions, err := a.uc.GetChildFunctions(in.Dbpath, in.ParentId)
 	if err != nil {
 		return nil, err
 	}
@@ -642,7 +662,7 @@ func (a *AnalysisService) GetFunctionCallGraph(ctx context.Context, in *v1.GetFu
 	return reply, nil
 }
 
-// InstrumentProject 实现插桩功能
+// InstrumentProject 对项目进行插桩
 func (a *AnalysisService) InstrumentProject(ctx context.Context, in *v1.InstrumentProjectReq) (*v1.InstrumentProjectReply, error) {
 	a.log.Infof("Instrumenting project at path: %s", in.Path)
 
@@ -662,9 +682,80 @@ func (a *AnalysisService) InstrumentProject(ctx context.Context, in *v1.Instrume
 
 	// 执行插桩操作
 	rewrite.RewriteDir(in.Path)
-
+	// 暂时返回成功
 	return &v1.InstrumentProjectReply{
 		Success: true,
-		Message: "项目插桩成功，现在可以运行您的程序进行分析",
+		Message: "项目插桩成功",
 	}, nil
+}
+
+// GetUnfinishedFunctions 获取未完成的函数列表
+func (a *AnalysisService) GetUnfinishedFunctions(ctx context.Context, in *v1.GetUnfinishedFunctionsReq) (*v1.GetUnfinishedFunctionsReply, error) {
+	a.log.WithContext(ctx).Infof("GetUnfinishedFunctions request received: threshold=%d, dbpath=%s, page=%d, limit=%d",
+		in.Threshold, in.Dbpath, in.Page, in.Limit)
+
+	// 参数验证
+	if in.Dbpath == "" {
+		a.log.WithContext(ctx).Errorf("GetUnfinishedFunctions failed: dbpath is empty")
+		return nil, errors.New("dbpath is required")
+	}
+
+	// 获取未完成函数列表
+	functions, err := a.uc.GetUnfinishedFunctions(in.Dbpath, in.Threshold)
+	if err != nil {
+		a.log.WithContext(ctx).Errorf("Failed to get unfinished functions: %v", err)
+		return nil, fmt.Errorf("failed to get unfinished functions: %w", err)
+	}
+
+	// 计算分页
+	totalCount := len(functions)
+	page := int(in.Page)
+	limit := int(in.Limit)
+
+	// 默认值处理
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10 // 默认每页10条
+	}
+
+	// 计算起始和结束索引
+	startIndex := (page - 1) * limit
+	endIndex := startIndex + limit
+
+	// 边界检查
+	if startIndex >= totalCount {
+		startIndex = 0
+		endIndex = 0
+	} else if endIndex > totalCount {
+		endIndex = totalCount
+	}
+
+	// 获取当前页的数据
+	var pagedFunctions []entity.UnfinishedFunction
+	if startIndex < endIndex {
+		pagedFunctions = functions[startIndex:endIndex]
+	} else {
+		pagedFunctions = []entity.UnfinishedFunction{}
+	}
+
+	// 构建响应
+	reply := &v1.GetUnfinishedFunctionsReply{
+		Total: int32(totalCount),
+	}
+
+	for _, function := range pagedFunctions {
+		reply.Functions = append(reply.Functions, &v1.GetUnfinishedFunctionsReply_UnfinishedFunction{
+			Name:        function.Name,
+			Gid:         function.GID,
+			RunningTime: function.RunningTime,
+			IsBlocking:  function.IsBlocking,
+			FunctionId:  function.FunctionID,
+		})
+	}
+
+	a.log.WithContext(ctx).Infof("Found %d unfinished functions, returning page %d with %d items",
+		totalCount, page, len(pagedFunctions))
+	return reply, nil
 }

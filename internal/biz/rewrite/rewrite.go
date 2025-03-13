@@ -82,22 +82,36 @@ type Rewrite struct {
 	f        *ast.File
 }
 
-func (r *Rewrite) genTraceParams(funcType *ast.FuncType) []ast.Expr {
-	if len(funcType.Params.List) == 0 {
-		return nil
-	}
+func (r *Rewrite) genTraceParams(funcType *ast.FuncType, recv *ast.FieldList) []ast.Expr {
 	var params []string
-	for _, item := range funcType.Params.List {
-		for _, j := range item.Names {
-			if j.Name == "_" {
-				continue
+
+	// 处理接收器
+	if recv != nil && len(recv.List) > 0 {
+		for _, field := range recv.List {
+			for _, name := range field.Names {
+				if name.Name != "_" {
+					params = append(params, name.Name)
+				}
 			}
-			params = append(params, j.Name)
 		}
 	}
+
+	// 处理函数参数
+	if funcType.Params != nil && len(funcType.Params.List) > 0 {
+		for _, item := range funcType.Params.List {
+			for _, j := range item.Names {
+				if j.Name == "_" {
+					continue
+				}
+				params = append(params, j.Name)
+			}
+		}
+	}
+
 	if len(params) == 0 {
 		return nil
 	}
+
 	var elts []ast.Expr
 	for _, param := range params {
 		elts = append(elts, &ast.BasicLit{
@@ -199,7 +213,7 @@ func (r *Rewrite) RewriteFile() {
 		if r.HasSameDefer(funcDel) {
 			continue
 		}
-		elts := r.genTraceParams(funcDel.Type)
+		elts := r.genTraceParams(funcDel.Type, funcDel.Recv)
 		deferStmt := r.genDefer(elts)
 		// 将defer语句添加到函数体的开头
 		funcDel.Body.List = append([]ast.Stmt{deferStmt}, funcDel.Body.List...)

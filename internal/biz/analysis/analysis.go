@@ -40,7 +40,7 @@ func NewAnalysisBiz(conf *conf.Biz, data *data.Data, logger log.Logger) *Analysi
 	return &AnalysisBiz{conf: conf, data: data, log: log.NewHelper(logger)}
 }
 
-func (a *AnalysisBiz) GetTracesByGID(dbpath string, gid string) ([]functrace.TraceData, error) {
+func (a *AnalysisBiz) GetTracesByGID(dbpath string, gid string) ([]entity.TraceData, error) {
 	a.log.Infof("get traces by gid: %s from db: %s", gid, dbpath)
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
@@ -91,34 +91,34 @@ func (a *AnalysisBiz) VerifyProjectPath(path string) bool {
 	return true
 }
 
-// GetTracesByParentFunc 根据父函数名称获取函数调用
-func (a *AnalysisBiz) GetTracesByParentFunc(dbpath string, parentFunc string) ([]functrace.TraceData, error) {
-	a.log.Infof("get traces by parent function: %s from db: %s", parentFunc, dbpath)
+// GetTracesByParentFunc 根据父函数ID获取函数调用
+func (a *AnalysisBiz) GetTracesByParentFunc(dbpath string, parentId int64) ([]entity.TraceData, error) {
+	a.log.Infof("get traces by parent id: %d from db: %s", parentId, dbpath)
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err
 	}
-	return traceDB.GetTracesByParentFunc(parentFunc)
+	return traceDB.GetTracesByParentId(parentId)
 }
 
-// GetAllParentFuncNames 获取所有的父函数名称
-func (a *AnalysisBiz) GetAllParentFuncNames(dbpath string) ([]string, error) {
-	a.log.Infof("get all parent function names from db: %s", dbpath)
+// GetAllParentIds 获取所有的父函数ID
+func (a *AnalysisBiz) GetAllParentIds(dbpath string) ([]int64, error) {
+	a.log.Infof("get all parent ids from db: %s", dbpath)
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err
 	}
-	return traceDB.GetAllParentFuncNames()
+	return traceDB.GetAllParentIds()
 }
 
 // GetChildFunctions 获取函数的子函数
-func (a *AnalysisBiz) GetChildFunctions(dbpath string, funcName string) ([]string, error) {
-	a.log.Infof("get child functions of: %s from db: %s", funcName, dbpath)
+func (a *AnalysisBiz) GetChildFunctions(dbpath string, parentId int64) ([]string, error) {
+	a.log.Infof("get child functions of parent id: %d from db: %s", parentId, dbpath)
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err
 	}
-	return traceDB.GetChildFunctions(funcName)
+	return traceDB.GetChildFunctions(parentId)
 }
 
 // GetHotFunctions 获取热点函数分析数据
@@ -179,4 +179,29 @@ func (a *AnalysisBiz) GetGoroutineExecutionTime(dbpath string, gid uint64) (stri
 		return "", err
 	}
 	return traceDB.GetGoroutineExecutionTime(gid)
+}
+
+// IsGoroutineFinished 检查指定的goroutine是否已完成
+func (a *AnalysisBiz) IsGoroutineFinished(dbpath string, gid uint64) (bool, error) {
+	a.log.Infof("check if goroutine is finished, gid: %d from db: %s", gid, dbpath)
+	traceDB, err := a.data.GetTraceDB(dbpath)
+	if err != nil {
+		return false, err
+	}
+	return traceDB.IsGoroutineFinished(gid)
+}
+
+// GetUnfinishedFunctions 获取未完成的函数列表
+func (a *AnalysisBiz) GetUnfinishedFunctions(dbpath string, threshold int64) ([]entity.UnfinishedFunction, error) {
+	a.log.Infof("get unfinished functions with threshold: %d ms from db: %s", threshold, dbpath)
+	traceDB, err := a.data.GetTraceDB(dbpath)
+	if err != nil {
+		return nil, err
+	}
+	functions, err := traceDB.GetUnfinishedFunctions(threshold)
+	if err != nil {
+		return nil, err
+	}
+
+	return functions, nil
 }

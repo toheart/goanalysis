@@ -41,20 +41,24 @@
           <div v-if="traceData" class="trace-container p-3">
             <template v-for="(value, key) in processedTraceData" :key="key">
               <div class="stack-item" :style="{ marginLeft: value.indent*20 + 'px' }">
-                <div class="trace-row" :class="{'has-children': hasChildren(value)}">
+                <div class="trace-row" :class="{
+                  'has-children': hasChildren(value), 
+                  'is-collapsed': isCollapsed(value.originalIndex),
+                  'is-highlighted': isHighlighted(value.id)
+                }">
                   <div class="row align-items-center">
                     <div class="col-md-9 trace-info">
                       <div class="d-flex align-items-center">
                         <button v-if="hasChildren(value)" 
                                 class="btn btn-sm btn-link toggle-btn me-2" 
                                 @click="toggleNode(value.originalIndex)">
-                          <i class="bi" :class="isCollapsed(value.originalIndex) ? 'bi-plus-square' : 'bi-dash-square'"></i>
+                          <i class="bi" :class="isCollapsed(value.originalIndex) ? 'bi-plus-circle-fill' : 'bi-dash-circle-fill'"></i>
                         </button>
-                        <span v-else class="me-4 ms-1"><i class="bi bi-dot"></i></span>
+                        <span v-else class="me-4 ms-1"><i class="bi bi-circle-fill function-dot"></i></span>
                         <div>
                           <p class="mb-1 function-name">{{ value.name }}</p>
-                          <small class="text-muted">耗时: {{ value.timeCost }}</small>
-                          <small v-if="value.parentFuncname" class="text-muted d-block">父函数: {{ value.parentFuncname }}</small>
+                          <small class="text-muted d-block">耗时: {{ value.timeCost }}</small>
+                          <small v-if="value.id" class="text-muted d-block">id: {{ value.id }}</small>
                         </div>
                       </div>
                     </div>
@@ -167,6 +171,7 @@ export default {
       parentMap: new Map(), // 存储函数的父函数
       expandedNodes: new Set(), // 存储展开的节点
       dbpath: '', // 当前使用的数据库路径
+      highlightedFunctionId: null, // 高亮显示的函数ID
     };
   },
   computed: {
@@ -178,8 +183,6 @@ export default {
         const result = [];
         const traceArray = Object.values(this.traceData);
         
-        console.log('折叠的节点索引:', this.collapsedNodes);
-        
         // 创建一个新数组，用于存储处理后的数据
         for (let i = 0; i < traceArray.length; i++) {
           const node = traceArray[i];
@@ -188,22 +191,18 @@ export default {
           // 检查该节点是否应该显示
           let shouldShow = true;
           
-          // 使用 parentFuncname 检查节点是否应该被隐藏
-          // 如果节点的任何祖先节点被折叠，则不显示该节点
-          let currentNode = node;
-          let ancestorIndex = this.findNodeIndexByName(currentNode.parentFuncname);
-          
-          while (ancestorIndex !== -1) {
-            if (this.collapsedNodes.has(ancestorIndex)) {
-              shouldShow = false;
-              break;
+          // 检查节点是否应该被隐藏（如果其父节点被折叠）
+          if (node.parentId) {
+            // 获取所有祖先节点
+            const ancestors = this.getAncestors(node);
+            
+            // 检查任何祖先是否被折叠
+            for (const ancestorIndex of ancestors) {
+              if (this.collapsedNodes.has(ancestorIndex)) {
+                shouldShow = false;
+                break;
+              }
             }
-            
-            // 继续向上查找祖先节点
-            const ancestorNode = traceArray[ancestorIndex];
-            if (!ancestorNode || !ancestorNode.parentFuncname) break;
-            
-            ancestorIndex = this.findNodeIndexByName(ancestorNode.parentFuncname);
           }
           
           if (shouldShow) {
@@ -224,6 +223,9 @@ export default {
   mounted() {
     this.checkProjectPath();
     this.modal = new Modal(document.getElementById('paramsModal'));
+    
+    // 从本地存储中获取高亮函数ID
+    this.getHighlightedFunctionId();
   },
   methods: {
     // 检查是否有已验证的项目路径
@@ -275,33 +277,90 @@ export default {
       }
     },
     
+    // 获取节点的所有祖先节点索引
+    getAncestors(node) {
+      if (!node || !node.parentId) return [];
+      
+      const ancestors = [];
+      let currentParentId = Number(node.parentId);
+      
+      while (currentParentId) {
+        const parentIndex = this.findNodeIndexById(currentParentId);
+        if (parentIndex === -1) break;
+        
+        ancestors.push(parentIndex);
+        
+        // 获取父节点，继续向上查找
+        const parentNode = Object.values(this.traceData)[parentIndex];
+        if (!parentNode || !parentNode.parentId) break;
+        
+        currentParentId = Number(parentNode.parentId);
+      }
+      
+      return ancestors;
+    },
+    
     // 构建函数调用关系映射
     buildFunctionRelationships() {
       if (!this.traceData) return;
       
       const traceArray = Object.values(this.traceData);
+      console.log('构建函数调用关系，总节点数:', traceArray.length);
       
       // 清空映射
       this.childrenMap.clear();
       this.parentMap.clear();
       
-      // 构建映射关系
+      // 检查数据结构
+      const sampleNode = traceArray[0];
+      console.log('节点数据结构示例:', sampleNode);
+      
+      // 构建直接子节点映射
+      const directChildrenMap = new Map(); // id -> [childIndices]
+      
+      // 第一遍：建立父子关系
+      let parentChildCount = 0;
       for (let i = 0; i < traceArray.length; i++) {
         const node = traceArray[i];
         if (!node) continue;
         
-        // 记录父子关系
-        if (node.parentFuncname) {
-          // 添加到父函数的子函数列表
-          if (!this.childrenMap.has(node.parentFuncname)) {
-            this.childrenMap.set(node.parentFuncname, []);
+        if (node.parentId) {
+          // 记录直接子节点关系
+          if (!directChildrenMap.has(node.parentId)) {
+            directChildrenMap.set(node.parentId, []);
           }
-          this.childrenMap.get(node.parentFuncname).push(i);
+          directChildrenMap.get(node.parentId).push(i);
+          parentChildCount++;
           
-          // 记录节点的父函数
-          this.parentMap.set(i, this.findNodeIndexByName(node.parentFuncname));
+          // 记录父节点关系
+          this.parentMap.set(i, this.findNodeIndexByParentId(node.parentId));
         }
       }
+      console.log(`找到 ${parentChildCount} 个父子关系`);
+      
+      // 第二遍：建立函数名到子节点的映射
+      let functionChildCount = 0;
+      for (let i = 0; i < traceArray.length; i++) {
+        const node = traceArray[i];
+        if (!node) continue;
+        
+        // 查找该节点的所有子节点
+        const childIndices = directChildrenMap.get(node.id) || [];
+        
+        if (childIndices.length > 0) {
+          if (!this.childrenMap.has(node.name)) {
+            this.childrenMap.set(node.name, []);
+          }
+          
+          // 添加所有子节点
+          for (const childIndex of childIndices) {
+            this.childrenMap.get(node.name).push(childIndex);
+            functionChildCount++;
+          }
+        }
+      }
+      console.log(`映射了 ${functionChildCount} 个函数子节点关系`);
+      console.log('函数子节点映射:', this.childrenMap);
     },
     
     // 根据函数名查找节点索引
@@ -311,6 +370,32 @@ export default {
       const traceArray = Object.values(this.traceData);
       for (let i = 0; i < traceArray.length; i++) {
         if (traceArray[i] && traceArray[i].name === funcName) {
+          return i;
+        }
+      }
+      return -1;
+    },
+    
+    // 根据父函数ID查找节点索引
+    findNodeIndexByParentId(parentId) {
+      if (!parentId || !this.traceData) return -1;
+      
+      const traceArray = Object.values(this.traceData);
+      for (let i = 0; i < traceArray.length; i++) {
+        if (traceArray[i] && Number(traceArray[i].id) === Number(parentId)) {
+          return i;
+        }
+      }
+      return -1;
+    },
+    
+    // 根据节点ID查找节点索引
+    findNodeIndexById(id) {
+      if (!id || !this.traceData) return -1;
+      
+      const traceArray = Object.values(this.traceData);
+      for (let i = 0; i < traceArray.length; i++) {
+        if (traceArray[i] && Number(traceArray[i].id) === Number(id)) {
           return i;
         }
       }
@@ -352,21 +437,34 @@ export default {
         console.error("Modal element not found.");
       }
     },
-    // 检查节点是否有子节点（基于 parentFuncname）
+    // 检查节点是否有子节点（基于 parentId）
     hasChildren(node) {
-      if (!this.traceData || !node) return false;
+      if (!this.traceData || !node || !node.id) return false;
       
-      // 使用 childrenMap 检查是否有子节点
-      return this.childrenMap.has(node.name) && this.childrenMap.get(node.name).length > 0;
+      // 直接检查是否有以当前节点ID为父ID的节点
+      const traceArray = Object.values(this.traceData);
+      return traceArray.some(item => item && Number(item.parentId) === Number(node.id));
     },
     
     // 切换节点的折叠状态
     toggleNode(index) {
+      const traceArray = Object.values(this.traceData);
+      const node = traceArray[index];
+      
+      if (!node) return;
+      
+      console.log(`切换节点折叠状态: ${node.name} (索引: ${index}, ID: ${node.id})`);
+      
       if (this.collapsedNodes.has(index)) {
+        console.log(`展开节点: ${node.name}`);
         this.collapsedNodes.delete(index);
       } else {
+        console.log(`折叠节点: ${node.name}`);
         this.collapsedNodes.add(index);
       }
+      
+      // 强制更新视图
+      this.$forceUpdate();
     },
     
     // 检查节点是否已折叠
@@ -374,21 +472,38 @@ export default {
       return this.collapsedNodes.has(index);
     },
     
-    // 新增方法
+    // 展开所有节点
     expandAll() {
+      console.log('展开所有节点');
       this.collapsedNodes.clear();
+      
+      // 强制更新视图
+      this.$forceUpdate();
     },
     
+    // 折叠所有节点
     collapseAll() {
+      console.log('折叠所有节点');
       // 找出所有有子节点的节点索引
       if (this.traceData) {
         const traceArray = Object.values(this.traceData);
+        this.collapsedNodes.clear();
+        
+        let collapsedCount = 0;
         for (let i = 0; i < traceArray.length; i++) {
           const node = traceArray[i];
-          if (node && this.childrenMap.has(node.name) && this.childrenMap.get(node.name).length > 0) {
+          if (!node) continue;
+          
+          // 检查节点是否有子节点
+          if (this.hasChildren(node)) {
             this.collapsedNodes.add(i);
+            collapsedCount++;
           }
         }
+        console.log(`折叠了 ${collapsedCount} 个节点`);
+        
+        // 强制更新视图
+        this.$forceUpdate();
       }
     },
     
@@ -406,7 +521,53 @@ export default {
       
       // 函数调用数量
       this.functionCount = this.traceData.length;
-    }
+    },
+    
+    // 根据父函数ID获取父函数名称
+    getParentFunctionName(parentId) {
+      if (!parentId || !this.traceData) return '无';
+      
+      const traceArray = Object.values(this.traceData);
+      for (let i = 0; i < traceArray.length; i++) {
+        if (traceArray[i] && traceArray[i].id === parentId) {
+          return traceArray[i].name;
+        }
+      }
+      return `ID: ${parentId}`;
+    },
+    
+    // 获取高亮函数ID
+    getHighlightedFunctionId() {
+      const highlightedId = localStorage.getItem('highlightedFunctionId');
+      if (highlightedId) {
+        this.highlightedFunctionId = Number(highlightedId);
+        
+        // 清除本地存储中的高亮函数ID，避免影响其他页面
+        localStorage.removeItem('highlightedFunctionId');
+        
+        // 在数据加载完成后滚动到高亮函数
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.scrollToHighlightedFunction();
+          }, 500);
+        });
+      }
+    },
+    
+    // 滚动到高亮函数
+    scrollToHighlightedFunction() {
+      if (!this.highlightedFunctionId) return;
+      
+      const highlightedElement = document.querySelector('.trace-row.is-highlighted');
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    },
+    
+    // 检查函数是否被高亮
+    isHighlighted(id) {
+      return this.highlightedFunctionId && Number(id) === Number(this.highlightedFunctionId);
+    },
   },
   watch: {
     processedTraceData() {
@@ -420,41 +581,88 @@ export default {
 .trace-container {
   max-height: 70vh;
   overflow-y: auto;
+  padding: 0.5rem 1rem;
+}
+
+.stack-item {
+  position: relative;
+}
+
+.stack-item::before {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 0;
+  height: 100%;
+  border-left: 1px dashed #ccc;
+}
+
+.stack-item:last-child::before {
+  height: 50%;
 }
 
 .trace-row {
   padding: 0.75rem;
   background-color: white;
-  border-radius: var(--border-radius);
+  border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: var(--transition);
-  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
+  position: relative;
 }
 
 .trace-row:hover {
-  background-color: var(--light-bg);
+  background-color: #f8f9fa;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .trace-row.has-children {
-  border-left: 3px solid var(--primary-color);
+  border-left: 3px solid #3498db;
+}
+
+.trace-row.is-collapsed {
+  border-left: 3px solid #e74c3c;
+}
+
+.trace-row.is-highlighted {
+  background-color: #fff3cd;
+  border-left: 3px solid #ffc107;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.trace-row.is-highlighted:hover {
+  background-color: #ffecb5;
+  transform: translateY(-2px);
 }
 
 .function-name {
   font-family: 'Consolas', 'Monaco', monospace;
   font-weight: 500;
+  color: #2c3e50;
 }
 
 .toggle-btn {
   padding: 0;
-  color: var(--primary-color);
+  color: #3498db;
   background: transparent;
   border: none;
   font-size: 1.2rem;
+  transition: transform 0.2s ease;
 }
 
 .toggle-btn:hover {
-  color: var(--secondary-color);
+  color: #2980b9;
+  transform: scale(1.2);
+}
+
+.is-collapsed .toggle-btn {
+  color: #e74c3c;
+}
+
+.function-dot {
+  font-size: 0.5rem;
+  color: #95a5a6;
 }
 
 .param-value {
@@ -464,6 +672,29 @@ export default {
   background-color: #f8f9fa;
   padding: 0.5rem;
   border-radius: 4px;
+  border-left: 3px solid #3498db;
+}
+
+.btn-outline-info {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.btn-outline-info:hover {
+  background-color: #3498db;
+  color: white;
+}
+
+.card {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: none;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eaeaea;
 }
 
 @media (max-width: 768px) {
@@ -474,6 +705,14 @@ export default {
   .trace-row .col-md-3 {
     margin-top: 0.5rem;
     text-align: left !important;
+  }
+  
+  .stack-item {
+    margin-left: 10px !important;
+  }
+  
+  .stack-item::before {
+    left: -10px;
   }
 }
 </style> 

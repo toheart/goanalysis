@@ -19,22 +19,23 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Analysis_GetAnalysis_FullMethodName           = "/analysis.v1.Analysis/GetAnalysis"
-	Analysis_GetAnalysisByGID_FullMethodName      = "/analysis.v1.Analysis/GetAnalysisByGID"
-	Analysis_GetAllGIDs_FullMethodName            = "/analysis.v1.Analysis/GetAllGIDs"
-	Analysis_GetParamsByID_FullMethodName         = "/analysis.v1.Analysis/GetParamsByID"
-	Analysis_GetAllFunctionName_FullMethodName    = "/analysis.v1.Analysis/GetAllFunctionName"
-	Analysis_GetGidsByFunctionName_FullMethodName = "/analysis.v1.Analysis/GetGidsByFunctionName"
-	Analysis_VerifyProjectPath_FullMethodName     = "/analysis.v1.Analysis/VerifyProjectPath"
-	Analysis_GetTraceGraph_FullMethodName         = "/analysis.v1.Analysis/GetTraceGraph"
-	Analysis_GetTracesByParentFunc_FullMethodName = "/analysis.v1.Analysis/GetTracesByParentFunc"
-	Analysis_GetAllParentFuncNames_FullMethodName = "/analysis.v1.Analysis/GetAllParentFuncNames"
-	Analysis_GetChildFunctions_FullMethodName     = "/analysis.v1.Analysis/GetChildFunctions"
-	Analysis_GetHotFunctions_FullMethodName       = "/analysis.v1.Analysis/GetHotFunctions"
-	Analysis_GetGoroutineStats_FullMethodName     = "/analysis.v1.Analysis/GetGoroutineStats"
-	Analysis_GetFunctionAnalysis_FullMethodName   = "/analysis.v1.Analysis/GetFunctionAnalysis"
-	Analysis_GetFunctionCallGraph_FullMethodName  = "/analysis.v1.Analysis/GetFunctionCallGraph"
-	Analysis_InstrumentProject_FullMethodName     = "/analysis.v1.Analysis/InstrumentProject"
+	Analysis_GetAnalysis_FullMethodName            = "/analysis.v1.Analysis/GetAnalysis"
+	Analysis_GetAnalysisByGID_FullMethodName       = "/analysis.v1.Analysis/GetAnalysisByGID"
+	Analysis_GetAllGIDs_FullMethodName             = "/analysis.v1.Analysis/GetAllGIDs"
+	Analysis_GetParamsByID_FullMethodName          = "/analysis.v1.Analysis/GetParamsByID"
+	Analysis_GetAllFunctionName_FullMethodName     = "/analysis.v1.Analysis/GetAllFunctionName"
+	Analysis_GetGidsByFunctionName_FullMethodName  = "/analysis.v1.Analysis/GetGidsByFunctionName"
+	Analysis_VerifyProjectPath_FullMethodName      = "/analysis.v1.Analysis/VerifyProjectPath"
+	Analysis_GetTraceGraph_FullMethodName          = "/analysis.v1.Analysis/GetTraceGraph"
+	Analysis_GetTracesByParentFunc_FullMethodName  = "/analysis.v1.Analysis/GetTracesByParentFunc"
+	Analysis_GetAllParentIds_FullMethodName        = "/analysis.v1.Analysis/GetAllParentIds"
+	Analysis_GetChildFunctions_FullMethodName      = "/analysis.v1.Analysis/GetChildFunctions"
+	Analysis_GetHotFunctions_FullMethodName        = "/analysis.v1.Analysis/GetHotFunctions"
+	Analysis_GetGoroutineStats_FullMethodName      = "/analysis.v1.Analysis/GetGoroutineStats"
+	Analysis_GetFunctionAnalysis_FullMethodName    = "/analysis.v1.Analysis/GetFunctionAnalysis"
+	Analysis_GetFunctionCallGraph_FullMethodName   = "/analysis.v1.Analysis/GetFunctionCallGraph"
+	Analysis_InstrumentProject_FullMethodName      = "/analysis.v1.Analysis/InstrumentProject"
+	Analysis_GetUnfinishedFunctions_FullMethodName = "/analysis.v1.Analysis/GetUnfinishedFunctions"
 )
 
 // AnalysisClient is the client API for Analysis service.
@@ -53,10 +54,10 @@ type AnalysisClient interface {
 	// 将VerifyProjectPath重定向到CheckDatabase
 	VerifyProjectPath(ctx context.Context, in *VerifyProjectPathReq, opts ...grpc.CallOption) (*VerifyProjectPathReply, error)
 	GetTraceGraph(ctx context.Context, in *GetTraceGraphReq, opts ...grpc.CallOption) (*GetTraceGraphReply, error)
-	// GetTracesByParentFunc 根据父函数名称获取函数调用
+	// GetTracesByParentFunc 根据父函数ID获取函数调用
 	GetTracesByParentFunc(ctx context.Context, in *GetTracesByParentFuncReq, opts ...grpc.CallOption) (*GetTracesByParentFuncReply, error)
-	// GetAllParentFuncNames 获取所有的父函数名称
-	GetAllParentFuncNames(ctx context.Context, in *GetAllParentFuncNamesReq, opts ...grpc.CallOption) (*GetAllParentFuncNamesReply, error)
+	// GetAllParentIds 获取所有的父函数ID
+	GetAllParentIds(ctx context.Context, in *GetAllParentIdsReq, opts ...grpc.CallOption) (*GetAllParentIdsReply, error)
 	// GetChildFunctions 获取函数的子函数
 	GetChildFunctions(ctx context.Context, in *GetChildFunctionsReq, opts ...grpc.CallOption) (*GetChildFunctionsReply, error)
 	// GetHotFunctions 获取热点函数分析数据
@@ -69,6 +70,8 @@ type AnalysisClient interface {
 	GetFunctionCallGraph(ctx context.Context, in *GetFunctionCallGraphReq, opts ...grpc.CallOption) (*GetFunctionCallGraphReply, error)
 	// InstrumentProject 对项目进行插桩
 	InstrumentProject(ctx context.Context, in *InstrumentProjectReq, opts ...grpc.CallOption) (*InstrumentProjectReply, error)
+	// GetUnfinishedFunctions 获取未完成的函数列表
+	GetUnfinishedFunctions(ctx context.Context, in *GetUnfinishedFunctionsReq, opts ...grpc.CallOption) (*GetUnfinishedFunctionsReply, error)
 }
 
 type analysisClient struct {
@@ -169,10 +172,10 @@ func (c *analysisClient) GetTracesByParentFunc(ctx context.Context, in *GetTrace
 	return out, nil
 }
 
-func (c *analysisClient) GetAllParentFuncNames(ctx context.Context, in *GetAllParentFuncNamesReq, opts ...grpc.CallOption) (*GetAllParentFuncNamesReply, error) {
+func (c *analysisClient) GetAllParentIds(ctx context.Context, in *GetAllParentIdsReq, opts ...grpc.CallOption) (*GetAllParentIdsReply, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetAllParentFuncNamesReply)
-	err := c.cc.Invoke(ctx, Analysis_GetAllParentFuncNames_FullMethodName, in, out, cOpts...)
+	out := new(GetAllParentIdsReply)
+	err := c.cc.Invoke(ctx, Analysis_GetAllParentIds_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +242,16 @@ func (c *analysisClient) InstrumentProject(ctx context.Context, in *InstrumentPr
 	return out, nil
 }
 
+func (c *analysisClient) GetUnfinishedFunctions(ctx context.Context, in *GetUnfinishedFunctionsReq, opts ...grpc.CallOption) (*GetUnfinishedFunctionsReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUnfinishedFunctionsReply)
+	err := c.cc.Invoke(ctx, Analysis_GetUnfinishedFunctions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalysisServer is the server API for Analysis service.
 // All implementations must embed UnimplementedAnalysisServer
 // for forward compatibility.
@@ -255,10 +268,10 @@ type AnalysisServer interface {
 	// 将VerifyProjectPath重定向到CheckDatabase
 	VerifyProjectPath(context.Context, *VerifyProjectPathReq) (*VerifyProjectPathReply, error)
 	GetTraceGraph(context.Context, *GetTraceGraphReq) (*GetTraceGraphReply, error)
-	// GetTracesByParentFunc 根据父函数名称获取函数调用
+	// GetTracesByParentFunc 根据父函数ID获取函数调用
 	GetTracesByParentFunc(context.Context, *GetTracesByParentFuncReq) (*GetTracesByParentFuncReply, error)
-	// GetAllParentFuncNames 获取所有的父函数名称
-	GetAllParentFuncNames(context.Context, *GetAllParentFuncNamesReq) (*GetAllParentFuncNamesReply, error)
+	// GetAllParentIds 获取所有的父函数ID
+	GetAllParentIds(context.Context, *GetAllParentIdsReq) (*GetAllParentIdsReply, error)
 	// GetChildFunctions 获取函数的子函数
 	GetChildFunctions(context.Context, *GetChildFunctionsReq) (*GetChildFunctionsReply, error)
 	// GetHotFunctions 获取热点函数分析数据
@@ -271,6 +284,8 @@ type AnalysisServer interface {
 	GetFunctionCallGraph(context.Context, *GetFunctionCallGraphReq) (*GetFunctionCallGraphReply, error)
 	// InstrumentProject 对项目进行插桩
 	InstrumentProject(context.Context, *InstrumentProjectReq) (*InstrumentProjectReply, error)
+	// GetUnfinishedFunctions 获取未完成的函数列表
+	GetUnfinishedFunctions(context.Context, *GetUnfinishedFunctionsReq) (*GetUnfinishedFunctionsReply, error)
 	mustEmbedUnimplementedAnalysisServer()
 }
 
@@ -308,8 +323,8 @@ func (UnimplementedAnalysisServer) GetTraceGraph(context.Context, *GetTraceGraph
 func (UnimplementedAnalysisServer) GetTracesByParentFunc(context.Context, *GetTracesByParentFuncReq) (*GetTracesByParentFuncReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTracesByParentFunc not implemented")
 }
-func (UnimplementedAnalysisServer) GetAllParentFuncNames(context.Context, *GetAllParentFuncNamesReq) (*GetAllParentFuncNamesReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAllParentFuncNames not implemented")
+func (UnimplementedAnalysisServer) GetAllParentIds(context.Context, *GetAllParentIdsReq) (*GetAllParentIdsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllParentIds not implemented")
 }
 func (UnimplementedAnalysisServer) GetChildFunctions(context.Context, *GetChildFunctionsReq) (*GetChildFunctionsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChildFunctions not implemented")
@@ -328,6 +343,9 @@ func (UnimplementedAnalysisServer) GetFunctionCallGraph(context.Context, *GetFun
 }
 func (UnimplementedAnalysisServer) InstrumentProject(context.Context, *InstrumentProjectReq) (*InstrumentProjectReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InstrumentProject not implemented")
+}
+func (UnimplementedAnalysisServer) GetUnfinishedFunctions(context.Context, *GetUnfinishedFunctionsReq) (*GetUnfinishedFunctionsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUnfinishedFunctions not implemented")
 }
 func (UnimplementedAnalysisServer) mustEmbedUnimplementedAnalysisServer() {}
 func (UnimplementedAnalysisServer) testEmbeddedByValue()                  {}
@@ -512,20 +530,20 @@ func _Analysis_GetTracesByParentFunc_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Analysis_GetAllParentFuncNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAllParentFuncNamesReq)
+func _Analysis_GetAllParentIds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllParentIdsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AnalysisServer).GetAllParentFuncNames(ctx, in)
+		return srv.(AnalysisServer).GetAllParentIds(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Analysis_GetAllParentFuncNames_FullMethodName,
+		FullMethod: Analysis_GetAllParentIds_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalysisServer).GetAllParentFuncNames(ctx, req.(*GetAllParentFuncNamesReq))
+		return srv.(AnalysisServer).GetAllParentIds(ctx, req.(*GetAllParentIdsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -638,6 +656,24 @@ func _Analysis_InstrumentProject_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Analysis_GetUnfinishedFunctions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUnfinishedFunctionsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetUnfinishedFunctions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetUnfinishedFunctions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetUnfinishedFunctions(ctx, req.(*GetUnfinishedFunctionsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Analysis_ServiceDesc is the grpc.ServiceDesc for Analysis service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -682,8 +718,8 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Analysis_GetTracesByParentFunc_Handler,
 		},
 		{
-			MethodName: "GetAllParentFuncNames",
-			Handler:    _Analysis_GetAllParentFuncNames_Handler,
+			MethodName: "GetAllParentIds",
+			Handler:    _Analysis_GetAllParentIds_Handler,
 		},
 		{
 			MethodName: "GetChildFunctions",
@@ -708,6 +744,10 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "InstrumentProject",
 			Handler:    _Analysis_InstrumentProject_Handler,
+		},
+		{
+			MethodName: "GetUnfinishedFunctions",
+			Handler:    _Analysis_GetUnfinishedFunctions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

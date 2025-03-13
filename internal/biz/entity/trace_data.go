@@ -1,5 +1,20 @@
 package entity
 
+import "github.com/toheart/functrace"
+
+// TraceData 存储跟踪数据的结构体
+type TraceData struct {
+	ID        int64                   `json:"id"`        // 唯一标识符
+	Name      string                  `json:"name"`      // 函数名称
+	GID       uint64                  `json:"gid"`       // Goroutine ID
+	Indent    int                     `json:"indent"`    // 缩进级别
+	Params    []functrace.TraceParams `json:"params"`    // 参数JSON字符串
+	TimeCost  string                  `json:"timeCost"`  // 执行时间
+	ParentId  int64                   `json:"parentId"`  // 父函数ID
+	CreatedAt string                  `json:"createdAt"` // 创建时间
+	Seq       string                  `json:"seq"`       // 序列号
+}
+
 // HotFunction 热点函数信息
 type HotFunction struct {
 	Name      string // 函数名称
@@ -48,4 +63,13 @@ type FunctionGraphEdge struct {
 type FunctionCallGraph struct {
 	Nodes []FunctionGraphNode // 图节点
 	Edges []FunctionGraphEdge // 图边
+}
+
+// UnfinishedFunction 未完成的函数
+type UnfinishedFunction struct {
+	Name        string `json:"name"`        // 函数名称
+	GID         uint64 `json:"gid"`         // goroutine ID
+	RunningTime string `json:"runningTime"` // 运行时间
+	IsBlocking  bool   `json:"isBlocking"`  // 是否阻塞
+	FunctionID  int64  `json:"functionId"`  // 函数ID
 }

@@ -64,18 +64,18 @@ service Analysis {
     };
   }
 
-  // GetTracesByParentFunc 根据父函数名称获取函数调用
+  // GetTracesByParentFunc 根据父函数ID获取函数调用
   rpc GetTracesByParentFunc(GetTracesByParentFuncReq) returns (GetTracesByParentFuncReply) {
     option (google.api.http) = {
-      post: "/api/runtime/traces/parent/{parent_func}"
+      post: "/api/runtime/traces/parent/{parent_id}"
       body: "*"
     };
   }
   
-  // GetAllParentFuncNames 获取所有的父函数名称
-  rpc GetAllParentFuncNames(GetAllParentFuncNamesReq) returns (GetAllParentFuncNamesReply) {
+  // GetAllParentIds 获取所有的父函数ID
+  rpc GetAllParentIds(GetAllParentIdsReq) returns (GetAllParentIdsReply) {
     option (google.api.http) = {
-      post: "/api/runtime/functions/parent"
+      post: "/api/runtime/functions/parent-ids"
       body: "*"
     };
   }
@@ -83,7 +83,7 @@ service Analysis {
   // GetChildFunctions 获取函数的子函数
   rpc GetChildFunctions(GetChildFunctionsReq) returns (GetChildFunctionsReply) {
     option (google.api.http) = {
-      post: "/api/runtime/functions/{func_name}/children"
+      post: "/api/runtime/functions/{parent_id}/children"
       body: "*"
     };
   }
@@ -131,6 +131,14 @@ service Analysis {
       body: "*"
     };
   }
+  
+  // GetUnfinishedFunctions 获取未完成的函数列表
+  rpc GetUnfinishedFunctions(GetUnfinishedFunctionsReq) returns (GetUnfinishedFunctionsReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/unfinished-functions"
+      body: "*"
+    };
+  }
 }
 
 
@@ -154,6 +162,7 @@ message GetGidsByFunctionNameReply {
     string initialFunc = 2;
     int32 depth = 3; // 调用深度
     string executionTime = 4; // 执行时间
+    bool isFinished = 5; // 是否完成
   }
   repeated Body body = 1;
   int32 total = 2; // 总的 GID 数量
@@ -206,7 +215,7 @@ message TraceData {
   repeated TraceParams params = 5;
   int32 paramCount = 6;
   string timeCost = 7;
-  string parent_funcname = 8; // 父函数名称
+  int64 parent_id = 8; // 父函数ID
 }
   repeated TraceData trace_data = 1;
 }
@@ -224,6 +233,7 @@ message GetAllGIDsReply {
     string initialFunc = 2;
     int32 depth = 3; // 调用深度
     string executionTime = 4; // 执行时间
+    bool isFinished = 5; // 是否完成
   }
   repeated Body body = 1;
   int32 total = 2; // 总的 GID 数量
@@ -263,9 +273,9 @@ message GetTraceGraphReply {
   repeated GraphEdge edges = 2;
 }
 
-// GetTracesByParentFuncReq 根据父函数名称获取函数调用的请求
+// GetTracesByParentFuncReq 根据父函数ID获取函数调用的请求
 message GetTracesByParentFuncReq {
-  string parent_func = 1;
+  int64 parent_id = 1;
   string dbpath = 2; // 数据库路径
 }
 
@@ -279,24 +289,24 @@ message GetTracesByParentFuncReply {
     repeated TraceParams params = 5;
     int32 paramCount = 6;
     string timeCost = 7;
-    string parent_funcname = 8; // 父函数名称
+    int64 parent_id = 8; // 父函数ID
   }
   repeated TraceData trace_data = 1;
 }
 
-// GetAllParentFuncNamesReq 获取所有的父函数名称的请求
-message GetAllParentFuncNamesReq {
+// GetAllParentIdsReq 获取所有的父函数ID的请求
+message GetAllParentIdsReq {
   string dbpath = 1; // 数据库路径
 }
 
-// GetAllParentFuncNamesReply 获取所有的父函数名称的响应
-message GetAllParentFuncNamesReply {
-  repeated string parent_func_names = 1;
+// GetAllParentIdsReply 获取所有的父函数ID的响应
+message GetAllParentIdsReply {
+  repeated int64 parent_ids = 1;
 }
 
 // GetChildFunctionsReq 获取函数的子函数的请求
 message GetChildFunctionsReq {
-  string func_name = 1;
+  int64 parent_id = 1;
   string dbpath = 2; // 数据库路径
 }
 
@@ -451,4 +461,25 @@ message InstrumentProjectReq {
 message InstrumentProjectReply {
   bool success = 1; // 是否成功
   string message = 2; // 消息
+}
+
+// GetUnfinishedFunctions 请求
+message GetUnfinishedFunctionsReq {
+  string dbpath = 1; // 数据库路径
+  int64 threshold = 2; // 阻塞时间阈值（毫秒）
+  int32 page = 3; // 当前页码
+  int32 limit = 4; // 每页数量
+}
+
+// GetUnfinishedFunctions 响应
+message GetUnfinishedFunctionsReply {
+  message UnfinishedFunction {
+    string name = 1; // 函数名称
+    uint64 gid = 2; // goroutine ID
+    string running_time = 3; // 运行时间
+    bool is_blocking = 4; // 是否阻塞
+    int64 function_id = 5; // 函数ID
+  }
+  repeated UnfinishedFunction functions = 1; // 未完成函数列表
+  int32 total = 2; // 总数
 }

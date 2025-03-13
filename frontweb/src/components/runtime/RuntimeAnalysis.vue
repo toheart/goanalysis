@@ -1,48 +1,5 @@
 <template>
   <div class="runtime-analysis">
-    <!-- 项目路径输入和插桩操作 -->
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-folder2-open me-2"></i>{{ $t('runtimeAnalysis.instrumentation.title') }}</h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-8">
-            <div class="input-group mb-3">
-              <span class="input-group-text"><i class="bi bi-folder"></i></span>
-              <input 
-                type="text" 
-                class="form-control" 
-                :placeholder="$t('runtimeAnalysis.instrumentation.placeholder')" 
-                :disabled="isInstrumenting"
-              >
-              <button 
-                class="btn btn-primary" 
-                @click="instrumentProject" 
-                :disabled="!projectPathInput || isInstrumenting"
-              >
-                <span v-if="isInstrumenting" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                {{ isInstrumenting ? $t('runtimeAnalysis.instrumentation.instrumenting') : $t('runtimeAnalysis.instrumentation.startInstrumentation') }}
-              </button>
-            </div>
-            <div v-if="instrumentError" class="alert alert-danger mt-2">
-              <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ instrumentError }}
-            </div>
-            <div v-if="instrumentSuccess" class="alert alert-success mt-2">
-              <i class="bi bi-check-circle-fill me-2"></i>{{ instrumentSuccess }}
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="alert alert-info mb-0">
-              <h6><i class="bi bi-info-circle me-2"></i>{{ $t('runtimeAnalysis.instrumentation.tip') }}</h6>
-              <p class="mb-0 small">{{ $t('runtimeAnalysis.instrumentation.description') }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-
     <!-- 函数名建议列表 -->
     <div class="suggestions-wrapper" v-if="showFunctionSuggestions && filteredFunctionNames.length">
       <ul class="list-group function-suggestions">
@@ -59,7 +16,7 @@
 
     <!-- 统计卡片 -->
     <div class="row mb-4">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="card h-100">
           <div class="card-body text-center">
             <h5 class="card-title"><i class="bi bi-cpu me-2"></i>{{ $t('runtimeAnalysis.statistics.activeGoroutines') }}</h5>
@@ -67,7 +24,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="card h-100">
           <div class="card-body text-center">
             <h5 class="card-title"><i class="bi bi-hourglass-split me-2"></i>{{ $t('runtimeAnalysis.statistics.avgExecutionTime') }}</h5>
@@ -75,11 +32,127 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="card h-100">
           <div class="card-body text-center">
             <h5 class="card-title"><i class="bi bi-lightning-charge me-2"></i>{{ $t('runtimeAnalysis.statistics.maxCallDepth') }}</h5>
             <p class="display-4">{{ goroutineStats.maxDepth || 0 }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title"><i class="bi bi-exclamation-triangle me-2"></i>未完成函数</h5>
+            <p class="display-4">{{ unfinishedFunctions.length || 0 }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 未完成函数列表 -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-exclamation-circle me-2"></i>未完成函数列表</h5>
+        <div class="d-flex align-items-center">
+          <div class="threshold-control me-3">
+            <label class="form-label mb-0 me-2 fw-bold">阻塞阈值：</label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                class="form-control" 
+                v-model="blockingThreshold" 
+                min="100"
+                step="100"
+                style="width: 100px;"
+              >
+              <span class="input-group-text">ms</span>
+              <button class="btn btn-primary" @click="updateBlockingThreshold" title="应用阈值">
+                <i class="bi bi-check-lg"></i> 应用
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div v-if="loadingUnfinishedFunctions" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">加载中...</span>
+          </div>
+          <p class="mt-3">正在加载未完成函数数据...</p>
+        </div>
+        <div v-else-if="unfinishedFunctions.length === 0" class="text-center py-5">
+          <i class="bi bi-check-circle text-success display-4"></i>
+          <p class="mt-3">没有检测到未完成函数</p>
+        </div>
+        <div v-else>
+          <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle me-2"></i>
+            当函数运行时间超过 <strong>{{ blockingThreshold }}ms</strong> 时会被标记为阻塞状态
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>函数名称</th>
+                  <th class="text-center">GID</th>
+                  <th class="text-center">已运行时间</th>
+                  <th class="text-center">状态</th>
+                  <th class="text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(func, index) in unfinishedFunctions" :key="index" :class="{'table-warning': func.isBlocking}">
+                  <td><code>{{ func.name }}</code></td>
+                  <td class="text-center">
+                    <span class="badge bg-primary">{{ func.gid }}</span>
+                  </td>
+                  <td class="text-center">{{ func.runningTime || '未知' }}</td>
+                  <td class="text-center">
+                    <span v-if="func.isBlocking" class="badge bg-danger">
+                      <i class="bi bi-exclamation-triangle me-1"></i>阻塞
+                    </span>
+                    <span v-else class="badge bg-secondary">
+                      <i class="bi bi-hourglass-split me-1"></i>运行中
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <button 
+                      class="btn btn-sm btn-primary"
+                      @click="viewFunctionCallChain(func.functionId, func.gid)"
+                      title="查看调用链并高亮显示"
+                    >
+                      <i class="bi bi-eye me-1"></i>查看
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- 分页控件 -->
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+              <span class="text-muted">共 {{ unfinishedFunctionsTotal }} 个未完成函数</span>
+            </div>
+            <nav aria-label="未完成函数分页">
+              <ul class="pagination mb-0">
+                <li class="page-item" :class="{ disabled: unfinishedFunctionsPage <= 1 }">
+                  <a class="page-link" href="#" @click.prevent="prevUnfinishedFunctionsPage">
+                    <i class="bi bi-chevron-left"></i>
+                  </a>
+                </li>
+                <li v-for="page in displayedUnfinishedFunctionsPages" :key="page" 
+                    class="page-item" :class="{ active: page === unfinishedFunctionsPage }">
+                  <a class="page-link" href="#" @click.prevent="goToUnfinishedFunctionsPage(page)">{{ page }}</a>
+                </li>
+                <li class="page-item" :class="{ disabled: unfinishedFunctionsPage >= unfinishedFunctionsTotalPages }">
+                  <a class="page-link" href="#" @click.prevent="nextUnfinishedFunctionsPage">
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
           </div>
         </div>
       </div>
@@ -161,6 +234,7 @@
                 <th>{{ $t('runtimeAnalysis.goroutineList.initialFunction') }}</th>
                 <th class="text-center">{{ $t('runtimeAnalysis.goroutineList.callDepth') }}</th>
                 <th class="text-center">{{ $t('runtimeAnalysis.goroutineList.executionTime') }}</th>
+                <th class="text-center">状态</th>
                 <th class="text-center">{{ $t('runtimeAnalysis.goroutineList.actions') }}</th>
               </tr>
             </thead>
@@ -170,6 +244,10 @@
                 <td><code>{{ result.InitialFunc }}</code></td>
                 <td class="text-center">{{ result.depth || '-' }}</td>
                 <td class="text-center">{{ result.executionTime || '-' }}</td>
+                <td class="text-center">
+                  <span v-if="result.isFinished" class="badge bg-success">已完成</span>
+                  <span v-else class="badge bg-warning">运行中</span>
+                </td>
                 <td class="text-center">
                   <template v-if="result.GID">
                     <div class="btn-group">
@@ -193,7 +271,7 @@
               </tr>
               <!-- 无数据时显示 -->
               <tr v-if="filteredGIDs.length === 0">
-                <td colspan="5" class="text-center py-4">
+                <td colspan="6" class="text-center py-4">
                   <div class="alert alert-info mb-0">
                     <i class="bi bi-info-circle me-2"></i>
                     {{ $t('runtimeAnalysis.goroutineList.noData') }}
@@ -282,10 +360,6 @@ export default {
         avgTime: '0ms',
         maxDepth: 0
       },
-      projectPathInput: '', // 用户输入的项目路径
-      isInstrumenting: false, // 是否正在插桩
-      instrumentError: '', // 插桩错误信息
-      instrumentSuccess: '', // 插桩成功信息
       showChart: false, // 是否显示图表
       currentGid: '', // 当前选中的GID
       showDatabaseError: false, // 添加数据库错误标志
@@ -295,13 +369,28 @@ export default {
       chartRenderCount: 0, // 图表渲染计数器，用于强制重新创建组件
       testMode: false, // 测试模式，用于在API请求失败时使用模拟数据
       searchTimeout: null, // 用于防抖
+      unfinishedFunctions: [], // 未完成函数列表
+      unfinishedFunctionsTotal: 0, // 未完成函数总数
+      unfinishedFunctionsPage: 1, // 当前页码
+      unfinishedFunctionsLimit: 10, // 每页数量
+      unfinishedFunctionsTotalPages: 1, // 总页数
+      blockingThreshold: 1000, // 阻塞时间阈值（毫秒），默认1秒
+      loadingUnfinishedFunctions: false, // 加载状态
+      highlightedFunctionId: null, // 高亮显示的函数ID
     };
   },
   mounted() {
     this.isComponentMounted = true;
-    if (this.projectPath) {
-      this.projectPathInput = this.projectPath;
+    
+    // 从本地存储中恢复阻塞阈值设置
+    const savedThreshold = localStorage.getItem('blockingThreshold');
+    if (savedThreshold) {
+      const threshold = parseInt(savedThreshold);
+      if (!isNaN(threshold) && threshold >= 100) {
+        this.blockingThreshold = threshold;
+      }
     }
+    
     this.initializeData();
     
     document.addEventListener('click', this.handleDocumentClick);
@@ -327,6 +416,11 @@ export default {
     if (this.suggestionsTimer) {
       clearTimeout(this.suggestionsTimer);
     }
+    
+    // 清除定时器
+    if (this.refreshUnfinishedFunctionsInterval) {
+      clearInterval(this.refreshUnfinishedFunctionsInterval);
+    }
   },
   computed: {
     displayedPages() {
@@ -334,6 +428,22 @@ export default {
       const maxVisiblePages = 5;
       let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
       let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      return pages;
+    },
+    displayedUnfinishedFunctionsPages() {
+      const pages = [];
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, this.unfinishedFunctionsPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(this.unfinishedFunctionsTotalPages, startPage + maxVisiblePages - 1);
       
       if (endPage - startPage + 1 < maxVisiblePages) {
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
@@ -425,7 +535,8 @@ export default {
         this.fetchGIDs(),
         this.fetchFunctionNames(),
         this.fetchHotFunctions(),
-        this.fetchGoroutineStats()
+        this.fetchGoroutineStats(),
+        this.fetchUnfinishedFunctions()
       ]);
       this.loading = false;
     },
@@ -454,7 +565,8 @@ export default {
             GID: item.gid,
             InitialFunc: item.initialFunc,
             depth: item.depth || mockData.depth,
-            executionTime: item.executionTime || mockData.executionTime
+            executionTime: item.executionTime || mockData.executionTime,
+            isFinished: item.isFinished || this.isExecutionFinished(item.executionTime)
           };
         });
         
@@ -660,34 +772,6 @@ export default {
       };
     },
 
-    async instrumentProject() {
-      if (!this.projectPathInput) {
-        this.instrumentError = '请输入项目路径';
-        return;
-      }
-      
-      this.instrumentError = '';
-      this.instrumentSuccess = '';
-      this.isInstrumenting = true;
-      
-      try {
-        const response = await axios.post('/api/runtime/instrument', {
-          path: this.projectPathInput
-        });
-        
-        if (response.data.success) {
-          this.instrumentSuccess = response.data.message || '项目插桩成功，现在可以运行您的程序进行分析';
-          this.$emit('update:projectPath', this.projectPathInput);
-        } else {
-          this.instrumentError = response.data.message || '插桩失败';
-        }
-      } catch (error) {
-        this.instrumentError = '插桩过程出错: ' + (error.response?.data?.message || error.message);
-      } finally {
-        this.isInstrumenting = false;
-      }
-    },
-
     async showFunctionCallGraph(gid) {
       console.log(`显示函数调用图，GID: ${gid}`);
       this.currentGid = gid;
@@ -765,6 +849,26 @@ export default {
       }
     },
     
+    // 获取函数调用关系图
+    async getFunctionCallGraph(dbpath, functionName, depth, direction) {
+      try {
+        const response = await axios({
+          url: '/api/runtime/function/graph',
+          method: 'post',
+          data: {
+            dbpath,
+            functionName,
+            depth,
+            direction
+          }
+        });
+        return response.data;
+      } catch (error) {
+        console.error('获取函数调用关系图失败:', error);
+        throw error;
+      }
+    },
+    
     handleChartError(errorMessage) {
       console.error('图表错误:', errorMessage);
       this.$message.error(errorMessage);
@@ -774,7 +878,7 @@ export default {
     getCurrentDbPath() {
       console.log('获取数据库路径，当前状态:', {
         dbpath: this.dbpath,
-        projectPathInput: this.projectPathInput
+        projectPath: this.projectPath
       });
       
       // 如果已经设置了数据库路径，直接返回
@@ -784,8 +888,8 @@ export default {
       }
       
       // 否则使用项目路径作为数据库路径
-      if (this.projectPathInput) {
-        this.dbpath = this.projectPathInput;
+      if (this.projectPath) {
+        this.dbpath = this.projectPath;
         console.log('使用项目路径作为数据库路径:', this.dbpath);
         return this.dbpath;
       }
@@ -801,6 +905,130 @@ export default {
       console.log('RuntimeAnalysis - Language changed:', event.detail.locale);
       // 强制刷新组件中的国际化文本
       this.$forceUpdate();
+    },
+
+    // 判断执行是否已完成
+    isExecutionFinished(executionTime) {
+      if (!executionTime) return false;
+      
+      // 如果执行时间字符串包含具体时间值，则认为已完成
+      return executionTime.match(/\d+(\.\d+)?(ms|s|µs)/i) !== null;
+    },
+    
+    // 获取未完成函数列表
+    async fetchUnfinishedFunctions() {
+      const dbpath = this.getCurrentDbPath();
+      if (!dbpath) {
+        this.unfinishedFunctions = [];
+        this.unfinishedFunctionsTotal = 0;
+        this.unfinishedFunctionsTotalPages = 1;
+        return;
+      }
+      
+      try {
+        this.loadingUnfinishedFunctions = true;
+        
+        // 确保阻塞阈值是有效的数字
+        const threshold = parseInt(this.blockingThreshold);
+        if (isNaN(threshold) || threshold < 100) {
+          this.blockingThreshold = 1000; // 如果无效，设置为默认值
+        }
+        
+        console.log(`获取未完成函数，阻塞阈值: ${this.blockingThreshold}ms`);
+        
+        const response = await axios.post('/api/runtime/unfinished-functions', {
+          dbpath: dbpath,
+          threshold: parseInt(this.blockingThreshold), // 确保发送数字类型
+          page: this.unfinishedFunctionsPage,
+          limit: this.unfinishedFunctionsLimit
+        });
+        
+        this.unfinishedFunctions = response.data.functions || [];
+        this.unfinishedFunctionsTotal = response.data.total || 0;
+        this.unfinishedFunctionsTotalPages = Math.ceil(this.unfinishedFunctionsTotal / this.unfinishedFunctionsLimit) || 1;
+        
+        // 如果当前页码超出总页数，则回到第一页
+        if (this.unfinishedFunctionsPage > this.unfinishedFunctionsTotalPages && this.unfinishedFunctionsTotalPages > 0) {
+          this.unfinishedFunctionsPage = 1;
+          await this.fetchUnfinishedFunctions();
+          return;
+        }
+        
+        console.log('未完成函数列表:', this.unfinishedFunctions);
+        console.log('未完成函数总数:', this.unfinishedFunctionsTotal);
+        console.log('未完成函数总页数:', this.unfinishedFunctionsTotalPages);
+      } catch (error) {
+        console.error('获取未完成函数列表失败:', error);
+        this.$message?.error?.('获取未完成函数列表失败') || alert('获取未完成函数列表失败');
+        this.unfinishedFunctions = [];
+        this.unfinishedFunctionsTotal = 0;
+        this.unfinishedFunctionsTotalPages = 1;
+      } finally {
+        this.loadingUnfinishedFunctions = false;
+      }
+    },
+    
+    // 更新阻塞阈值并刷新未完成函数列表
+    updateBlockingThreshold() {
+      // 验证输入是否为有效数字
+      const threshold = parseInt(this.blockingThreshold);
+      if (isNaN(threshold) || threshold < 0) {
+        this.$message?.warning?.('无效的阻塞阈值') || alert('无效的阻塞阈值');
+        this.blockingThreshold = 1000; // 重置为默认值
+        return;
+      }
+      
+      // 设置最小值
+      if (threshold < 100) {
+        this.blockingThreshold = 100;
+      }
+      
+      // 保存到本地存储
+      localStorage.setItem('blockingThreshold', this.blockingThreshold.toString());
+      
+      // 显示提示信息
+      this.$message?.success?.(`阻塞阈值已更新为 ${this.blockingThreshold}ms`) || 
+        alert(`阻塞阈值已更新为 ${this.blockingThreshold}ms`);
+      
+      // 重置页码并刷新未完成函数列表
+      this.unfinishedFunctionsPage = 1;
+      this.fetchUnfinishedFunctions();
+    },
+    
+    // 前往上一页
+    prevUnfinishedFunctionsPage() {
+      if (this.unfinishedFunctionsPage > 1) {
+        this.unfinishedFunctionsPage--;
+        this.fetchUnfinishedFunctions();
+      }
+    },
+    
+    // 前往下一页
+    nextUnfinishedFunctionsPage() {
+      if (this.unfinishedFunctionsPage < this.unfinishedFunctionsTotalPages) {
+        this.unfinishedFunctionsPage++;
+        this.fetchUnfinishedFunctions();
+      }
+    },
+    
+    // 前往指定页
+    goToUnfinishedFunctionsPage(page) {
+      if (page !== this.unfinishedFunctionsPage) {
+        this.unfinishedFunctionsPage = page;
+        this.fetchUnfinishedFunctions();
+      }
+    },
+    
+    // 查看函数调用链
+    async viewFunctionCallChain(functionId, gid) {
+      // 保存高亮函数ID到本地存储
+      localStorage.setItem('highlightedFunctionId', functionId);
+      
+      // 跳转到调用链页面
+      this.$router.push({
+        name: 'TraceDetails',
+        params: { gid: gid }
+      });
     },
   }
 };
@@ -872,6 +1100,34 @@ export default {
   align-items: center;
 }
 
+/* 阻塞阈值控件样式 */
+.threshold-control {
+  display: flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.threshold-control .form-label {
+  color: #495057;
+  white-space: nowrap;
+}
+
+.threshold-control .input-group {
+  width: auto;
+  flex-wrap: nowrap;
+}
+
+.threshold-control .form-control {
+  text-align: center;
+  font-weight: 500;
+}
+
+.threshold-control .btn-primary {
+  min-width: 80px;
+}
 
 @media (max-width: 768px) {
   .pagination-info {
@@ -881,6 +1137,31 @@ export default {
   .function-suggestions {
     width: 90%;
     top: 180px;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .card-header .d-flex {
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+  .threshold-control {
+    width: 100%;
+    margin-bottom: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .threshold-control .form-label {
+    margin-bottom: 5px !important;
+  }
+  
+  .threshold-control .input-group {
+    width: 100%;
   }
 }
 </style> 

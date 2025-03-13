@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
+	"time"
 
-	_ "github.com/mattn/go-sqlite3" // 引入 sqlite3 驱动
+	_ "github.com/glebarez/go-sqlite" // 引入 sqlite3 驱动
 
 	"github.com/toheart/functrace"
 	"github.com/toheart/goanalysis/internal/biz/entity"
@@ -23,7 +23,7 @@ func NewTraceDB(dbPath string) (*TraceDB, error) {
 		return nil, fmt.Errorf("trace db file not found: %w", err)
 	}
 
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("open trace db failed: %w", err)
 	}
@@ -31,20 +31,22 @@ func NewTraceDB(dbPath string) (*TraceDB, error) {
 	return &TraceDB{db: db}, nil
 }
 
-func (d *TraceDB) GetTracesByGID(gid string) ([]functrace.TraceData, error) {
-	var traces []functrace.TraceData
-	rows, err := d.db.Query("SELECT id, name, gid, indent, params, timeCost, parentFuncname FROM TraceData WHERE gid = ?", gid) // 使用 sqlite3 查询
+func (d *TraceDB) GetTracesByGID(gid string) ([]entity.TraceData, error) {
+	var traces []entity.TraceData
+	rows, err := d.db.Query("SELECT id, name, gid, indent, params, timeCost, parentId, createdAt, seq FROM TraceData WHERE gid = ?", gid) // 使用 sqlite3 查询
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var trace functrace.TraceData
+		var trace entity.TraceData
 		var paramsJSON string
-		var timeCost sql.NullString       // 使用 sql.NullString 处理可能的 NULL 值
-		var parentFuncname sql.NullString // 使用 sql.NullString 处理可能的 NULL 值
-		if err := rows.Scan(&trace.ID, &trace.Name, &trace.GID, &trace.Indent, &paramsJSON, &timeCost, &parentFuncname); err != nil {
+		var timeCost sql.NullString  // 使用 sql.NullString 处理可能的 NULL 值
+		var parentId sql.NullInt64   // 使用 sql.NullInt64 处理可能的 NULL 值
+		var createdAt sql.NullString // 使用 sql.NullString 处理可能的 NULL 值
+		var seq sql.NullString       // 使用 sql.NullString 处理可能的 NULL 值
+		if err := rows.Scan(&trace.ID, &trace.Name, &trace.GID, &trace.Indent, &paramsJSON, &timeCost, &parentId, &createdAt, &seq); err != nil {
 			return nil, err
 		}
 
@@ -62,11 +64,25 @@ func (d *TraceDB) GetTracesByGID(gid string) ([]functrace.TraceData, error) {
 			trace.TimeCost = "" // 或者设置为默认值
 		}
 
-		// 处理 parentFuncname 的值
-		if parentFuncname.Valid {
-			trace.ParentFuncName = parentFuncname.String // 只有在有效时才赋值
+		// 处理 parentId 的值
+		if parentId.Valid {
+			trace.ParentId = parentId.Int64 // 只有在有效时才赋值
 		} else {
-			trace.ParentFuncName = "" // 或者设置为默认值
+			trace.ParentId = 0 // 或者设置为默认值
+		}
+
+		// 处理 createdAt 的值
+		if createdAt.Valid {
+			trace.CreatedAt = createdAt.String // 只有在有效时才赋值
+		} else {
+			trace.CreatedAt = "" // 或者设置为默认值
+		}
+
+		// 处理 seq 的值
+		if seq.Valid {
+			trace.Seq = seq.String // 只有在有效时才赋值
+		} else {
+			trace.Seq = "" // 或者设置为默认值
 		}
 
 		traces = append(traces, trace)
@@ -175,21 +191,23 @@ func (d *TraceDB) GetInitialFunc(gid uint64) (string, error) {
 	return initialFunc, nil
 }
 
-// GetTracesByParentFunc 根据父函数名称查询函数调用
-func (d *TraceDB) GetTracesByParentFunc(parentFunc string) ([]functrace.TraceData, error) {
-	var traces []functrace.TraceData
-	rows, err := d.db.Query("SELECT id, name, gid, indent, params, timeCost, parentFuncname FROM TraceData WHERE parentFuncname = ?", parentFunc) // 使用 sqlite3 查询
+// GetTracesByParentId 根据父函数ID查询函数调用
+func (d *TraceDB) GetTracesByParentId(parentId int64) ([]entity.TraceData, error) {
+	var traces []entity.TraceData
+	rows, err := d.db.Query("SELECT id, name, gid, indent, params, timeCost, parentId, createdAt, seq FROM TraceData WHERE parentId = ?", parentId) // 使用 sqlite3 查询
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var trace functrace.TraceData
+		var trace entity.TraceData
 		var paramsJSON string
-		var timeCost sql.NullString       // 使用 sql.NullString 处理可能的 NULL 值
-		var parentFuncname sql.NullString // 使用 sql.NullString 处理可能的 NULL 值
-		if err := rows.Scan(&trace.ID, &trace.Name, &trace.GID, &trace.Indent, &paramsJSON, &timeCost, &parentFuncname); err != nil {
+		var timeCost sql.NullString  // 使用 sql.NullString 处理可能的 NULL 值
+		var parentId sql.NullInt64   // 使用 sql.NullInt64 处理可能的 NULL 值
+		var createdAt sql.NullString // 使用 sql.NullString 处理可能的 NULL 值
+		var seq sql.NullString       // 使用 sql.NullString 处理可能的 NULL 值
+		if err := rows.Scan(&trace.ID, &trace.Name, &trace.GID, &trace.Indent, &paramsJSON, &timeCost, &parentId, &createdAt, &seq); err != nil {
 			return nil, err
 		}
 
@@ -207,11 +225,25 @@ func (d *TraceDB) GetTracesByParentFunc(parentFunc string) ([]functrace.TraceDat
 			trace.TimeCost = ""
 		}
 
-		// 处理 parentFuncname 的值
-		if parentFuncname.Valid {
-			trace.ParentFuncName = parentFuncname.String
+		// 处理 parentId 的值
+		if parentId.Valid {
+			trace.ParentId = parentId.Int64
 		} else {
-			trace.ParentFuncName = ""
+			trace.ParentId = 0
+		}
+
+		// 处理 createdAt 的值
+		if createdAt.Valid {
+			trace.CreatedAt = createdAt.String
+		} else {
+			trace.CreatedAt = ""
+		}
+
+		// 处理 seq 的值
+		if seq.Valid {
+			trace.Seq = seq.String
+		} else {
+			trace.Seq = ""
 		}
 
 		traces = append(traces, trace)
@@ -219,10 +251,10 @@ func (d *TraceDB) GetTracesByParentFunc(parentFunc string) ([]functrace.TraceDat
 	return traces, nil
 }
 
-// GetAllParentFuncNames 获取所有的父函数名称
-func (d *TraceDB) GetAllParentFuncNames() ([]string, error) {
-	var parentFuncNames []string
-	rows, err := d.db.Query("SELECT DISTINCT parentFuncname FROM TraceData WHERE parentFuncname IS NOT NULL AND parentFuncname != ''") // 查询所有不同的父函数名
+// GetAllParentIds 获取所有的父函数ID
+func (d *TraceDB) GetAllParentIds() ([]int64, error) {
+	var parentIds []int64
+	rows, err := d.db.Query("SELECT DISTINCT parentId FROM TraceData WHERE parentId IS NOT NULL AND parentId != 0") // 查询所有不同的父函数ID
 	if err != nil {
 		return nil, err
 	}
@@ -230,19 +262,19 @@ func (d *TraceDB) GetAllParentFuncNames() ([]string, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var parentFuncName string
-		if err := rows.Scan(&parentFuncName); err != nil {
+		var parentId int64
+		if err := rows.Scan(&parentId); err != nil {
 			return nil, err
 		}
-		parentFuncNames = append(parentFuncNames, parentFuncName)
+		parentIds = append(parentIds, parentId)
 	}
-	return parentFuncNames, nil
+	return parentIds, nil
 }
 
 // GetChildFunctions 获取函数的子函数
-func (d *TraceDB) GetChildFunctions(funcName string) ([]string, error) {
+func (d *TraceDB) GetChildFunctions(parentId int64) ([]string, error) {
 	var childFunctions []string
-	rows, err := d.db.Query("SELECT DISTINCT name FROM TraceData WHERE parentFuncname = ?", funcName) // 查询所有以指定函数为父函数的函数名
+	rows, err := d.db.Query("SELECT DISTINCT name FROM TraceData WHERE parentId = ?", parentId) // 查询所有以指定函数ID为父函数的函数名
 	if err != nil {
 		return nil, err
 	}
@@ -507,9 +539,11 @@ func (d *TraceDB) getCallerFunctions(functionName string) ([]string, error) {
 
 	// 查询调用了指定函数的父函数
 	query := `
-		SELECT DISTINCT parentFuncname 
+		SELECT DISTINCT name 
 		FROM TraceData 
-		WHERE name = ? AND parentFuncname IS NOT NULL AND parentFuncname != ''
+		WHERE parentId IN (
+			SELECT id FROM TraceData WHERE name = ?
+		)
 	`
 
 	rows, err := d.db.Query(query, functionName)
@@ -537,7 +571,9 @@ func (d *TraceDB) getCalleeFunctions(functionName string) ([]string, error) {
 	query := `
 		SELECT DISTINCT name 
 		FROM TraceData 
-		WHERE parentFuncname = ?
+		WHERE parentId = (
+			SELECT id FROM TraceData WHERE name = ? LIMIT 1
+		)
 	`
 
 	rows, err := d.db.Query(query, functionName)
@@ -807,84 +843,145 @@ func (d *TraceDB) GetGoroutineCallDepth(gid uint64) (int, error) {
 }
 
 // GetGoroutineExecutionTime 获取指定 Goroutine 的总执行时间
+func parseTimeCost(timeCostStr string) (int64, error) {
+	duration, err := time.ParseDuration(timeCostStr)
+	if err != nil {
+		return 0, err
+	}
+	return int64(duration.Milliseconds()), nil
+}
+
+func formatTime(totalTime int64) string {
+	return fmt.Sprintf("%d ms", totalTime) // 返回总时间的字符串格式
+}
+
 func (d *TraceDB) GetGoroutineExecutionTime(gid uint64) (string, error) {
-	// 查询所有时间消耗记录
-	query := "SELECT timeCost FROM TraceData WHERE gid = ? AND timeCost IS NOT NULL AND timeCost != ''"
-	rows, err := d.db.Query(query, gid)
+	var totalTime int64
+	rows, err := d.db.Query(`
+		SELECT timeCost FROM TraceData 
+		WHERE gid = ? AND indent = 0
+	`, gid)
 	if err != nil {
 		return "", err
 	}
 	defer rows.Close()
 
-	var totalMs float64
 	for rows.Next() {
-		var timeCost string
-		if err := rows.Scan(&timeCost); err != nil {
+		var timeCostStr sql.NullString
+		if err := rows.Scan(&timeCostStr); err != nil {
 			return "", err
 		}
-
-		// 解析时间字符串，假设格式为 "XXXms" 或 "XXXµs"
-		ms, err := parseTimeToMs(timeCost)
-		if err != nil {
-			// 如果解析失败，跳过这条记录
+		if timeCostStr.String == "" {
 			continue
 		}
-		totalMs += ms
+		timeCost, err := parseTimeCost(timeCostStr.String)
+		if err != nil {
+			return "", err
+		}
+		totalTime += timeCost
 	}
 
-	// 格式化总时间
-	if totalMs >= 1000 {
-		return fmt.Sprintf("%.2fs", totalMs/1000), nil
-	}
-	return fmt.Sprintf("%.2fms", totalMs), nil
+	return formatTime(totalTime), nil
 }
 
-// parseTimeToMs 将时间字符串解析为毫秒数
-func parseTimeToMs(timeStr string) (float64, error) {
-	// 移除所有空格
-	timeStr = strings.TrimSpace(timeStr)
-
-	// 检查是否为空字符串
-	if timeStr == "" {
-		return 0, fmt.Errorf("empty time string")
-	}
-
-	// 处理不同的时间单位
-	if strings.HasSuffix(timeStr, "ms") {
-		// 毫秒
-		valueStr := strings.TrimSuffix(timeStr, "ms")
-		value, err := strconv.ParseFloat(valueStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return value, nil
-	} else if strings.HasSuffix(timeStr, "µs") || strings.HasSuffix(timeStr, "us") {
-		// 微秒
-		var valueStr string
-		if strings.HasSuffix(timeStr, "µs") {
-			valueStr = strings.TrimSuffix(timeStr, "µs")
-		} else {
-			valueStr = strings.TrimSuffix(timeStr, "us")
-		}
-		value, err := strconv.ParseFloat(valueStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return value / 1000, nil // 转换为毫秒
-	} else if strings.HasSuffix(timeStr, "s") {
-		// 秒
-		valueStr := strings.TrimSuffix(timeStr, "s")
-		value, err := strconv.ParseFloat(valueStr, 64)
-		if err != nil {
-			return 0, err
-		}
-		return value * 1000, nil // 转换为毫秒
-	}
-
-	// 如果没有单位，假设为毫秒
-	value, err := strconv.ParseFloat(timeStr, 64)
+// IsGoroutineFinished 检查指定的goroutine是否已完成
+// 判断依据：如果一个goroutine中所有indent=0的函数都有timeCost值，则认为该goroutine已完成
+func (d *TraceDB) IsGoroutineFinished(gid uint64) (bool, error) {
+	// 查询indent=0的函数数量
+	var totalCount int
+	err := d.db.QueryRow(`
+		SELECT COUNT(*) FROM TraceData 
+		WHERE gid = ? AND indent = 0
+	`, gid).Scan(&totalCount)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
-	return value, nil
+
+	if totalCount == 0 {
+		return false, nil // 没有找到indent=0的函数，认为未完成
+	}
+
+	// 查询有timeCost值的indent=0函数数量
+	var finishedCount int
+	err = d.db.QueryRow(`
+		SELECT COUNT(*) FROM TraceData 
+		WHERE gid = ? AND indent = 0 AND timeCost IS NOT NULL AND timeCost != ''
+	`, gid).Scan(&finishedCount)
+	if err != nil {
+		return false, err
+	}
+
+	// 如果所有indent=0的函数都有timeCost值，则认为该goroutine已完成
+	return finishedCount == totalCount, nil
+}
+
+// GetUnfinishedFunctions 获取未完成的函数列表
+func (d *TraceDB) GetUnfinishedFunctions(threshold int64) ([]entity.UnfinishedFunction, error) {
+	var functions []entity.UnfinishedFunction
+
+	// 获取最后一条记录的时间
+	var lastRecordTime string
+	err := d.db.QueryRow(`
+		SELECT createdAt FROM TraceData 
+		ORDER BY createdAt DESC LIMIT 1
+	`).Scan(&lastRecordTime)
+	if err != nil {
+		return nil, fmt.Errorf("get last record time failed: %w", err)
+	}
+
+	// 解析最后记录时间
+	lastTime, err := time.Parse("2006-01-02 15:04:05", lastRecordTime)
+	if err != nil {
+		return nil, fmt.Errorf("parse last record time failed: %w", err)
+	}
+
+	// 查询所有未完成的函数（timeCost为空）
+	rows, err := d.db.Query(`
+		SELECT id, name, gid, indent, parentId, createdAt FROM TraceData 
+		WHERE timeCost IS NULL OR timeCost = ''
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("query unfinished functions failed: %w", err)
+	}
+	defer rows.Close()
+
+	// 处理每个未完成的函数
+	for rows.Next() {
+		var function entity.TraceData
+		if err := rows.Scan(&function.ID, &function.Name, &function.GID, &function.Indent, &function.ParentId, &function.CreatedAt); err != nil {
+			continue
+		}
+
+		// 计算运行时间（从创建时间到现在）
+		var runningTime string
+		var runningTimeMs int64
+		createdTime, _ := time.Parse("2006-01-02 15:04:05", function.CreatedAt)
+		duration := lastTime.Sub(createdTime)
+		runningTimeMs = duration.Milliseconds()
+
+		if runningTimeMs > 1000 {
+			runningTime = fmt.Sprintf("%.2fs", float64(runningTimeMs)/1000)
+		} else {
+			runningTime = fmt.Sprintf("%dms", runningTimeMs)
+		}
+
+		// 只有运行时间超过阈值的函数才被视为未完成函数
+		if runningTimeMs <= threshold {
+			continue
+		}
+
+		// 检查是否为阻塞函数（运行时间超过阈值）
+		isBlocking := runningTimeMs >= threshold
+
+		// 添加到未完成函数列表
+		functions = append(functions, entity.UnfinishedFunction{
+			Name:        function.Name,
+			GID:         function.GID,
+			RunningTime: runningTime,
+			IsBlocking:  isBlocking,
+			FunctionID:  function.ID,
+		})
+	}
+
+	return functions, nil
 }
