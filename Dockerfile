@@ -4,7 +4,7 @@ COPY . /src
 WORKDIR /src
 
 ARG VERSION=dev
-RUN GOPROXY=https://goproxy.cn make build VERSION=${VERSION}
+RUN GOPROXY=https://proxy.golang.org make build VERSION=${VERSION}
 
 # 前端内容已经通过sync-frontend命令获取并放置在web目录中
 
@@ -28,7 +28,7 @@ WORKDIR /app
 ARG VERSION=dev
 ARG FRONTEND_VERSION=unknown
 LABEL org.opencontainers.image.version=${VERSION}
-LABEL org.opencontainers.image.description="Go源码分析平台 - 后端版本: ${VERSION}, 前端版本: ${FRONTEND_VERSION}"
+LABEL org.opencontainers.image.description="go-analysis backend: ${VERSION}, frontend: ${FRONTEND_VERSION}"
 
 EXPOSE 8000
 EXPOSE 9000

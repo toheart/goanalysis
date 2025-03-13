@@ -105,17 +105,6 @@ git clone https://github.com/toheart/goanalysis.git
 go run cmd/server/server.go
 ```
 
-### Frontend Setup
-
-```bash
-cd frontWeb
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run serve
-```
 
 ## 📡 API Reference
 
