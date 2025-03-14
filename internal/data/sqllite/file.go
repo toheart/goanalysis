@@ -8,19 +8,21 @@ import (
 	_ "github.com/glebarez/go-sqlite" // 引入 sqlite3 驱动
 	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/biz/repo"
+	"github.com/toheart/goanalysis/internal/conf"
 )
 
 var _ repo.FileRepo = (*FileDB)(nil)
 
 // FileDB 文件数据库管理结构
 type FileDB struct {
-	db *sql.DB
+	conf *conf.Data
+	db   *sql.DB
 }
 
 // NewFileDB 创建文件数据库管理实例
-func NewFileDB(dbPath string) (*FileDB, error) {
+func NewFileDB(conf *conf.Data) (repo.FileRepo, error) {
 	// 打开数据库连接
-	db, err := sql.Open("sqlite", dbPath)
+	db, err := sql.Open("sqlite", conf.Dbpath)
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite3 database failed: %w", err)
 	}
@@ -31,7 +33,8 @@ func NewFileDB(dbPath string) (*FileDB, error) {
 	db.SetConnMaxLifetime(time.Hour)
 
 	fileDB := &FileDB{
-		db: db,
+		db:   db,
+		conf: conf,
 	}
 
 	// 初始化数据库表

@@ -106,6 +106,9 @@ generate:
 	go generate ./...
 	go mod tidy
 
+wire:
+	cd ./cmd && wire && cd ..
+
 .PHONY: all
 # generate all
 all:

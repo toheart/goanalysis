@@ -13,7 +13,7 @@ const (
 type AnalysisTask struct {
 	ID          string
 	ProjectPath string
-	DbPath      string
+	Filename    string
 	Options     *AnalysisOptions // 分析选项
 }
 

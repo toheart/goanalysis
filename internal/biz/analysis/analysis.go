@@ -32,10 +32,6 @@ func (a *AnalysisBiz) GetAllFunctionName(dbpath string) ([]string, error) {
 	return traceDB.GetAllFunctionName()
 }
 
-func (a *AnalysisBiz) GetStaticDBPath() string {
-	return a.conf.StaticDBpath
-}
-
 func NewAnalysisBiz(conf *conf.Biz, data *data.Data, logger log.Logger) *AnalysisBiz {
 	return &AnalysisBiz{conf: conf, data: data, log: log.NewHelper(logger)}
 }

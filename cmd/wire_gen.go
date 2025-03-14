@@ -11,9 +11,11 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/toheart/goanalysis/internal/biz/analysis"
 	"github.com/toheart/goanalysis/internal/biz/chanMgr"
+	"github.com/toheart/goanalysis/internal/biz/filemanager"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
+	"github.com/toheart/goanalysis/internal/data/sqllite"
 	"github.com/toheart/goanalysis/internal/server"
 	"github.com/toheart/goanalysis/internal/service"
 )
@@ -21,14 +23,20 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, biz *conf.Biz, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, biz *conf.Biz, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
 	dataData := data.NewData(logger)
 	channelManager := chanMgr.NewChannelManager()
 	staticAnalysisBiz := staticanalysis.NewStaticAnalysisBiz(biz, dataData, channelManager, logger)
 	staticAnalysisService := service.NewStaticAnalysisService(staticAnalysisBiz, logger)
 	analysisBiz := analysis.NewAnalysisBiz(biz, dataData, logger)
 	analysisService := service.NewAnalysisService(analysisBiz, logger)
-	v := service.NewHttpServiceList(staticAnalysisService, analysisService)
+	fileRepo, err := sqllite.NewFileDB(confData)
+	if err != nil {
+		return nil, nil, err
+	}
+	fileBiz := filemanager.NewFileBiz(biz, logger, fileRepo)
+	fileManagerService := service.NewFileManagerService(fileBiz, logger)
+	v := service.NewHttpServiceList(staticAnalysisService, analysisService, fileManagerService)
 	httpServer := server.NewHTTPServer(confServer, logger, staticAnalysisBiz, v...)
 	grpcServer := server.NewGRPCServer(confServer, logger, v...)
 	v2 := server.NewServerList(httpServer, grpcServer)

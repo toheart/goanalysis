@@ -3,8 +3,6 @@ package filemanager
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/toheart/goanalysis/internal/biz/entity"
@@ -20,7 +18,7 @@ type FileBiz struct {
 }
 
 // NewFileBiz 创建文件管理业务逻辑实例
-func NewFileBiz(fileRepo repo.FileRepo, bizConf *conf.Biz, logger log.Logger) *FileBiz {
+func NewFileBiz(bizConf *conf.Biz, logger log.Logger, fileRepo repo.FileRepo) *FileBiz {
 	return &FileBiz{
 		repo: fileRepo,
 		conf: bizConf,
@@ -28,8 +26,8 @@ func NewFileBiz(fileRepo repo.FileRepo, bizConf *conf.Biz, logger log.Logger) *F
 	}
 }
 
-func (f *FileBiz) GetUploadDir() string {
-	return filepath.Join(f.conf.GetFileStoragePath(), "runtime", time.Now().Format("20060102"))
+func (f *FileBiz) GetUploadDir(runtime bool) string {
+	return entity.GetFileStoragePath(f.conf.FileStoragePath, runtime)
 }
 
 // UploadFile 上传文件

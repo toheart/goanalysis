@@ -75,7 +75,7 @@ func (s *StaticAnalysisBiz) AnalyzeProjectPath(projectPath string, DbPath string
 	task := entity.AnalysisTask{
 		ID:          uuid.New().String(),
 		ProjectPath: projectPath,
-		DbPath:      DbPath,
+		Filename:    DbPath,
 	}
 	s.SetTaskStatus(task.ID, entity.AnalysisTaskStatus{
 		Status:   entity.TaskStatusStarting,
@@ -91,7 +91,7 @@ func (s *StaticAnalysisBiz) AnalyzeProjectPathWithOptions(projectPath string, Db
 	task := entity.AnalysisTask{
 		ID:          uuid.New().String(),
 		ProjectPath: projectPath,
-		DbPath:      DbPath,
+		Filename:    DbPath,
 		Options:     options,
 	}
 	s.SetTaskStatus(task.ID, entity.AnalysisTaskStatus{
@@ -114,7 +114,7 @@ func (s *StaticAnalysisBiz) VerifyProjectPath(path string) bool {
 
 // GetStaticDBPath 获取静态分析数据库路径
 func (s *StaticAnalysisBiz) GetStaticDBPath() string {
-	return s.conf.StaticDBpath
+	return entity.GetFileStoragePath(s.conf.FileStoragePath, false)
 }
 
 // GetHotFunctions 获取热点函数
@@ -233,7 +233,7 @@ func (s *StaticAnalysisBiz) GetTaskStatusChan(taskID string) (chan []byte, error
 
 // 运行callgraph分析
 func (s *StaticAnalysisBiz) runCallgraphAnalysis(task *entity.AnalysisTask) error {
-	s.log.Infof("start callgraph analysis for project %s, db path: %s", task.ProjectPath, task.DbPath)
+	s.log.Infof("start callgraph analysis for project %s, db path: %s", task.ProjectPath, task.Filename)
 
 	// 设置通道
 	statusChan := make(chan []byte, 100)
@@ -243,7 +243,7 @@ func (s *StaticAnalysisBiz) runCallgraphAnalysis(task *entity.AnalysisTask) erro
 	statusChan <- []byte(fmt.Sprintf("Starting analysis for project: %s", task.ProjectPath))
 
 	// 查找对应的任务
-	dbPath := filepath.Join(s.conf.StaticDBpath, task.DbPath)
+	dbPath := filepath.Join(s.GetStaticDBPath(), task.Filename)
 	s.log.Infof("Database path: %s", dbPath)
 
 	funcNodeDB, err := s.data.GetFuncNodeDB(dbPath)

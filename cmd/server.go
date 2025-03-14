@@ -64,7 +64,7 @@ var ServerCmd = &cobra.Command{
 
 		// 启动服务器的逻辑
 		log := logger.NewLogger(bc.Logger)
-		app, cleanup, err := wireApp(bc.Server, bc.Biz, log)
+		app, cleanup, err := wireApp(bc.Server, bc.Biz, bc.Data, log)
 		if err != nil {
 			panic(err)
 		}

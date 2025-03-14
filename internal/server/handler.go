@@ -108,7 +108,7 @@ func (h *HttpServer) HandleChunkUpload(w http.ResponseWriter, r *http.Request) {
 	// 如果是最后一个分块，合并所有分块
 	if isLast {
 		// 创建上传目录
-		uploadDir := h.fileBiz.GetUploadDir()
+		uploadDir := h.fileBiz.GetUploadDir(true)
 		if err := os.MkdirAll(uploadDir, 0o755); err != nil {
 			http.Error(w, "create upload directory failed", http.StatusInternalServerError)
 			return

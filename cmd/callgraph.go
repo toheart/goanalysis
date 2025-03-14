@@ -12,6 +12,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 	"github.com/toheart/goanalysis/internal/biz/callgraph"
+	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
 )
@@ -55,12 +56,12 @@ var callGraphCmd = &cobra.Command{
 		}
 		db := data.NewData(logger)
 		// 获取codeDir最后一个目录
-		dir := filepath.Base(codeDir)
-		if dir == "." || dir == "/" {
+		fileName := filepath.Base(codeDir)
+		if fileName == "." || fileName == "/" {
 			// 处理路径末尾有斜杠的情况
-			dir = filepath.Base(filepath.Dir(codeDir))
+			fileName = filepath.Base(filepath.Dir(codeDir))
 		}
-		dbPath := filepath.Join(bc.Biz.StaticDBpath, dir)
+		dbPath := filepath.Join(entity.GetFileStoragePath(bc.Biz.FileStoragePath, false), fileName)
 		funcNodeDB, err := db.GetFuncNodeDB(dbPath)
 		if err != nil {
 			panic(err)
