@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/filemanager"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/server/iface"
@@ -29,6 +29,7 @@ type HttpServer struct {
 	server    *http.Server
 	log       *log.Helper
 	staticBiz *staticanalysis.StaticAnalysisBiz
+	fileBiz   *filemanager.FileBiz
 }
 
 func (h *HttpServer) Start(ctx context.Context) error {
@@ -191,34 +192,7 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 	fileServer := http.FileServer(http.Dir(frontendDir))
 
 	// 创建一个处理所有请求的处理器
-	rootHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 检查是否是API路径
-		if isAPIPath(r.URL.Path) {
-			// 如果是API路径，交给gRPC-Gateway处理
-			mux.ServeHTTP(w, r)
-			return
-		}
-
-		// 构建静态资源的完整路径
-		path := filepath.Join(frontendDir, r.URL.Path)
-
-		// 检查请求的文件是否存在
-		if fileExists(path) && !strings.HasSuffix(path, "/") {
-			// 如果文件存在，直接提供该文件
-			fileServer.ServeHTTP(w, r)
-			return
-		}
-
-		// 如果是目录或文件不存在，返回index.html（SPA应用通常需要这样处理）
-		indexPath := filepath.Join(frontendDir, "index.html")
-		if fileExists(indexPath) {
-			http.ServeFile(w, r, indexPath)
-			return
-		}
-
-		// 如果index.html也不存在，返回404
-		http.NotFound(w, r)
-	})
+	rootHandler := h.BaseHandler(mux, frontendDir, fileServer)
 
 	// 将根处理器包装在CORS处理器中
 	handler.Handle("/", corsHandler.Handler(rootHandler))
@@ -247,10 +221,4 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 	}
 
 	return h
-}
-
-// isAPIPath 判断是否为API路径
-func isAPIPath(path string) bool {
-	// 假设所有API路径都以/api/开头
-	return len(path) >= 5 && path[:5] == "/api/"
 }

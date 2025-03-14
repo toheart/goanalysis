@@ -6,11 +6,12 @@ import (
 )
 
 // ProviderSet is service providers.
-var ProviderSet = wire.NewSet(NewAnalysisService, NewStaticAnalysisService, NewHttpServiceList)
+var ProviderSet = wire.NewSet(NewAnalysisService, NewStaticAnalysisService, NewHttpServiceList, NewFileManagerService)
 
-func NewHttpServiceList(s *StaticAnalysisService, a *AnalysisService) []iface.InitGrpcHttp {
+func NewHttpServiceList(staticAnalysisService *StaticAnalysisService, analysisService *AnalysisService, fileManagerService *FileManagerService) []iface.InitGrpcHttp {
 	return []iface.InitGrpcHttp{
-		s,
-		a,
+		staticAnalysisService,
+		analysisService,
+		fileManagerService,
 	}
 }

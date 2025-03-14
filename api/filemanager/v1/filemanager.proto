@@ -1,0 +1,123 @@
+ syntax = "proto3";
+
+package filemanager.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/toheart/goanalysis/api/filemanager/v1;v1";
+
+// 文件管理服务定义
+service FileManager {
+
+  // 获取文件信息
+  rpc GetFileInfo (GetFileInfoRequest) returns (GetFileInfoReply) {
+    option (google.api.http) = {
+      get: "/api/files/{id}"
+    };
+  }
+
+  // 获取文件列表
+  rpc ListFiles (ListFilesRequest) returns (ListFilesReply) {
+    option (google.api.http) = {
+      get: "/api/files"
+    };
+  }
+
+  // 删除文件
+  rpc DeleteFile (DeleteFileRequest) returns (DeleteFileReply) {
+    option (google.api.http) = {
+      delete: "/api/files/{id}"
+    };
+  }
+
+  // 下载文件
+  rpc DownloadFile (DownloadFileRequest) returns (DownloadFileReply) {
+    option (google.api.http) = {
+      get: "/api/files/{id}/download"
+    };
+  }
+}
+
+// 文件类型枚举
+enum FileType {
+  FILE_TYPE_UNSPECIFIED = 0;
+  FILE_TYPE_RUNTIME = 1;    // 运行时文件
+  FILE_TYPE_STATIC = 2;     // 静态分析文件
+}
+
+
+// 获取文件信息请求
+message GetFileInfoRequest {
+  // 文件ID
+  int64 id = 1;
+}
+
+// 获取文件信息响应
+message GetFileInfoReply {
+  // 文件信息
+  FileInfo file_info = 1;
+}
+
+// 获取文件列表请求
+message ListFilesRequest {
+  // 文件类型
+  FileType file_type = 1;
+  // 分页限制
+  int32 limit = 2;
+  // 分页偏移
+  int32 offset = 3;
+}
+
+// 获取文件列表响应
+message ListFilesReply {
+  // 文件信息列表
+  repeated FileInfo files = 1;
+  // 总数
+  int64 total = 2;
+}
+
+// 删除文件请求
+message DeleteFileRequest {
+  // 文件ID
+  int64 id = 1;
+}
+
+// 删除文件响应
+message DeleteFileReply {
+  // 是否成功
+  bool success = 1;
+}
+
+// 下载文件请求
+message DownloadFileRequest {
+  // 文件ID
+  int64 id = 1;
+}
+
+// 下载文件响应
+message DownloadFileReply {
+  // 文件内容（Base64编码）
+  string file_content = 1;
+  // 文件名
+  string file_name = 2;
+  // 内容类型
+  string content_type = 3;
+}
+
+// 文件信息
+message FileInfo {
+  // 文件ID
+  int64 id = 1;
+  // 文件名
+  string file_name = 2;
+  // 文件类型
+  FileType file_type = 3;
+  // 文件大小（字节）
+  int64 file_size = 4;
+  // 内容类型
+  string content_type = 5;
+  // 上传时间（ISO 8601格式）
+  string upload_time = 6;
+  // 文件描述
+  string description = 7;
+}

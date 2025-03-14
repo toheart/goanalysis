@@ -42,4 +42,7 @@ message Biz {
   string gitlab_token = 2;     // GitLab访问令牌
   string gitlab_url = 3;       // GitLab服务器URL
   string gitlab_clone_dir = 4; // GitLab仓库克隆目录
+  // 文件存储相关配置
+  string runtimeDBpath = 5;    // 运行时数据库路径
+  string file_storage_path = 6; // 文件存储路径
 }

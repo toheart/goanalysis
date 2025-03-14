@@ -11,13 +11,13 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData)
+var ProviderSet = wire.NewSet(NewData, sqllite.NewTraceDB, sqllite.NewFuncNodeDB, sqllite.NewFileDB)
 
 // Data .
 type Data struct {
 	sync.RWMutex
 	traceDB    map[string]*sqllite.TraceDB
-	funcNodeDB map[string]*sqllite.FuncTree
+	funcNodeDB map[string]*sqllite.StaticDBImpl
 	log        *log.Helper
 }
 
@@ -25,7 +25,7 @@ type Data struct {
 func NewData(logger log.Logger) *Data {
 	return &Data{
 		traceDB:    make(map[string]*sqllite.TraceDB),
-		funcNodeDB: make(map[string]*sqllite.FuncTree),
+		funcNodeDB: make(map[string]*sqllite.StaticDBImpl),
 		log:        log.NewHelper(logger),
 	}
 }
@@ -51,7 +51,7 @@ func (d *Data) GetTraceDB(dbPath string) (*sqllite.TraceDB, error) {
 	return traceDB, nil
 }
 
-func (d *Data) GetFuncNodeDB(dbPath string) (*sqllite.FuncTree, error) {
+func (d *Data) GetFuncNodeDB(dbPath string) (*sqllite.StaticDBImpl, error) {
 	d.RLock()
 	funcNodeDB := d.funcNodeDB[dbPath]
 	d.RUnlock()

@@ -14,6 +14,7 @@ import (
 	"github.com/toheart/goanalysis/internal/biz/callgraph"
 	"github.com/toheart/goanalysis/internal/biz/chanMgr"
 	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/repo"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
 )
@@ -197,7 +198,7 @@ func (s *StaticAnalysisBiz) GetFunctionCallGraph(functionName string, depth int,
 }
 
 // GetFuncNodeDB 获取函数节点数据库
-func (s *StaticAnalysisBiz) GetFuncNodeDB(dbPath string) (callgraph.DBStore, error) {
+func (s *StaticAnalysisBiz) GetFuncNodeDB(dbPath string) (repo.StaticDBStore, error) {
 	s.log.Infof("Getting function node database: %s", dbPath)
 	return s.data.GetFuncNodeDB(dbPath)
 }

@@ -31,6 +31,97 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.AnalysisReply'
+    /api/files:
+        get:
+            tags:
+                - FileManager
+            description: 获取文件列表
+            operationId: FileManager_ListFiles
+            parameters:
+                - name: fileType
+                  in: query
+                  description: 文件类型
+                  schema:
+                    type: integer
+                    format: enum
+                - name: limit
+                  in: query
+                  description: 分页限制
+                  schema:
+                    type: integer
+                    format: int32
+                - name: offset
+                  in: query
+                  description: 分页偏移
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/filemanager.v1.ListFilesReply'
+    /api/files/{id}:
+        get:
+            tags:
+                - FileManager
+            description: 获取文件信息
+            operationId: FileManager_GetFileInfo
+            parameters:
+                - name: id
+                  in: path
+                  description: 文件ID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/filemanager.v1.GetFileInfoReply'
+        delete:
+            tags:
+                - FileManager
+            description: 删除文件
+            operationId: FileManager_DeleteFile
+            parameters:
+                - name: id
+                  in: path
+                  description: 文件ID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/filemanager.v1.DeleteFileReply'
+    /api/files/{id}/download:
+        get:
+            tags:
+                - FileManager
+            description: 下载文件
+            operationId: FileManager_DownloadFile
+            parameters:
+                - name: id
+                  in: path
+                  description: 文件ID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/filemanager.v1.DownloadFileReply'
     /api/runtime/function/analysis:
         post:
             tags:
@@ -1142,6 +1233,72 @@ components:
             properties:
                 path:
                     type: string
+        filemanager.v1.DeleteFileReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                    description: 是否成功
+            description: 删除文件响应
+        filemanager.v1.DownloadFileReply:
+            type: object
+            properties:
+                fileContent:
+                    type: string
+                    description: 文件内容（Base64编码）
+                fileName:
+                    type: string
+                    description: 文件名
+                contentType:
+                    type: string
+                    description: 内容类型
+            description: 下载文件响应
+        filemanager.v1.FileInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 文件ID
+                fileName:
+                    type: string
+                    description: 文件名
+                fileType:
+                    type: integer
+                    description: 文件类型
+                    format: enum
+                fileSize:
+                    type: string
+                    description: 文件大小（字节）
+                contentType:
+                    type: string
+                    description: 内容类型
+                uploadTime:
+                    type: string
+                    description: 上传时间（ISO 8601格式）
+                description:
+                    type: string
+                    description: 文件描述
+            description: 文件信息
+        filemanager.v1.GetFileInfoReply:
+            type: object
+            properties:
+                fileInfo:
+                    allOf:
+                        - $ref: '#/components/schemas/filemanager.v1.FileInfo'
+                    description: 文件信息
+            description: 获取文件信息响应
+        filemanager.v1.ListFilesReply:
+            type: object
+            properties:
+                files:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/filemanager.v1.FileInfo'
+                    description: 文件信息列表
+                total:
+                    type: string
+                    description: 总数
+            description: 获取文件列表响应
         staticanalysis.v1.AnalyzeDbFileRequest:
             type: object
             properties:
@@ -1551,5 +1708,7 @@ components:
 tags:
     - name: Analysis
       description: The greeting service definition.
+    - name: FileManager
+      description: 文件管理服务定义
     - name: StaticAnalysis
       description: 静态分析服务定义

@@ -7,10 +7,11 @@ import (
 	"time"
 
 	_ "github.com/glebarez/go-sqlite"
-	"github.com/toheart/goanalysis/internal/biz/callgraph"
+	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/repo"
 )
 
-var _ callgraph.DBStore = (*FuncTree)(nil)
+var _ repo.StaticDBStore = (*StaticDBImpl)(nil)
 
 // FuncNodeDB 函数节点的数据库模型
 type FuncNodeDB struct {
@@ -23,8 +24,8 @@ type FuncNodeDB struct {
 }
 
 // 添加从数据库模型转换回内存模型的方法
-func (f *FuncNodeDB) ToMemModel() *callgraph.FuncNode {
-	return &callgraph.FuncNode{
+func (f *FuncNodeDB) ToMemModel() *entity.FuncNode {
+	return &entity.FuncNode{
 		Key:      f.Key,
 		Pkg:      f.Pkg,
 		Name:     f.Name,
@@ -33,7 +34,7 @@ func (f *FuncNodeDB) ToMemModel() *callgraph.FuncNode {
 	}
 }
 
-func NodefromMemModel(node *callgraph.FuncNode) *FuncNodeDB {
+func NodefromMemModel(node *entity.FuncNode) *FuncNodeDB {
 	return &FuncNodeDB{
 		Key:  node.Key,
 		Pkg:  node.Pkg,
@@ -50,27 +51,27 @@ type FuncEdgeDB struct {
 	CalleeKey string    `gorm:"type:varchar(255);index"` // 被调用方函数Key
 }
 
-func EdgefromMemModel(edge *callgraph.FuncEdge) *FuncEdgeDB {
+func EdgefromMemModel(edge *entity.FuncEdge) *FuncEdgeDB {
 	return &FuncEdgeDB{
 		CallerKey: edge.CallerKey,
 		CalleeKey: edge.CalleeKey,
 	}
 }
 
-type FuncTree struct {
+type StaticDBImpl struct {
 	db *sql.DB
 }
 
-func NewFuncNodeDB(dbPath string) (*FuncTree, error) {
+func NewFuncNodeDB(dbPath string) (*StaticDBImpl, error) {
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite db failed: %w", err)
 	}
 
-	return &FuncTree{db: db}, nil
+	return &StaticDBImpl{db: db}, nil
 }
 
-func (s *FuncTree) InitTable() error {
+func (s *StaticDBImpl) InitTable() error {
 	// 创建函数节点表
 	_, err := s.db.Exec(`
 		CREATE TABLE IF NOT EXISTS func_nodes (
@@ -113,7 +114,7 @@ func (s *FuncTree) InitTable() error {
 }
 
 // SaveFuncNode 保存函数节点
-func (s *FuncTree) SaveFuncNode(node *callgraph.FuncNode) error {
+func (s *StaticDBImpl) SaveFuncNode(node *entity.FuncNode) error {
 	query := `INSERT OR REPLACE INTO func_nodes (key, pkg, name) VALUES (?, ?, ?)`
 	_, err := s.db.Exec(query, node.Key, node.Pkg, node.Name)
 	if err != nil {
@@ -123,7 +124,7 @@ func (s *FuncTree) SaveFuncNode(node *callgraph.FuncNode) error {
 }
 
 // SaveFuncEdge 保存函数调用关系
-func (s *FuncTree) SaveFuncEdge(edge *callgraph.FuncEdge) error {
+func (s *StaticDBImpl) SaveFuncEdge(edge *entity.FuncEdge) error {
 	query := `INSERT INTO func_edges (caller_key, callee_key) VALUES (?, ?)`
 	_, err := s.db.Exec(query, edge.CallerKey, edge.CalleeKey)
 	if err != nil {
@@ -133,11 +134,11 @@ func (s *FuncTree) SaveFuncEdge(edge *callgraph.FuncEdge) error {
 }
 
 // GetFuncNodeByKey 根据Key获取函数节点
-func (s *FuncTree) GetFuncNodeByKey(key string) (*callgraph.FuncNode, error) {
+func (s *StaticDBImpl) GetFuncNodeByKey(key string) (*entity.FuncNode, error) {
 	query := `SELECT key, pkg, name FROM func_nodes WHERE key = ?`
 	row := s.db.QueryRow(query, key)
 
-	node := &callgraph.FuncNode{}
+	node := &entity.FuncNode{}
 	err := row.Scan(&node.Key, &node.Pkg, &node.Name)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -170,7 +171,7 @@ func (s *FuncTree) GetFuncNodeByKey(key string) (*callgraph.FuncNode, error) {
 }
 
 // GetCallerEdges 获取调用该函数的所有节点
-func (s *FuncTree) GetCallerEdges(calleeKey string) ([]*callgraph.FuncNode, error) {
+func (s *StaticDBImpl) GetCallerEdges(calleeKey string) ([]*entity.FuncNode, error) {
 	query := `
 		SELECT n.key, n.pkg, n.name 
 		FROM func_nodes n
@@ -183,9 +184,9 @@ func (s *FuncTree) GetCallerEdges(calleeKey string) ([]*callgraph.FuncNode, erro
 	}
 	defer rows.Close()
 
-	var nodes []*callgraph.FuncNode
+	var nodes []*entity.FuncNode
 	for rows.Next() {
-		node := &callgraph.FuncNode{}
+		node := &entity.FuncNode{}
 		err := rows.Scan(&node.Key, &node.Pkg, &node.Name)
 		if err != nil {
 			return nil, fmt.Errorf("scan caller node failed: %w", err)
@@ -196,7 +197,7 @@ func (s *FuncTree) GetCallerEdges(calleeKey string) ([]*callgraph.FuncNode, erro
 }
 
 // GetCalleeEdges 获取该函数调用的所有节点
-func (s *FuncTree) GetCalleeEdges(callerKey string) ([]*callgraph.FuncNode, error) {
+func (s *StaticDBImpl) GetCalleeEdges(callerKey string) ([]*entity.FuncNode, error) {
 	query := `
 		SELECT n.key, n.pkg, n.name 
 		FROM func_nodes n
@@ -209,9 +210,9 @@ func (s *FuncTree) GetCalleeEdges(callerKey string) ([]*callgraph.FuncNode, erro
 	}
 	defer rows.Close()
 
-	var nodes []*callgraph.FuncNode
+	var nodes []*entity.FuncNode
 	for rows.Next() {
-		node := &callgraph.FuncNode{}
+		node := &entity.FuncNode{}
 		err := rows.Scan(&node.Key, &node.Pkg, &node.Name)
 		if err != nil {
 			return nil, fmt.Errorf("scan callee node failed: %w", err)
@@ -222,12 +223,12 @@ func (s *FuncTree) GetCalleeEdges(callerKey string) ([]*callgraph.FuncNode, erro
 }
 
 // Close 关闭数据库连接
-func (s *FuncTree) Close() error {
+func (s *StaticDBImpl) Close() error {
 	return s.db.Close()
 }
 
 // GetAllFuncNodes 获取所有函数节点
-func (s *FuncTree) GetAllFuncNodes() ([]*callgraph.FuncNode, error) {
+func (s *StaticDBImpl) GetAllFuncNodes() ([]*entity.FuncNode, error) {
 	query := `SELECT key, pkg, name FROM func_nodes`
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -235,9 +236,9 @@ func (s *FuncTree) GetAllFuncNodes() ([]*callgraph.FuncNode, error) {
 	}
 	defer rows.Close()
 
-	var nodes []*callgraph.FuncNode
+	var nodes []*entity.FuncNode
 	for rows.Next() {
-		node := &callgraph.FuncNode{}
+		node := &entity.FuncNode{}
 		err := rows.Scan(&node.Key, &node.Pkg, &node.Name)
 		if err != nil {
 			return nil, fmt.Errorf("scan func node failed: %w", err)
@@ -253,7 +254,7 @@ func (s *FuncTree) GetAllFuncNodes() ([]*callgraph.FuncNode, error) {
 }
 
 // GetAllFuncEdges 获取所有函数调用边
-func (s *FuncTree) GetAllFuncEdges() ([]*callgraph.FuncEdge, error) {
+func (s *StaticDBImpl) GetAllFuncEdges() ([]*entity.FuncEdge, error) {
 	query := `SELECT caller_key, callee_key FROM func_edges`
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -261,9 +262,9 @@ func (s *FuncTree) GetAllFuncEdges() ([]*callgraph.FuncEdge, error) {
 	}
 	defer rows.Close()
 
-	var edges []*callgraph.FuncEdge
+	var edges []*entity.FuncEdge
 	for rows.Next() {
-		edge := &callgraph.FuncEdge{}
+		edge := &entity.FuncEdge{}
 		err := rows.Scan(&edge.CallerKey, &edge.CalleeKey)
 		if err != nil {
 			return nil, fmt.Errorf("scan func edge failed: %w", err)
