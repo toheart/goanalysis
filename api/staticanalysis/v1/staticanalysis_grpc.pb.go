@@ -33,6 +33,7 @@ const (
 	StaticAnalysis_GetFunctionUpstream_FullMethodName    = "/staticanalysis.v1.StaticAnalysis/GetFunctionUpstream"
 	StaticAnalysis_GetFunctionDownstream_FullMethodName  = "/staticanalysis.v1.StaticAnalysis/GetFunctionDownstream"
 	StaticAnalysis_GetFunctionFullChain_FullMethodName   = "/staticanalysis.v1.StaticAnalysis/GetFunctionFullChain"
+	StaticAnalysis_GetTreeGraph_FullMethodName           = "/staticanalysis.v1.StaticAnalysis/GetTreeGraph"
 )
 
 // StaticAnalysisClient is the client API for StaticAnalysis service.
@@ -69,6 +70,8 @@ type StaticAnalysisClient interface {
 	GetFunctionDownstream(ctx context.Context, in *GetFunctionDownstreamRequest, opts ...grpc.CallOption) (*GetFunctionDownstreamResponse, error)
 	// 获取函数全链路调用关系
 	GetFunctionFullChain(ctx context.Context, in *GetFunctionFullChainRequest, opts ...grpc.CallOption) (*GetFunctionFullChainResponse, error)
+	// 获取静态分析树状图数据
+	GetTreeGraph(ctx context.Context, in *GetTreeGraphReq, opts ...grpc.CallOption) (*GetTreeGraphReply, error)
 }
 
 type staticAnalysisClient struct {
@@ -219,6 +222,16 @@ func (c *staticAnalysisClient) GetFunctionFullChain(ctx context.Context, in *Get
 	return out, nil
 }
 
+func (c *staticAnalysisClient) GetTreeGraph(ctx context.Context, in *GetTreeGraphReq, opts ...grpc.CallOption) (*GetTreeGraphReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTreeGraphReply)
+	err := c.cc.Invoke(ctx, StaticAnalysis_GetTreeGraph_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StaticAnalysisServer is the server API for StaticAnalysis service.
 // All implementations must embed UnimplementedStaticAnalysisServer
 // for forward compatibility.
@@ -253,6 +266,8 @@ type StaticAnalysisServer interface {
 	GetFunctionDownstream(context.Context, *GetFunctionDownstreamRequest) (*GetFunctionDownstreamResponse, error)
 	// 获取函数全链路调用关系
 	GetFunctionFullChain(context.Context, *GetFunctionFullChainRequest) (*GetFunctionFullChainResponse, error)
+	// 获取静态分析树状图数据
+	GetTreeGraph(context.Context, *GetTreeGraphReq) (*GetTreeGraphReply, error)
 	mustEmbedUnimplementedStaticAnalysisServer()
 }
 
@@ -304,6 +319,9 @@ func (UnimplementedStaticAnalysisServer) GetFunctionDownstream(context.Context, 
 }
 func (UnimplementedStaticAnalysisServer) GetFunctionFullChain(context.Context, *GetFunctionFullChainRequest) (*GetFunctionFullChainResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionFullChain not implemented")
+}
+func (UnimplementedStaticAnalysisServer) GetTreeGraph(context.Context, *GetTreeGraphReq) (*GetTreeGraphReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTreeGraph not implemented")
 }
 func (UnimplementedStaticAnalysisServer) mustEmbedUnimplementedStaticAnalysisServer() {}
 func (UnimplementedStaticAnalysisServer) testEmbeddedByValue()                        {}
@@ -578,6 +596,24 @@ func _StaticAnalysis_GetFunctionFullChain_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StaticAnalysis_GetTreeGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTreeGraphReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StaticAnalysisServer).GetTreeGraph(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StaticAnalysis_GetTreeGraph_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StaticAnalysisServer).GetTreeGraph(ctx, req.(*GetTreeGraphReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StaticAnalysis_ServiceDesc is the grpc.ServiceDesc for StaticAnalysis service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -640,6 +676,10 @@ var StaticAnalysis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFunctionFullChain",
 			Handler:    _StaticAnalysis_GetFunctionFullChain_Handler,
+		},
+		{
+			MethodName: "GetTreeGraph",
+			Handler:    _StaticAnalysis_GetTreeGraph_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

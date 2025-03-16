@@ -14,6 +14,7 @@ import (
 	"github.com/toheart/goanalysis/internal/biz/callgraph"
 	"github.com/toheart/goanalysis/internal/biz/chanMgr"
 	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/repo"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
 )
@@ -74,7 +75,7 @@ func (s *StaticAnalysisBiz) AnalyzeProjectPath(projectPath string, DbPath string
 	task := entity.AnalysisTask{
 		ID:          uuid.New().String(),
 		ProjectPath: projectPath,
-		DbPath:      DbPath,
+		Filename:    DbPath,
 	}
 	s.SetTaskStatus(task.ID, entity.AnalysisTaskStatus{
 		Status:   entity.TaskStatusStarting,
@@ -90,7 +91,7 @@ func (s *StaticAnalysisBiz) AnalyzeProjectPathWithOptions(projectPath string, Db
 	task := entity.AnalysisTask{
 		ID:          uuid.New().String(),
 		ProjectPath: projectPath,
-		DbPath:      DbPath,
+		Filename:    DbPath,
 		Options:     options,
 	}
 	s.SetTaskStatus(task.ID, entity.AnalysisTaskStatus{
@@ -113,7 +114,7 @@ func (s *StaticAnalysisBiz) VerifyProjectPath(path string) bool {
 
 // GetStaticDBPath 获取静态分析数据库路径
 func (s *StaticAnalysisBiz) GetStaticDBPath() string {
-	return s.conf.StaticDBpath
+	return entity.GetFileStoragePath(s.conf.FileStoragePath, false)
 }
 
 // GetHotFunctions 获取热点函数
@@ -197,7 +198,7 @@ func (s *StaticAnalysisBiz) GetFunctionCallGraph(functionName string, depth int,
 }
 
 // GetFuncNodeDB 获取函数节点数据库
-func (s *StaticAnalysisBiz) GetFuncNodeDB(dbPath string) (callgraph.DBStore, error) {
+func (s *StaticAnalysisBiz) GetFuncNodeDB(dbPath string) (repo.StaticDBStore, error) {
 	s.log.Infof("Getting function node database: %s", dbPath)
 	return s.data.GetFuncNodeDB(dbPath)
 }
@@ -232,7 +233,7 @@ func (s *StaticAnalysisBiz) GetTaskStatusChan(taskID string) (chan []byte, error
 
 // 运行callgraph分析
 func (s *StaticAnalysisBiz) runCallgraphAnalysis(task *entity.AnalysisTask) error {
-	s.log.Infof("start callgraph analysis for project %s, db path: %s", task.ProjectPath, task.DbPath)
+	s.log.Infof("start callgraph analysis for project %s, db path: %s", task.ProjectPath, task.Filename)
 
 	// 设置通道
 	statusChan := make(chan []byte, 100)
@@ -242,7 +243,7 @@ func (s *StaticAnalysisBiz) runCallgraphAnalysis(task *entity.AnalysisTask) erro
 	statusChan <- []byte(fmt.Sprintf("Starting analysis for project: %s", task.ProjectPath))
 
 	// 查找对应的任务
-	dbPath := filepath.Join(s.conf.StaticDBpath, task.DbPath)
+	dbPath := filepath.Join(s.GetStaticDBPath(), task.Filename)
 	s.log.Infof("Database path: %s", dbPath)
 
 	funcNodeDB, err := s.data.GetFuncNodeDB(dbPath)
@@ -405,4 +406,63 @@ func (s *StaticAnalysisBiz) GetTaskProgress(taskID string) (float64, error) {
 	}
 
 	return status.Progress, nil
+}
+
+// GetTreeGraph 获取静态分析的树状图数据
+func (s *StaticAnalysisBiz) GetTreeGraph(functionName string, dbPath string) (*entity.TreeGraph, error) {
+	s.log.Infof("get tree graph, function: %s, dbpath: %s", functionName, dbPath)
+
+	// 检查数据库路径是否有效
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("database file not found: %s", dbPath)
+	}
+
+	// 构建树状图结构
+	root := &entity.TreeNode{
+		Name: functionName,
+	}
+
+	// 获取函数调用图
+	nodes, edges, err := s.GetFunctionCallGraph(functionName, 3, "outgoing") // 获取向外的调用，深度3
+	if err != nil {
+		s.log.Errorf("get function call graph failed: %v", err)
+		// 返回只有根节点的树
+		return &entity.TreeGraph{Root: root}, nil
+	}
+
+	// 创建节点映射，用于快速查找
+	nodeMap := make(map[string]*entity.TreeNode)
+	nodeMap[functionName] = root
+
+	// 建立节点ID到节点的映射
+	funcNodes := make(map[string]entity.FunctionGraphNode)
+	for _, node := range nodes {
+		funcNodes[node.ID] = node
+	}
+
+	// 从调用图构建树状图
+	for _, edge := range edges {
+		sourceName := funcNodes[edge.Source].Name
+		targetName := funcNodes[edge.Target].Name
+
+		// 只处理从当前节点出发的边，避免形成环
+		if sourceName == functionName || nodeMap[sourceName] != nil {
+			sourceNode := nodeMap[sourceName]
+
+			// 创建或获取目标节点
+			targetNode, exists := nodeMap[targetName]
+			if !exists {
+				targetNode = &entity.TreeNode{
+					Name:  targetName,
+					Value: int64(funcNodes[edge.Target].CallCount),
+				}
+				nodeMap[targetName] = targetNode
+			}
+
+			// 添加子节点
+			sourceNode.Children = append(sourceNode.Children, targetNode)
+		}
+	}
+
+	return &entity.TreeGraph{Root: root}, nil
 }

@@ -139,6 +139,46 @@ service Analysis {
       body: "*"
     };
   }
+  
+  // 获取运行时树状图数据
+  rpc GetTreeGraph (GetTreeGraphReq) returns (GetTreeGraphReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/tree-graph"
+      body: "*"
+    };
+  }
+
+  // 根据GID获取多棵树状图数据
+  rpc GetTreeGraphByGID (GetTreeGraphByGIDReq) returns (GetTreeGraphByGIDReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/tree-graph/gid"
+      body: "*"
+    };
+  }
+  
+  // GetFunctionHotPaths 获取函数热点路径分析
+  rpc GetFunctionHotPaths(GetFunctionHotPathsReq) returns (GetFunctionHotPathsReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/hot-paths"
+      body: "*"
+    };
+  }
+  
+  // GetFunctionCallStats 获取函数调用统计分析
+  rpc GetFunctionCallStats(GetFunctionCallStatsReq) returns (GetFunctionCallStatsReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/call-stats"
+      body: "*"
+    };
+  }
+  
+  // GetPerformanceAnomalies 获取性能异常检测结果
+  rpc GetPerformanceAnomalies(GetPerformanceAnomaliesReq) returns (GetPerformanceAnomaliesReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/performance-anomalies"
+      body: "*"
+    };
+  }
 }
 
 
@@ -177,7 +217,7 @@ message GetAllFunctionNameReply {
 }
 
 message GenerateImageReq {
-  string gid = 1;
+  uint64 gid = 1;
   string dbpath = 2; // 数据库路径
 }
 
@@ -197,7 +237,7 @@ message AnalysisReply {
 }
 
 message AnalysisByGIDRequest {
-  string gid = 1;
+  uint64 gid = 1;
   string dbpath = 2; // 数据库路径
 }
 
@@ -210,7 +250,7 @@ message AnalysisByGIDReply {
 message TraceData {
   int32 id = 1;
   string name = 2;
-  int32 gid = 3;
+  uint64 gid = 3;
   int32 indent = 4;
   repeated TraceParams params = 5;
   int32 paramCount = 6;
@@ -264,7 +304,7 @@ message GraphEdge {
 }
 
 message GetTraceGraphReq {
-  string gid = 1;
+  uint64 gid = 1;
   string dbpath = 2; // 数据库路径
 }
 
@@ -482,4 +522,102 @@ message GetUnfinishedFunctionsReply {
   }
   repeated UnfinishedFunction functions = 1; // 未完成函数列表
   int32 total = 2; // 总数
+}
+
+// 获取树状图请求
+message GetTreeGraphReq {
+  string db_path = 1; // 数据库路径
+  string function_name = 2; // 函数名称
+  string chain_type = 3; // 链路类型: "upstream"(上游调用), "downstream"(下游调用), "full"(全链路)
+}
+
+
+// 树状图节点
+message TreeNode {
+  string name = 1; // 节点名称
+  int64 value = 2; // 值，只在tooltip中显示
+  bool collapsed = 3; // 是否默认折叠
+  repeated TreeNode children = 4; // 子节点
+}
+
+// 获取树状图响应
+message GetTreeGraphReply {
+  repeated TreeNode trees = 1; // 多棵树
+}
+
+// 根据GID获取树状图请求
+message GetTreeGraphByGIDReq {
+  string db_path = 1; // 数据库路径
+  uint64 gid = 2;     // Goroutine ID
+}
+
+// 根据GID获取树状图响应 - 返回多棵树
+message GetTreeGraphByGIDReply {
+  repeated TreeNode trees = 1; // 多棵树
+}
+
+// 获取函数热点路径请求
+message GetFunctionHotPathsReq {
+  string db_path = 1; // 数据库路径
+  string function_name = 2; // 函数名称（可选，不提供则分析所有函数）
+  int32 limit = 3; // 返回结果数量限制
+}
+
+// 热点路径信息
+message HotPathInfo {
+  repeated string path = 1; // 路径上的函数名称序列
+  int32 call_count = 2; // 调用次数
+  string total_time = 3; // 总耗时
+  string avg_time = 4; // 平均耗时
+}
+
+// 获取函数热点路径响应
+message GetFunctionHotPathsReply {
+  repeated HotPathInfo paths = 1; // 热点路径列表
+}
+
+// 获取函数调用统计请求
+message GetFunctionCallStatsReq {
+  string db_path = 1; // 数据库路径
+  string function_name = 2; // 函数名称（可选，不提供则分析所有函数）
+}
+
+// 函数调用统计信息
+message FunctionCallStats {
+  string name = 1; // 函数名称
+  string package = 2; // 包名
+  int32 call_count = 3; // 调用次数
+  int32 caller_count = 4; // 调用方数量
+  int32 callee_count = 5; // 被调用方数量
+  string avg_time = 6; // 平均执行时间
+  string max_time = 7; // 最大执行时间
+  string min_time = 8; // 最小执行时间
+  double time_std_dev = 9; // 执行时间标准差
+}
+
+// 获取函数调用统计响应
+message GetFunctionCallStatsReply {
+  repeated FunctionCallStats stats = 1; // 函数调用统计列表
+}
+
+// 获取性能异常检测请求
+message GetPerformanceAnomaliesReq {
+  string db_path = 1; // 数据库路径
+  string function_name = 2; // 函数名称（可选，不提供则检测所有函数）
+  double threshold = 3; // 异常阈值（标准差倍数），默认为2.0
+}
+
+// 性能异常信息
+message PerformanceAnomaly {
+  string name = 1; // 函数名称
+  string package = 2; // 包名
+  string anomaly_type = 3; // 异常类型: "time_variance"(时间波动), "depth_anomaly"(调用深度异常), "frequency_anomaly"(调用频率异常)
+  string description = 4; // 异常描述
+  double severity = 5; // 严重程度 (0.0-1.0)
+  map<string, string> details = 6; // 详细信息
+}
+
+// 获取性能异常检测响应
+message GetPerformanceAnomaliesReply {
+  repeated PerformanceAnomaly anomalies = 1; // 性能异常列表
 }

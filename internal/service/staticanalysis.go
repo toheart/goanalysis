@@ -12,8 +12,8 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/toheart/goanalysis/api/staticanalysis/v1"
-	"github.com/toheart/goanalysis/internal/biz/callgraph"
 	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/repo"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 	"google.golang.org/grpc"
 )
@@ -227,7 +227,7 @@ func (s *StaticAnalysisService) GetHotFunctions(ctx context.Context, req *v1.Get
 	}
 
 	// 创建一个函数键到函数节点的映射
-	funcNodeMap := make(map[string]*callgraph.FuncNode)
+	funcNodeMap := make(map[string]*entity.FuncNode)
 	for _, node := range nodes {
 		funcNodeMap[node.Key] = node
 	}
@@ -549,7 +549,7 @@ func (s *StaticAnalysisService) analyzeDbReal(dbPath string) (*staticAnalysisRes
 	}
 
 	// 创建一个函数键到函数节点的映射
-	funcNodeMap := make(map[string]*callgraph.FuncNode)
+	funcNodeMap := make(map[string]*entity.FuncNode)
 	for _, node := range nodes {
 		funcNodeMap[node.Key] = node
 	}
@@ -937,8 +937,8 @@ func (s *StaticAnalysisService) GetFunctionUpstream(ctx context.Context, req *v1
 
 // findAllUpstreamCalls 递归查找所有上游调用
 func (s *StaticAnalysisService) findAllUpstreamCalls(
-	currentNode *callgraph.FuncNode,
-	funcNodeDB callgraph.DBStore,
+	currentNode *entity.FuncNode,
+	funcNodeDB repo.StaticDBStore,
 	calleeToCallers map[string][]string,
 	funcCallCounts map[string]int,
 	visited map[string]bool,
@@ -1086,8 +1086,8 @@ func (s *StaticAnalysisService) GetFunctionDownstream(ctx context.Context, req *
 
 // findAllDownstreamCalls 递归查找所有下游调用
 func (s *StaticAnalysisService) findAllDownstreamCalls(
-	currentNode *callgraph.FuncNode,
-	funcNodeDB callgraph.DBStore,
+	currentNode *entity.FuncNode,
+	funcNodeDB repo.StaticDBStore,
 	callerToCallees map[string][]string,
 	funcCallCounts map[string]int,
 	visited map[string]bool,
@@ -1253,4 +1253,46 @@ func (s *StaticAnalysisService) mergeNodes(nodes []*v1.GraphNode) []*v1.GraphNod
 	}
 
 	return mergedNodes
+}
+
+// GetTreeGraph 获取静态分析树状图数据
+func (s *StaticAnalysisService) GetTreeGraph(ctx context.Context, req *v1.GetTreeGraphReq) (*v1.GetTreeGraphReply, error) {
+	s.log.Infof("get tree graph, function: %s, dbpath: %s", req.FunctionName, req.DbPath)
+
+	// 调用业务逻辑获取树状图数据
+	treeGraph, err := s.uc.GetTreeGraph(req.FunctionName, req.DbPath)
+	if err != nil {
+		s.log.Errorf("get tree graph failed: %v", err)
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetTreeGraphReply{
+		Root: s.convertTreeNodeToProto(treeGraph.Root),
+	}
+
+	return reply, nil
+}
+
+// 将实体TreeNode转换为proto TreeNode
+func (s *StaticAnalysisService) convertTreeNodeToProto(node *entity.TreeNode) *v1.TreeNode {
+	if node == nil {
+		return nil
+	}
+
+	protoNode := &v1.TreeNode{
+		Name:      node.Name,
+		Value:     node.Value,
+		Collapsed: true,
+	}
+
+	// 递归转换子节点
+	if len(node.Children) > 0 {
+		protoNode.Children = make([]*v1.TreeNode, 0, len(node.Children))
+		for _, child := range node.Children {
+			protoNode.Children = append(protoNode.Children, s.convertTreeNodeToProto(child))
+		}
+	}
+
+	return protoNode
 }

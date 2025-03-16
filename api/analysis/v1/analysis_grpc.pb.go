@@ -19,23 +19,28 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Analysis_GetAnalysis_FullMethodName            = "/analysis.v1.Analysis/GetAnalysis"
-	Analysis_GetAnalysisByGID_FullMethodName       = "/analysis.v1.Analysis/GetAnalysisByGID"
-	Analysis_GetAllGIDs_FullMethodName             = "/analysis.v1.Analysis/GetAllGIDs"
-	Analysis_GetParamsByID_FullMethodName          = "/analysis.v1.Analysis/GetParamsByID"
-	Analysis_GetAllFunctionName_FullMethodName     = "/analysis.v1.Analysis/GetAllFunctionName"
-	Analysis_GetGidsByFunctionName_FullMethodName  = "/analysis.v1.Analysis/GetGidsByFunctionName"
-	Analysis_VerifyProjectPath_FullMethodName      = "/analysis.v1.Analysis/VerifyProjectPath"
-	Analysis_GetTraceGraph_FullMethodName          = "/analysis.v1.Analysis/GetTraceGraph"
-	Analysis_GetTracesByParentFunc_FullMethodName  = "/analysis.v1.Analysis/GetTracesByParentFunc"
-	Analysis_GetAllParentIds_FullMethodName        = "/analysis.v1.Analysis/GetAllParentIds"
-	Analysis_GetChildFunctions_FullMethodName      = "/analysis.v1.Analysis/GetChildFunctions"
-	Analysis_GetHotFunctions_FullMethodName        = "/analysis.v1.Analysis/GetHotFunctions"
-	Analysis_GetGoroutineStats_FullMethodName      = "/analysis.v1.Analysis/GetGoroutineStats"
-	Analysis_GetFunctionAnalysis_FullMethodName    = "/analysis.v1.Analysis/GetFunctionAnalysis"
-	Analysis_GetFunctionCallGraph_FullMethodName   = "/analysis.v1.Analysis/GetFunctionCallGraph"
-	Analysis_InstrumentProject_FullMethodName      = "/analysis.v1.Analysis/InstrumentProject"
-	Analysis_GetUnfinishedFunctions_FullMethodName = "/analysis.v1.Analysis/GetUnfinishedFunctions"
+	Analysis_GetAnalysis_FullMethodName             = "/analysis.v1.Analysis/GetAnalysis"
+	Analysis_GetAnalysisByGID_FullMethodName        = "/analysis.v1.Analysis/GetAnalysisByGID"
+	Analysis_GetAllGIDs_FullMethodName              = "/analysis.v1.Analysis/GetAllGIDs"
+	Analysis_GetParamsByID_FullMethodName           = "/analysis.v1.Analysis/GetParamsByID"
+	Analysis_GetAllFunctionName_FullMethodName      = "/analysis.v1.Analysis/GetAllFunctionName"
+	Analysis_GetGidsByFunctionName_FullMethodName   = "/analysis.v1.Analysis/GetGidsByFunctionName"
+	Analysis_VerifyProjectPath_FullMethodName       = "/analysis.v1.Analysis/VerifyProjectPath"
+	Analysis_GetTraceGraph_FullMethodName           = "/analysis.v1.Analysis/GetTraceGraph"
+	Analysis_GetTracesByParentFunc_FullMethodName   = "/analysis.v1.Analysis/GetTracesByParentFunc"
+	Analysis_GetAllParentIds_FullMethodName         = "/analysis.v1.Analysis/GetAllParentIds"
+	Analysis_GetChildFunctions_FullMethodName       = "/analysis.v1.Analysis/GetChildFunctions"
+	Analysis_GetHotFunctions_FullMethodName         = "/analysis.v1.Analysis/GetHotFunctions"
+	Analysis_GetGoroutineStats_FullMethodName       = "/analysis.v1.Analysis/GetGoroutineStats"
+	Analysis_GetFunctionAnalysis_FullMethodName     = "/analysis.v1.Analysis/GetFunctionAnalysis"
+	Analysis_GetFunctionCallGraph_FullMethodName    = "/analysis.v1.Analysis/GetFunctionCallGraph"
+	Analysis_InstrumentProject_FullMethodName       = "/analysis.v1.Analysis/InstrumentProject"
+	Analysis_GetUnfinishedFunctions_FullMethodName  = "/analysis.v1.Analysis/GetUnfinishedFunctions"
+	Analysis_GetTreeGraph_FullMethodName            = "/analysis.v1.Analysis/GetTreeGraph"
+	Analysis_GetTreeGraphByGID_FullMethodName       = "/analysis.v1.Analysis/GetTreeGraphByGID"
+	Analysis_GetFunctionHotPaths_FullMethodName     = "/analysis.v1.Analysis/GetFunctionHotPaths"
+	Analysis_GetFunctionCallStats_FullMethodName    = "/analysis.v1.Analysis/GetFunctionCallStats"
+	Analysis_GetPerformanceAnomalies_FullMethodName = "/analysis.v1.Analysis/GetPerformanceAnomalies"
 )
 
 // AnalysisClient is the client API for Analysis service.
@@ -72,6 +77,16 @@ type AnalysisClient interface {
 	InstrumentProject(ctx context.Context, in *InstrumentProjectReq, opts ...grpc.CallOption) (*InstrumentProjectReply, error)
 	// GetUnfinishedFunctions 获取未完成的函数列表
 	GetUnfinishedFunctions(ctx context.Context, in *GetUnfinishedFunctionsReq, opts ...grpc.CallOption) (*GetUnfinishedFunctionsReply, error)
+	// 获取运行时树状图数据
+	GetTreeGraph(ctx context.Context, in *GetTreeGraphReq, opts ...grpc.CallOption) (*GetTreeGraphReply, error)
+	// 根据GID获取多棵树状图数据
+	GetTreeGraphByGID(ctx context.Context, in *GetTreeGraphByGIDReq, opts ...grpc.CallOption) (*GetTreeGraphByGIDReply, error)
+	// GetFunctionHotPaths 获取函数热点路径分析
+	GetFunctionHotPaths(ctx context.Context, in *GetFunctionHotPathsReq, opts ...grpc.CallOption) (*GetFunctionHotPathsReply, error)
+	// GetFunctionCallStats 获取函数调用统计分析
+	GetFunctionCallStats(ctx context.Context, in *GetFunctionCallStatsReq, opts ...grpc.CallOption) (*GetFunctionCallStatsReply, error)
+	// GetPerformanceAnomalies 获取性能异常检测结果
+	GetPerformanceAnomalies(ctx context.Context, in *GetPerformanceAnomaliesReq, opts ...grpc.CallOption) (*GetPerformanceAnomaliesReply, error)
 }
 
 type analysisClient struct {
@@ -252,6 +267,56 @@ func (c *analysisClient) GetUnfinishedFunctions(ctx context.Context, in *GetUnfi
 	return out, nil
 }
 
+func (c *analysisClient) GetTreeGraph(ctx context.Context, in *GetTreeGraphReq, opts ...grpc.CallOption) (*GetTreeGraphReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTreeGraphReply)
+	err := c.cc.Invoke(ctx, Analysis_GetTreeGraph_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetTreeGraphByGID(ctx context.Context, in *GetTreeGraphByGIDReq, opts ...grpc.CallOption) (*GetTreeGraphByGIDReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTreeGraphByGIDReply)
+	err := c.cc.Invoke(ctx, Analysis_GetTreeGraphByGID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetFunctionHotPaths(ctx context.Context, in *GetFunctionHotPathsReq, opts ...grpc.CallOption) (*GetFunctionHotPathsReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFunctionHotPathsReply)
+	err := c.cc.Invoke(ctx, Analysis_GetFunctionHotPaths_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetFunctionCallStats(ctx context.Context, in *GetFunctionCallStatsReq, opts ...grpc.CallOption) (*GetFunctionCallStatsReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFunctionCallStatsReply)
+	err := c.cc.Invoke(ctx, Analysis_GetFunctionCallStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) GetPerformanceAnomalies(ctx context.Context, in *GetPerformanceAnomaliesReq, opts ...grpc.CallOption) (*GetPerformanceAnomaliesReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPerformanceAnomaliesReply)
+	err := c.cc.Invoke(ctx, Analysis_GetPerformanceAnomalies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalysisServer is the server API for Analysis service.
 // All implementations must embed UnimplementedAnalysisServer
 // for forward compatibility.
@@ -286,6 +351,16 @@ type AnalysisServer interface {
 	InstrumentProject(context.Context, *InstrumentProjectReq) (*InstrumentProjectReply, error)
 	// GetUnfinishedFunctions 获取未完成的函数列表
 	GetUnfinishedFunctions(context.Context, *GetUnfinishedFunctionsReq) (*GetUnfinishedFunctionsReply, error)
+	// 获取运行时树状图数据
+	GetTreeGraph(context.Context, *GetTreeGraphReq) (*GetTreeGraphReply, error)
+	// 根据GID获取多棵树状图数据
+	GetTreeGraphByGID(context.Context, *GetTreeGraphByGIDReq) (*GetTreeGraphByGIDReply, error)
+	// GetFunctionHotPaths 获取函数热点路径分析
+	GetFunctionHotPaths(context.Context, *GetFunctionHotPathsReq) (*GetFunctionHotPathsReply, error)
+	// GetFunctionCallStats 获取函数调用统计分析
+	GetFunctionCallStats(context.Context, *GetFunctionCallStatsReq) (*GetFunctionCallStatsReply, error)
+	// GetPerformanceAnomalies 获取性能异常检测结果
+	GetPerformanceAnomalies(context.Context, *GetPerformanceAnomaliesReq) (*GetPerformanceAnomaliesReply, error)
 	mustEmbedUnimplementedAnalysisServer()
 }
 
@@ -346,6 +421,21 @@ func (UnimplementedAnalysisServer) InstrumentProject(context.Context, *Instrumen
 }
 func (UnimplementedAnalysisServer) GetUnfinishedFunctions(context.Context, *GetUnfinishedFunctionsReq) (*GetUnfinishedFunctionsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUnfinishedFunctions not implemented")
+}
+func (UnimplementedAnalysisServer) GetTreeGraph(context.Context, *GetTreeGraphReq) (*GetTreeGraphReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTreeGraph not implemented")
+}
+func (UnimplementedAnalysisServer) GetTreeGraphByGID(context.Context, *GetTreeGraphByGIDReq) (*GetTreeGraphByGIDReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTreeGraphByGID not implemented")
+}
+func (UnimplementedAnalysisServer) GetFunctionHotPaths(context.Context, *GetFunctionHotPathsReq) (*GetFunctionHotPathsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionHotPaths not implemented")
+}
+func (UnimplementedAnalysisServer) GetFunctionCallStats(context.Context, *GetFunctionCallStatsReq) (*GetFunctionCallStatsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionCallStats not implemented")
+}
+func (UnimplementedAnalysisServer) GetPerformanceAnomalies(context.Context, *GetPerformanceAnomaliesReq) (*GetPerformanceAnomaliesReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPerformanceAnomalies not implemented")
 }
 func (UnimplementedAnalysisServer) mustEmbedUnimplementedAnalysisServer() {}
 func (UnimplementedAnalysisServer) testEmbeddedByValue()                  {}
@@ -674,6 +764,96 @@ func _Analysis_GetUnfinishedFunctions_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Analysis_GetTreeGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTreeGraphReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetTreeGraph(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetTreeGraph_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetTreeGraph(ctx, req.(*GetTreeGraphReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetTreeGraphByGID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTreeGraphByGIDReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetTreeGraphByGID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetTreeGraphByGID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetTreeGraphByGID(ctx, req.(*GetTreeGraphByGIDReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetFunctionHotPaths_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFunctionHotPathsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetFunctionHotPaths(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetFunctionHotPaths_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetFunctionHotPaths(ctx, req.(*GetFunctionHotPathsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetFunctionCallStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFunctionCallStatsReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetFunctionCallStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetFunctionCallStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetFunctionCallStats(ctx, req.(*GetFunctionCallStatsReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_GetPerformanceAnomalies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPerformanceAnomaliesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetPerformanceAnomalies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetPerformanceAnomalies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetPerformanceAnomalies(ctx, req.(*GetPerformanceAnomaliesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Analysis_ServiceDesc is the grpc.ServiceDesc for Analysis service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -748,6 +928,26 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUnfinishedFunctions",
 			Handler:    _Analysis_GetUnfinishedFunctions_Handler,
+		},
+		{
+			MethodName: "GetTreeGraph",
+			Handler:    _Analysis_GetTreeGraph_Handler,
+		},
+		{
+			MethodName: "GetTreeGraphByGID",
+			Handler:    _Analysis_GetTreeGraphByGID_Handler,
+		},
+		{
+			MethodName: "GetFunctionHotPaths",
+			Handler:    _Analysis_GetFunctionHotPaths_Handler,
+		},
+		{
+			MethodName: "GetFunctionCallStats",
+			Handler:    _Analysis_GetFunctionCallStats_Handler,
+		},
+		{
+			MethodName: "GetPerformanceAnomalies",
+			Handler:    _Analysis_GetPerformanceAnomalies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

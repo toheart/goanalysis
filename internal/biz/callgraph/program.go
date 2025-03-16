@@ -13,6 +13,8 @@ import (
 	"sync"
 
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/repo"
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/callgraph/cha"
 	"golang.org/x/tools/go/callgraph/rta"
@@ -42,28 +44,28 @@ type ProgramAnalysis struct {
 	isCache    bool   // 是否使用缓存
 	outputPath string // 输出文件路径
 
-	tree map[string]*FuncNode // 语法树
+	tree map[string]*entity.FuncNode // 语法树
 
-	callGraph  *callgraph.Graph // 调用图
-	data       DBStore          // 数据存储
-	moduleName string           // 模块名
+	callGraph  *callgraph.Graph   // 调用图
+	data       repo.StaticDBStore // 数据存储
+	moduleName string             // 模块名
 
-	edgeChan      chan *FuncEdge  // 边通道
-	nodeChan      chan *FuncNode  // 节点通道
-	totalNode     int             // 总节点数
-	currNodeCount int             // 当前节点数
-	isVisited     map[string]bool // 是否访问过
+	edgeChan      chan *entity.FuncEdge // 边通道
+	nodeChan      chan *entity.FuncNode // 节点通道
+	totalNode     int                   // 总节点数
+	currNodeCount int                   // 当前节点数
+	isVisited     map[string]bool       // 是否访问过
 }
 
 // NewProgramAnalysis 创建新的程序分析实例
-func NewProgramAnalysis(dir string, log *log.Helper, data DBStore, opts ...ProgramOption) *ProgramAnalysis {
+func NewProgramAnalysis(dir string, log *log.Helper, data repo.StaticDBStore, opts ...ProgramOption) *ProgramAnalysis {
 	p := &ProgramAnalysis{
 		Dir:       dir,
 		algo:      CallGraphTypeVta,
 		data:      data,
-		tree:      make(map[string]*FuncNode),
-		nodeChan:  make(chan *FuncNode, 100),
-		edgeChan:  make(chan *FuncEdge, 100),
+		tree:      make(map[string]*entity.FuncNode),
+		nodeChan:  make(chan *entity.FuncNode, 100),
+		edgeChan:  make(chan *entity.FuncEdge, 100),
 		isVisited: make(map[string]bool),
 		log:       log,
 	}
@@ -95,7 +97,7 @@ func (p *ProgramAnalysis) NodeIsExist(key string) bool {
 }
 
 // GetNode 获取节点
-func (p *ProgramAnalysis) GetNode(key string) *FuncNode {
+func (p *ProgramAnalysis) GetNode(key string) *entity.FuncNode {
 	if !p.NodeIsExist(key) {
 		return nil
 	}
@@ -300,10 +302,10 @@ func (p *ProgramAnalysis) SetTree(statusChan chan []byte) error {
 			return nil
 		}
 		// caller是否存在
-		var pNode, qNode *FuncNode
+		var pNode, qNode *entity.FuncNode
 		// 如果不存在, 则创建
 		if !p.NodeIsExist(caller.String()) {
-			pNode = &FuncNode{
+			pNode = &entity.FuncNode{
 				Key:  caller.String(),
 				Pkg:  caller.Func.Pkg.Pkg.Path(),
 				Name: caller.Func.RelString(caller.Func.Pkg.Pkg),
@@ -323,7 +325,7 @@ func (p *ProgramAnalysis) SetTree(statusChan chan []byte) error {
 		}
 		// 如果不存在, 则创建
 		if !p.NodeIsExist(callee.String()) {
-			qNode = &FuncNode{
+			qNode = &entity.FuncNode{
 				Key:  callee.String(),
 				Pkg:  callee.Func.Pkg.Pkg.Path(),
 				Name: callee.Func.RelString(callee.Func.Pkg.Pkg),
@@ -342,7 +344,7 @@ func (p *ProgramAnalysis) SetTree(statusChan chan []byte) error {
 		}
 		pNode.Children = append(pNode.Children, qNode.Key)
 		qNode.Parent = append(qNode.Parent, pNode.Key)
-		p.edgeChan <- &FuncEdge{
+		p.edgeChan <- &entity.FuncEdge{
 			CallerKey: pNode.Key,
 			CalleeKey: qNode.Key,
 		}

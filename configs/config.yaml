@@ -16,7 +16,12 @@ logger:
   compress: true                  # 压缩旧日志文件
 
 biz:
-  staticDBpath: ./data/static.db
   gitlab_token: ""
   gitlab_url: ""
   gitlab_clone_dir: "./data/repos"
+  staticStorePath: ./data/static
+  runtimeStorePath: ./data/runtime
+  file_storage_path: ./data/files
+
+data:
+  dbpath: ./goanalysis.db

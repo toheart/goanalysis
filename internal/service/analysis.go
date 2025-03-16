@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -54,11 +53,11 @@ func (a *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisB
 		traceData := &v1.AnalysisByGIDReply_TraceData{
 			Id:         int32(trace.ID),
 			Name:       trace.Name,
-			Gid:        int32(trace.GID),
+			Gid:        trace.GID,
 			Indent:     int32(trace.Indent),
 			ParamCount: int32(len(trace.Params)),
 			TimeCost:   trace.TimeCost,
-			ParentId:   trace.ParentId,
+			ParentId:   int64(trace.ParentId),
 		}
 
 		reply.TraceData = append(reply.TraceData, traceData)
@@ -72,54 +71,38 @@ func (a *AnalysisService) GetAllGIDs(ctx context.Context, in *v1.GetAllGIDsReq) 
 	includeMetrics := in.IncludeMetrics
 	dbpath := in.Dbpath
 	reply := &v1.GetAllGIDsReply{}
-	gids, err := a.uc.GetAllGIDs(dbpath, int(page), int(limit))
+	groutines, err := a.uc.GetAllGIDs(dbpath, int(page), int(limit))
 	if err != nil {
 		return nil, err
 	}
 
-	for _, gid := range gids {
-		initialFunc, err := a.uc.GetInitialFunc(dbpath, gid)
-		if err != nil {
-			return nil, err
-		}
-
+	for _, g := range groutines {
+		isFinished := (g.IsFinished == 1)
 		body := &v1.GetAllGIDsReply_Body{
-			Gid:         gid,
-			InitialFunc: initialFunc,
+			Gid:         uint64(g.ID),
+			InitialFunc: g.InitFuncName,
+			IsFinished:  isFinished,
 		}
 
 		// 如果需要包含调用深度和执行时间
 		if includeMetrics {
 			// 获取调用深度
-			depth, err := a.uc.GetGoroutineCallDepth(dbpath, gid)
+			depth, err := a.uc.GetGoroutineCallDepth(dbpath, uint64(g.ID))
 			if err != nil {
 				// 如果获取失败，使用默认值
 				body.Depth = 0
 			} else {
 				body.Depth = int32(depth)
 			}
-
-			// 获取执行时间
-			execTime, err := a.uc.GetGoroutineExecutionTime(dbpath, gid)
+			execTime, err := a.uc.GetGoroutineExecutionTime(dbpath, g)
 			if err != nil {
 				// 如果获取失败，使用默认值
-				a.log.Errorf("get goroutine execution time for gid: %d from db: %s failed: %v", gid, dbpath, err)
+				a.log.Errorf("get goroutine execution time for gid: %d from db: %s failed: %v", g.ID, dbpath, err)
 				body.ExecutionTime = "N/A"
 			} else {
 				body.ExecutionTime = execTime
 			}
-
-			// 判断goroutine是否已完成
-			isFinished, err := a.uc.IsGoroutineFinished(dbpath, gid)
-			if err != nil {
-				// 如果获取失败，默认为未完成
-				a.log.Errorf("check if goroutine is finished for gid: %d from db: %s failed: %v", gid, dbpath, err)
-				body.IsFinished = false
-			} else {
-				body.IsFinished = isFinished
-			}
 		}
-
 		reply.Body = append(reply.Body, body)
 	}
 
@@ -209,15 +192,15 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 	dbpath := in.Path // 使用 Path 字段作为 dbpath
 
 	// 获取所有GID
-	allGids, err := a.uc.GetAllGIDs(dbpath, 0, 1000) // 假设最多1000个GID
+	groutines, err := a.uc.GetAllGIDs(dbpath, 0, 1000) // 假设最多1000个GID
 	if err != nil {
 		return nil, err
 	}
 
 	// 过滤包含指定函数的GID
-	var matchingGids []uint64
-	for _, gid := range allGids {
-		traces, err := a.uc.GetTracesByGID(dbpath, strconv.FormatUint(gid, 10))
+	var matchingG []entity.GoroutineTrace
+	for _, g := range groutines {
+		traces, err := a.uc.GetTracesByGID(dbpath, uint64(g.ID))
 		if err != nil {
 			continue
 		}
@@ -227,7 +210,7 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 			// 简化函数名称进行比较
 			simplifiedName := getLastSegment(removeParentheses(trace.Name))
 			if simplifiedName == functionName {
-				matchingGids = append(matchingGids, gid)
+				matchingG = append(matchingG, g)
 				break
 			}
 		}
@@ -235,21 +218,19 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 
 	// 构建响应
 	reply := &v1.GetGidsByFunctionNameReply{}
-	for _, gid := range matchingGids {
-		initialFunc, err := a.uc.GetInitialFunc(dbpath, gid)
-		if err != nil {
-			continue
-		}
+	for _, g := range matchingG {
 
+		isfinished := (g.IsFinished == 1)
 		body := &v1.GetGidsByFunctionNameReply_Body{
-			Gid:         gid,
-			InitialFunc: initialFunc,
+			Gid:         uint64(g.ID),
+			InitialFunc: g.InitFuncName,
+			IsFinished:  isfinished,
 		}
 
 		// 如果需要包含调用深度和执行时间
 		if includeMetrics {
 			// 获取调用深度
-			depth, err := a.uc.GetGoroutineCallDepth(dbpath, gid)
+			depth, err := a.uc.GetGoroutineCallDepth(dbpath, uint64(g.ID))
 			if err != nil {
 				// 如果获取失败，使用默认值
 				body.Depth = 0
@@ -258,22 +239,12 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 			}
 
 			// 获取执行时间
-			execTime, err := a.uc.GetGoroutineExecutionTime(dbpath, gid)
+			execTime, err := a.uc.GetGoroutineExecutionTime(dbpath, g)
 			if err != nil {
 				// 如果获取失败，使用默认值
 				body.ExecutionTime = "N/A"
 			} else {
 				body.ExecutionTime = execTime
-			}
-
-			// 判断goroutine是否已完成
-			isFinished, err := a.uc.IsGoroutineFinished(dbpath, gid)
-			if err != nil {
-				// 如果获取失败，默认为未完成
-				a.log.Errorf("check if goroutine is finished for gid: %d from db: %s failed: %v", gid, dbpath, err)
-				body.IsFinished = false
-			} else {
-				body.IsFinished = isFinished
 			}
 		}
 
@@ -281,7 +252,7 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 	}
 
 	// 获取总数
-	reply.Total = int32(len(matchingGids))
+	reply.Total = int32(len(matchingG))
 
 	return reply, nil
 }
@@ -338,10 +309,10 @@ type GraphData struct {
 
 func (a *AnalysisService) GetTraceGraph(ctx context.Context, in *v1.GetTraceGraphReq) (*v1.GetTraceGraphReply, error) {
 	// 记录请求信息
-	a.log.WithContext(ctx).Infof("GetTraceGraph request received: gid=%s, dbpath=%s", in.Gid, in.Dbpath)
+	a.log.WithContext(ctx).Infof("GetTraceGraph request received: gid=%d, dbpath=%s", in.Gid, in.Dbpath)
 
 	// 参数验证
-	if in.Gid == "" {
+	if in.Gid == 0 {
 		a.log.WithContext(ctx).Errorf("GetTraceGraph failed: gid is empty")
 		return nil, errors.New("gid is required")
 	}
@@ -529,7 +500,7 @@ func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetT
 			Indent:     int32(trace.Indent),
 			ParamCount: int32(len(trace.Params)),
 			TimeCost:   trace.TimeCost,
-			ParentId:   trace.ParentId,
+			ParentId:   int64(trace.ParentId),
 		}
 
 		reply.TraceData = append(reply.TraceData, traceData)
@@ -733,11 +704,11 @@ func (a *AnalysisService) GetUnfinishedFunctions(ctx context.Context, in *v1.Get
 	}
 
 	// 获取当前页的数据
-	var pagedFunctions []entity.UnfinishedFunction
+	var pagedFunctions []entity.AllUnfinishedFunction
 	if startIndex < endIndex {
 		pagedFunctions = functions[startIndex:endIndex]
 	} else {
-		pagedFunctions = []entity.UnfinishedFunction{}
+		pagedFunctions = []entity.AllUnfinishedFunction{}
 	}
 
 	// 构建响应
@@ -751,11 +722,178 @@ func (a *AnalysisService) GetUnfinishedFunctions(ctx context.Context, in *v1.Get
 			Gid:         function.GID,
 			RunningTime: function.RunningTime,
 			IsBlocking:  function.IsBlocking,
-			FunctionId:  function.FunctionID,
+			FunctionId:  int64(function.FunctionID),
 		})
 	}
 
 	a.log.WithContext(ctx).Infof("Found %d unfinished functions, returning page %d with %d items",
 		totalCount, page, len(pagedFunctions))
+	return reply, nil
+}
+
+// GetTreeGraph 获取树状图
+func (a *AnalysisService) GetTreeGraph(ctx context.Context, req *v1.GetTreeGraphReq) (*v1.GetTreeGraphReply, error) {
+	a.log.Infof("get tree graph, function: %s, dbpath: %s, chain_type: %s", req.FunctionName, req.DbPath, req.ChainType)
+
+	// 调用业务逻辑获取树状图数据
+	trees, err := a.uc.GetTreeGraph(req.DbPath, req.FunctionName, req.ChainType)
+	if err != nil {
+		a.log.Errorf("get tree graph failed: %v", err)
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetTreeGraphReply{
+		Trees: make([]*v1.TreeNode, 0, len(trees)),
+	}
+
+	// 转换每棵树节点
+	for _, tree := range trees {
+		protoTree := a.convertTreeNodeToProto(tree)
+		reply.Trees = append(reply.Trees, protoTree)
+	}
+
+	return reply, nil
+}
+
+// 将实体TreeNode转换为proto TreeNode
+func (a *AnalysisService) convertTreeNodeToProto(node *entity.TreeNode) *v1.TreeNode {
+	if node == nil {
+		return nil
+	}
+
+	protoNode := &v1.TreeNode{
+		Name:      node.Name,
+		Value:     node.Value,
+		Collapsed: true,
+	}
+
+	// 递归转换子节点
+	if len(node.Children) > 0 {
+		protoNode.Children = make([]*v1.TreeNode, 0, len(node.Children))
+		for _, child := range node.Children {
+			protoNode.Children = append(protoNode.Children, a.convertTreeNodeToProto(child))
+		}
+	}
+
+	return protoNode
+}
+
+// GetTreeGraphByGID 根据GID获取多棵树状图数据
+func (a *AnalysisService) GetTreeGraphByGID(ctx context.Context, req *v1.GetTreeGraphByGIDReq) (*v1.GetTreeGraphByGIDReply, error) {
+	a.log.Infof("get tree graph by gid: %d, dbpath: %s", req.Gid, req.DbPath)
+
+	// 调用业务逻辑获取树状图数据
+	treeTrees, err := a.uc.GetTreeGraphByGID(req.DbPath, req.Gid)
+	if err != nil {
+		a.log.Errorf("get tree graph by gid failed: %v", err)
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetTreeGraphByGIDReply{
+		Trees: make([]*v1.TreeNode, 0, len(treeTrees)),
+	}
+
+	// 转换每棵树
+	for _, tree := range treeTrees {
+		protoTree := a.convertTreeNodeToProto(tree)
+		reply.Trees = append(reply.Trees, protoTree)
+	}
+
+	return reply, nil
+}
+
+// GetFunctionHotPaths 获取函数热点路径分析
+func (a *AnalysisService) GetFunctionHotPaths(ctx context.Context, req *v1.GetFunctionHotPathsReq) (*v1.GetFunctionHotPathsReply, error) {
+	a.log.Infof("获取函数热点路径, 函数: %s, dbpath: %s, 限制: %d", req.FunctionName, req.DbPath, req.Limit)
+
+	// 调用业务逻辑获取热点路径数据
+	hotPaths, err := a.uc.GetFunctionHotPaths(req.DbPath, req.FunctionName, int(req.Limit))
+	if err != nil {
+		a.log.Errorf("获取函数热点路径失败: %v", err)
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetFunctionHotPathsReply{
+		Paths: make([]*v1.HotPathInfo, 0, len(hotPaths)),
+	}
+
+	for _, path := range hotPaths {
+		hotPathInfo := &v1.HotPathInfo{
+			Path:      path.Path,
+			CallCount: int32(path.CallCount),
+			TotalTime: path.TotalTime,
+			AvgTime:   path.AvgTime,
+		}
+		reply.Paths = append(reply.Paths, hotPathInfo)
+	}
+
+	return reply, nil
+}
+
+// GetFunctionCallStats 获取函数调用统计分析
+func (a *AnalysisService) GetFunctionCallStats(ctx context.Context, req *v1.GetFunctionCallStatsReq) (*v1.GetFunctionCallStatsReply, error) {
+	a.log.Infof("获取函数调用统计, 函数: %s, dbpath: %s", req.FunctionName, req.DbPath)
+
+	// 调用业务逻辑获取函数调用统计数据
+	stats, err := a.uc.GetFunctionCallStats(req.DbPath, req.FunctionName)
+	if err != nil {
+		a.log.Errorf("获取函数调用统计失败: %v", err)
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetFunctionCallStatsReply{
+		Stats: make([]*v1.FunctionCallStats, 0, len(stats)),
+	}
+
+	for _, stat := range stats {
+		functionStat := &v1.FunctionCallStats{
+			Name:        stat.Name,
+			Package:     stat.Package,
+			CallCount:   int32(stat.CallCount),
+			CallerCount: int32(stat.CallerCount),
+			CalleeCount: int32(stat.CalleeCount),
+			AvgTime:     stat.AvgTime,
+			MaxTime:     stat.MaxTime,
+			MinTime:     stat.MinTime,
+			TimeStdDev:  stat.TimeStdDev,
+		}
+		reply.Stats = append(reply.Stats, functionStat)
+	}
+
+	return reply, nil
+}
+
+// GetPerformanceAnomalies 获取性能异常检测结果
+func (a *AnalysisService) GetPerformanceAnomalies(ctx context.Context, req *v1.GetPerformanceAnomaliesReq) (*v1.GetPerformanceAnomaliesReply, error) {
+	a.log.Infof("获取性能异常检测, 函数: %s, dbpath: %s, 阈值: %f", req.FunctionName, req.DbPath, req.Threshold)
+
+	// 调用业务逻辑获取性能异常数据
+	anomalies, err := a.uc.GetPerformanceAnomalies(req.DbPath, req.FunctionName, req.Threshold)
+	if err != nil {
+		a.log.Errorf("获取性能异常检测失败: %v", err)
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetPerformanceAnomaliesReply{
+		Anomalies: make([]*v1.PerformanceAnomaly, 0, len(anomalies)),
+	}
+
+	for _, anomaly := range anomalies {
+		performanceAnomaly := &v1.PerformanceAnomaly{
+			Name:        anomaly.Name,
+			Package:     anomaly.Package,
+			AnomalyType: anomaly.AnomalyType,
+			Description: anomaly.Description,
+			Severity:    anomaly.Severity,
+			Details:     anomaly.Details,
+		}
+		reply.Anomalies = append(reply.Anomalies, performanceAnomaly)
+	}
+
 	return reply, nil
 }

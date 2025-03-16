@@ -1,0 +1,47 @@
+---
+description: Best practices for building microservices with Kratos
+globs: **/*.go
+alwaysApply: true
+---
+
+- Use Kratos' built-in service discovery and load balancing features
+- Implement proper error handling and recovery mechanisms
+- Utilize Kratos' built-in logging and tracing capabilities
+- Follow Kratos' recommended project structure for better maintainability
+
+Rule Name: goanalysis-best-practices
+Description: Best practices for developing and maintaining the GoAnalysis project.
+
+- **Project Structure**: 
+  - Follow the standard Go project structure with `cmd`, `internal`, `pkg`, and `api` directories.
+  - Place all database-related code in the `internal/data` directory.
+  - Use the `internal/biz` directory for business logic and entity definitions.
+
+- **Database Operations**:
+  - Use Ent for all database interactions to ensure type safety and reduce boilerplate code.
+  - Place all Ent schema definitions in the `internal/data/ent/schema` directory.
+  - Use SQLite for local development and testing.
+
+- **Error Handling**:
+  - Implement proper error handling and logging using Kratos' built-in capabilities.
+  - Ensure all errors are wrapped with context using `fmt.Errorf` or similar.
+
+- **Logging and Tracing**:
+  - Utilize Kratos' logging and tracing features for better observability.
+  - Ensure all critical operations are logged with appropriate log levels.
+
+- **Testing**:
+  - Write unit tests for all business logic in the `internal/biz` directory.
+  - Use `go test` for running tests and ensure high test coverage.
+
+- **Code Generation**:
+  - Use `go generate` for Ent code generation.
+  - Ensure the `generate.go` file is present in the `internal/data/ent` directory with the appropriate `//go:generate` directive.
+
+- **Version Control**:
+  - Follow semantic versioning for all releases.
+  - Use Git for version control and ensure all changes are reviewed via pull requests.
+
+- **Documentation**:
+  - Maintain up-to-date documentation in the `README.md` and `docs` directory.
+  - Document all public APIs and major components.

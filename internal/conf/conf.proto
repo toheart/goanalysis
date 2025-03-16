@@ -9,6 +9,7 @@ message Bootstrap {
   Server server = 1;
   Biz biz = 2;
   Logger logger = 3;  // 添加日志配置
+  Data data = 4;
 }
 
 message Server {
@@ -37,9 +38,13 @@ message Logger {
 }
 
 message Biz {
-  string staticDBpath = 1;
-  // GitLab相关配置
+  string file_storage_path = 1; // 文件存储路径
   string gitlab_token = 2;     // GitLab访问令牌
   string gitlab_url = 3;       // GitLab服务器URL
   string gitlab_clone_dir = 4; // GitLab仓库克隆目录
+}
+
+
+message Data{
+  string dbpath = 1;
 }

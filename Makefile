@@ -42,7 +42,7 @@ api:
 	       $(API_PROTO_FILES)
 
 debug:
-	dlv debug --headless --listen :2346 --api-version 2 --accept-multiclient ./cmd -- server
+	dlv debug --headless --listen :8082 --api-version 2 --accept-multiclient . -- server
 
 .PHONY: build
 # build
@@ -80,14 +80,14 @@ sync-frontend:
 .PHONY: package-linux
 # 打包Linux版本
 package-linux: sync-frontend
-	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./cmd
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./
 	mkdir -p release
 	tar -czvf release/goanalysis-linux-$(VERSION).tar.gz ./goanalysis ./configs ./web
 
 .PHONY: package-windows
 # 打包Windows版本
 package-windows: sync-frontend
-	go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis.exe ./cmd
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis.exe ./
 	mkdir -p release
 	tar -czvf release/goanalysis-windows-$(VERSION).tar.gz ./goanalysis.exe ./configs ./web
 
@@ -105,6 +105,9 @@ docker:
 generate:
 	go generate ./...
 	go mod tidy
+
+wire:
+	cd ./cmd && wire && cd ..
 
 .PHONY: all
 # generate all

@@ -1,0 +1,122 @@
+name: build-and-release
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      frontend_version: ${{ steps.get_frontend_version.outputs.version }}
+      previous_tag: ${{ steps.get_previous_tag.outputs.previous_tag }}
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get all history and tags
+
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip gcc g++ make
+
+      - name: setup go environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: get version info
+        id: get_version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=$(git describe --tags --always || echo $(echo $GITHUB_SHA | cut -c1-8))
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: get previous tag
+        id: get_previous_tag
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            CURRENT_TAG=${GITHUB_REF#refs/tags/}
+            PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v $CURRENT_TAG | head -n 1 || echo "")
+            echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+            echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+            echo "Previous tag: $PREVIOUS_TAG"
+          fi
+
+      - name: sync frontend code
+        id: get_frontend_version
+        run: |
+          make sync-frontend
+          # Extract frontend version
+          FRONTEND_VERSION=$(curl -s https://api.github.com/repos/toheart/goanalysis-web/releases/latest | grep "tag_name" | cut -d '"' -f 4 || echo "unknown")
+          echo "FRONTEND_VERSION=$FRONTEND_VERSION" >> $GITHUB_ENV
+          echo "version=$FRONTEND_VERSION" >> $GITHUB_OUTPUT
+          echo "Using frontend version: $FRONTEND_VERSION"
+
+      - name: build application
+        run: |
+          make build VERSION=$VERSION
+
+      - name: package linux version
+        run: |
+          make package-linux VERSION=$VERSION
+
+      - name: package windows version
+        run: |
+          make package-windows VERSION=$VERSION
+
+      - name: login to github container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: extract docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+            type=ref,event=branch
+
+      - name: build and push docker image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ env.VERSION }}
+            FRONTEND_VERSION=${{ env.FRONTEND_VERSION }}
+
+      - name: upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: goanalysis-packages
+          path: |
+            release/goanalysis-linux-${{ env.VERSION }}.tar.gz
+            release/goanalysis-windows-${{ env.VERSION }}.tar.gz

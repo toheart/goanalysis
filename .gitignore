@@ -40,3 +40,7 @@ bin/
 ./web
 ./bin
 ./release
+./*.db
+
+*.log
+*.log.*
