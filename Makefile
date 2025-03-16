@@ -80,7 +80,7 @@ sync-frontend:
 .PHONY: package-linux
 # 打包Linux版本
 package-linux: sync-frontend
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./
 	mkdir -p release
 	tar -czvf release/goanalysis-linux-$(VERSION).tar.gz ./goanalysis ./configs ./web
 
