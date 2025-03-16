@@ -10,18 +10,20 @@ type TraceData struct {
 	Indent    int                     `json:"indent"`    // 缩进级别
 	Params    []functrace.TraceParams `json:"params"`    // 参数JSON字符串
 	TimeCost  string                  `json:"timeCost"`  // 执行时间
-	ParentId  int64                   `json:"parentId"`  // 父函数ID
+	ParentId  uint64                  `json:"parentId"`  // 父函数ID
 	CreatedAt string                  `json:"createdAt"` // 创建时间
 	Seq       string                  `json:"seq"`       // 序列号
 }
 
-// HotFunction 热点函数信息
-type HotFunction struct {
-	Name      string // 函数名称
-	Package   string // 包名
-	CallCount int    // 调用次数
-	TotalTime string // 总耗时
-	AvgTime   string // 平均耗时
+// GoroutineTrace 存储goroutine信息的结构体
+type GoroutineTrace struct {
+	ID           int64  `json:"id"`           // 自增ID
+	GID          uint64 `json:"gid"`          // Goroutine ID
+	TimeCost     string `json:"timeCost"`     // 执行时间
+	CreateTime   string `json:"createTime"`   // 创建时间
+	IsFinished   int    `json:"isFinished"`   // 是否完成
+	InitFuncName string `json:"initFuncName"` // 初始函数名
+	Depth        int    `json:"depth"`        // 调用深度
 }
 
 // GoroutineStats Goroutine统计信息
@@ -66,7 +68,7 @@ type FunctionCallGraph struct {
 }
 
 // UnfinishedFunction 未完成的函数
-type UnfinishedFunction struct {
+type AllUnfinishedFunction struct {
 	Name        string `json:"name"`        // 函数名称
 	GID         uint64 `json:"gid"`         // goroutine ID
 	RunningTime string `json:"runningTime"` // 运行时间

@@ -122,6 +122,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/filemanager.v1.DownloadFileReply'
+    /api/runtime/call-stats:
+        post:
+            tags:
+                - Analysis
+            description: GetFunctionCallStats 获取函数调用统计分析
+            operationId: Analysis_GetFunctionCallStats
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetFunctionCallStatsReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetFunctionCallStatsReply'
     /api/runtime/function/analysis:
         post:
             tags:
@@ -321,6 +340,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetHotFunctionsReply'
+    /api/runtime/hot-paths:
+        post:
+            tags:
+                - Analysis
+            description: GetFunctionHotPaths 获取函数热点路径分析
+            operationId: Analysis_GetFunctionHotPaths
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetFunctionHotPathsReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetFunctionHotPathsReply'
     /api/runtime/instrument:
         post:
             tags:
@@ -365,6 +403,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetParamsByIDReply'
+    /api/runtime/performance-anomalies:
+        post:
+            tags:
+                - Analysis
+            description: GetPerformanceAnomalies 获取性能异常检测结果
+            operationId: Analysis_GetPerformanceAnomalies
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReply'
     /api/runtime/traces/graph:
         post:
             tags:
@@ -432,6 +489,44 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.AnalysisByGIDReply'
+    /api/runtime/tree-graph:
+        post:
+            tags:
+                - Analysis
+            description: 获取运行时树状图数据
+            operationId: Analysis_GetTreeGraph
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetTreeGraphReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetTreeGraphReply'
+    /api/runtime/tree-graph/gid:
+        post:
+            tags:
+                - Analysis
+            description: 根据GID获取多棵树状图数据
+            operationId: Analysis_GetTreeGraphByGID
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetTreeGraphByGIDReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetTreeGraphByGIDReply'
     /api/runtime/unfinished-functions:
         post:
             tags:
@@ -760,6 +855,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/staticanalysis.v1.GetAnalysisTaskStatusResponse'
+    /api/static/tree-graph:
+        post:
+            tags:
+                - StaticAnalysis
+            description: 获取静态分析树状图数据
+            operationId: StaticAnalysis_GetTreeGraph
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/staticanalysis.v1.GetTreeGraphReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/staticanalysis.v1.GetTreeGraphReply'
 components:
     schemas:
         analysis.v1.AnalysisByGIDReply:
@@ -778,8 +892,7 @@ components:
                 name:
                     type: string
                 gid:
-                    type: integer
-                    format: int32
+                    type: string
                 indent:
                     type: integer
                     format: int32
@@ -815,6 +928,32 @@ components:
                 dbpath:
                     type: string
             description: The request message containing the user's name.
+        analysis.v1.FunctionCallStats:
+            type: object
+            properties:
+                name:
+                    type: string
+                package:
+                    type: string
+                callCount:
+                    type: integer
+                    format: int32
+                callerCount:
+                    type: integer
+                    format: int32
+                calleeCount:
+                    type: integer
+                    format: int32
+                avgTime:
+                    type: string
+                maxTime:
+                    type: string
+                minTime:
+                    type: string
+                timeStdDev:
+                    type: number
+                    format: double
+            description: 函数调用统计信息
         analysis.v1.GetAllFunctionNameReply:
             type: object
             properties:
@@ -982,6 +1121,41 @@ components:
                 dbpath:
                     type: string
             description: GetFunctionCallGraphReq 获取函数调用关系图的请求
+        analysis.v1.GetFunctionCallStatsReply:
+            type: object
+            properties:
+                stats:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.FunctionCallStats'
+            description: 获取函数调用统计响应
+        analysis.v1.GetFunctionCallStatsReq:
+            type: object
+            properties:
+                dbPath:
+                    type: string
+                functionName:
+                    type: string
+            description: 获取函数调用统计请求
+        analysis.v1.GetFunctionHotPathsReply:
+            type: object
+            properties:
+                paths:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.HotPathInfo'
+            description: 获取函数热点路径响应
+        analysis.v1.GetFunctionHotPathsReq:
+            type: object
+            properties:
+                dbPath:
+                    type: string
+                functionName:
+                    type: string
+                limit:
+                    type: integer
+                    format: int32
+            description: 获取函数热点路径请求
         analysis.v1.GetGidsByFunctionNameReply:
             type: object
             properties:
@@ -1078,6 +1252,25 @@ components:
                     format: int32
                 dbpath:
                     type: string
+        analysis.v1.GetPerformanceAnomaliesReply:
+            type: object
+            properties:
+                anomalies:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.PerformanceAnomaly'
+            description: 获取性能异常检测响应
+        analysis.v1.GetPerformanceAnomaliesReq:
+            type: object
+            properties:
+                dbPath:
+                    type: string
+                functionName:
+                    type: string
+                threshold:
+                    type: number
+                    format: double
+            description: 获取性能异常检测请求
         analysis.v1.GetTraceGraphReply:
             type: object
             properties:
@@ -1137,6 +1330,40 @@ components:
                 dbpath:
                     type: string
             description: GetTracesByParentFuncReq 根据父函数ID获取函数调用的请求
+        analysis.v1.GetTreeGraphByGIDReply:
+            type: object
+            properties:
+                trees:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.TreeNode'
+            description: 根据GID获取树状图响应 - 返回多棵树
+        analysis.v1.GetTreeGraphByGIDReq:
+            type: object
+            properties:
+                dbPath:
+                    type: string
+                gid:
+                    type: string
+            description: 根据GID获取树状图请求
+        analysis.v1.GetTreeGraphReply:
+            type: object
+            properties:
+                trees:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.TreeNode'
+            description: 获取树状图响应
+        analysis.v1.GetTreeGraphReq:
+            type: object
+            properties:
+                dbPath:
+                    type: string
+                functionName:
+                    type: string
+                chainType:
+                    type: string
+            description: 获取树状图请求
         analysis.v1.GetUnfinishedFunctionsReply:
             type: object
             properties:
@@ -1201,6 +1428,21 @@ components:
                     type: string
                 timeCost:
                     type: string
+        analysis.v1.HotPathInfo:
+            type: object
+            properties:
+                path:
+                    type: array
+                    items:
+                        type: string
+                callCount:
+                    type: integer
+                    format: int32
+                totalTime:
+                    type: string
+                avgTime:
+                    type: string
+            description: 热点路径信息
         analysis.v1.InstrumentProjectReply:
             type: object
             properties:
@@ -1215,6 +1457,25 @@ components:
                 path:
                     type: string
             description: 插桩请求
+        analysis.v1.PerformanceAnomaly:
+            type: object
+            properties:
+                name:
+                    type: string
+                package:
+                    type: string
+                anomalyType:
+                    type: string
+                description:
+                    type: string
+                severity:
+                    type: number
+                    format: double
+                details:
+                    type: object
+                    additionalProperties:
+                        type: string
+            description: 性能异常信息
         analysis.v1.TraceParams:
             type: object
             properties:
@@ -1223,6 +1484,20 @@ components:
                     format: int32
                 param:
                     type: string
+        analysis.v1.TreeNode:
+            type: object
+            properties:
+                name:
+                    type: string
+                value:
+                    type: string
+                collapsed:
+                    type: boolean
+                children:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.TreeNode'
+            description: 树状图节点
         analysis.v1.VerifyProjectPathReply:
             type: object
             properties:
@@ -1278,6 +1553,9 @@ components:
                 description:
                     type: string
                     description: 文件描述
+                filePath:
+                    type: string
+                    description: 文件路径
             description: 文件信息
         filemanager.v1.GetFileInfoReply:
             type: object
@@ -1608,6 +1886,20 @@ components:
                     items:
                         $ref: '#/components/schemas/staticanalysis.v1.DbFileInfo'
             description: 获取静态分析数据库文件列表响应
+        staticanalysis.v1.GetTreeGraphReply:
+            type: object
+            properties:
+                root:
+                    $ref: '#/components/schemas/staticanalysis.v1.TreeNode'
+            description: 获取树状图响应
+        staticanalysis.v1.GetTreeGraphReq:
+            type: object
+            properties:
+                dbPath:
+                    type: string
+                functionName:
+                    type: string
+            description: 获取树状图请求
         staticanalysis.v1.GitLabRepository:
             type: object
             properties:
@@ -1705,6 +1997,20 @@ components:
                     items:
                         $ref: '#/components/schemas/staticanalysis.v1.FunctionInfo'
             description: 模糊搜索函数响应
+        staticanalysis.v1.TreeNode:
+            type: object
+            properties:
+                name:
+                    type: string
+                value:
+                    type: string
+                collapsed:
+                    type: boolean
+                children:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.TreeNode'
+            description: 树状图节点
 tags:
     - name: Analysis
       description: The greeting service definition.

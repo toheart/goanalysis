@@ -158,12 +158,13 @@ func fileExists(path string) bool {
 }
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.StaticAnalysisBiz, services ...iface.InitGrpcHttp) *HttpServer {
+func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.StaticAnalysisBiz, fileBiz *filemanager.FileBiz, services ...iface.InitGrpcHttp) *HttpServer {
 	logHelper := log.NewHelper(log.With(logger, "module", "http"))
 
 	h := &HttpServer{
 		log:       logHelper,
 		staticBiz: staticBiz,
+		fileBiz:   fileBiz,
 	}
 
 	opts := []grpc.DialOption{

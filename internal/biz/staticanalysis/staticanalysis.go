@@ -407,3 +407,62 @@ func (s *StaticAnalysisBiz) GetTaskProgress(taskID string) (float64, error) {
 
 	return status.Progress, nil
 }
+
+// GetTreeGraph 获取静态分析的树状图数据
+func (s *StaticAnalysisBiz) GetTreeGraph(functionName string, dbPath string) (*entity.TreeGraph, error) {
+	s.log.Infof("get tree graph, function: %s, dbpath: %s", functionName, dbPath)
+
+	// 检查数据库路径是否有效
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("database file not found: %s", dbPath)
+	}
+
+	// 构建树状图结构
+	root := &entity.TreeNode{
+		Name: functionName,
+	}
+
+	// 获取函数调用图
+	nodes, edges, err := s.GetFunctionCallGraph(functionName, 3, "outgoing") // 获取向外的调用，深度3
+	if err != nil {
+		s.log.Errorf("get function call graph failed: %v", err)
+		// 返回只有根节点的树
+		return &entity.TreeGraph{Root: root}, nil
+	}
+
+	// 创建节点映射，用于快速查找
+	nodeMap := make(map[string]*entity.TreeNode)
+	nodeMap[functionName] = root
+
+	// 建立节点ID到节点的映射
+	funcNodes := make(map[string]entity.FunctionGraphNode)
+	for _, node := range nodes {
+		funcNodes[node.ID] = node
+	}
+
+	// 从调用图构建树状图
+	for _, edge := range edges {
+		sourceName := funcNodes[edge.Source].Name
+		targetName := funcNodes[edge.Target].Name
+
+		// 只处理从当前节点出发的边，避免形成环
+		if sourceName == functionName || nodeMap[sourceName] != nil {
+			sourceNode := nodeMap[sourceName]
+
+			// 创建或获取目标节点
+			targetNode, exists := nodeMap[targetName]
+			if !exists {
+				targetNode = &entity.TreeNode{
+					Name:  targetName,
+					Value: int64(funcNodes[edge.Target].CallCount),
+				}
+				nodeMap[targetName] = targetNode
+			}
+
+			// 添加子节点
+			sourceNode.Children = append(sourceNode.Children, targetNode)
+		}
+	}
+
+	return &entity.TreeGraph{Root: root}, nil
+}

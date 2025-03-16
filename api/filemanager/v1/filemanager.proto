@@ -55,13 +55,13 @@ message GetFileInfoRequest {
 // 获取文件信息响应
 message GetFileInfoReply {
   // 文件信息
-  FileInfo file_info = 1;
+  FileInfo fileInfo = 1;
 }
 
 // 获取文件列表请求
 message ListFilesRequest {
   // 文件类型
-  FileType file_type = 1;
+  FileType fileType = 1;
   // 分页限制
   int32 limit = 2;
   // 分页偏移
@@ -97,11 +97,11 @@ message DownloadFileRequest {
 // 下载文件响应
 message DownloadFileReply {
   // 文件内容（Base64编码）
-  string file_content = 1;
+  string fileContent = 1;
   // 文件名
-  string file_name = 2;
+  string fileName = 2;
   // 内容类型
-  string content_type = 3;
+  string contentType = 3;
 }
 
 // 文件信息
@@ -109,15 +109,17 @@ message FileInfo {
   // 文件ID
   int64 id = 1;
   // 文件名
-  string file_name = 2;
+  string fileName = 2;
   // 文件类型
-  FileType file_type = 3;
+  FileType fileType = 3;
   // 文件大小（字节）
-  int64 file_size = 4;
+  int64 fileSize = 4;
   // 内容类型
-  string content_type = 5;
+  string contentType = 5;
   // 上传时间（ISO 8601格式）
-  string upload_time = 6;
+  string uploadTime = 6;
   // 文件描述
   string description = 7;
+  // 文件路径
+  string filePath = 8;
 }

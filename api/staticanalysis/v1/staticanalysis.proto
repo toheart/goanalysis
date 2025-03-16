@@ -120,6 +120,15 @@ service StaticAnalysis {
       body: "*"
     };
   }
+
+  
+  // 获取静态分析树状图数据
+  rpc GetTreeGraph (GetTreeGraphReq) returns (GetTreeGraphReply) {
+    option (google.api.http) = {
+      post: "/api/static/tree-graph"
+      body: "*"
+    };
+  }
 }
 
 // 获取静态分析数据库文件列表请求
@@ -397,4 +406,24 @@ message GetFunctionFullChainRequest {
 message GetFunctionFullChainResponse {
   repeated GraphNode nodes = 1; // 图节点
   repeated GraphEdge edges = 2; // 图边
+}
+
+// 获取树状图请求
+message GetTreeGraphReq {
+  string db_path = 1; // 数据库路径
+  string function_name = 2; // 函数名称
+}
+
+
+// 树状图节点
+message TreeNode {
+  string name = 1; // 节点名称
+  int64 value = 2; // 值，只在tooltip中显示
+  bool collapsed = 3; // 是否默认折叠
+  repeated TreeNode children = 4; // 子节点
+}
+
+// 获取树状图响应
+message GetTreeGraphReply {
+  TreeNode root = 1; // 根节点
 } 

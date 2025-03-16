@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	v1 "github.com/toheart/goanalysis/api/filemanager/v1"
+)
 
 // FileType 文件类型枚举
 type FileType string
@@ -9,6 +13,17 @@ const (
 	FileTypeRuntime FileType = "runtime" // 运行时文件
 	FileTypeStatic  FileType = "static"  // 静态分析文件
 )
+
+func NewFileType(fileType v1.FileType) FileType {
+	switch fileType {
+	case v1.FileType_FILE_TYPE_RUNTIME:
+		return FileTypeRuntime
+	case v1.FileType_FILE_TYPE_STATIC:
+		return FileTypeStatic
+	default:
+		return FileTypeRuntime
+	}
+}
 
 // FileInfo 文件信息结构体
 type FileInfo struct {

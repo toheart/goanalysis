@@ -42,7 +42,7 @@ api:
 	       $(API_PROTO_FILES)
 
 debug:
-	dlv debug --headless --listen :2346 --api-version 2 --accept-multiclient ./cmd -- server
+	dlv debug --headless --listen :8082 --api-version 2 --accept-multiclient . -- server
 
 .PHONY: build
 # build

@@ -3,7 +3,7 @@ package data
 import (
 	"sync"
 
-	"github.com/toheart/goanalysis/internal/data/sqllite"
+	sqlite "github.com/toheart/goanalysis/internal/data/sqlite"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
@@ -11,26 +11,26 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, sqllite.NewTraceDB, sqllite.NewFuncNodeDB, sqllite.NewFileDB)
+var ProviderSet = wire.NewSet(NewData, sqlite.NewTraceEntDB, sqlite.NewStaticEntDBImpl, sqlite.NewFileEntDB)
 
 // Data .
 type Data struct {
 	sync.RWMutex
-	traceDB    map[string]*sqllite.TraceDB
-	funcNodeDB map[string]*sqllite.StaticDBImpl
+	traceDB    map[string]*sqlite.TraceEntDB
+	funcNodeDB map[string]*sqlite.StaticEntDBImpl
 	log        *log.Helper
 }
 
 // NewData .
 func NewData(logger log.Logger) *Data {
 	return &Data{
-		traceDB:    make(map[string]*sqllite.TraceDB),
-		funcNodeDB: make(map[string]*sqllite.StaticDBImpl),
+		traceDB:    make(map[string]*sqlite.TraceEntDB),
+		funcNodeDB: make(map[string]*sqlite.StaticEntDBImpl),
 		log:        log.NewHelper(logger),
 	}
 }
 
-func (d *Data) GetTraceDB(dbPath string) (*sqllite.TraceDB, error) {
+func (d *Data) GetTraceDB(dbPath string) (*sqlite.TraceEntDB, error) {
 	d.RLock()
 	traceDB := d.traceDB[dbPath]
 	d.RUnlock()
@@ -42,7 +42,7 @@ func (d *Data) GetTraceDB(dbPath string) (*sqllite.TraceDB, error) {
 			return traceDB, nil
 		}
 		d.log.Infof("create trace db: %s", dbPath)
-		traceDB, err := sqllite.NewTraceDB(dbPath)
+		traceDB, err := sqlite.NewTraceEntDB(dbPath)
 		if err != nil {
 			return nil, err
 		}
@@ -51,7 +51,7 @@ func (d *Data) GetTraceDB(dbPath string) (*sqllite.TraceDB, error) {
 	return traceDB, nil
 }
 
-func (d *Data) GetFuncNodeDB(dbPath string) (*sqllite.StaticDBImpl, error) {
+func (d *Data) GetFuncNodeDB(dbPath string) (*sqlite.StaticEntDBImpl, error) {
 	d.RLock()
 	funcNodeDB := d.funcNodeDB[dbPath]
 	d.RUnlock()
@@ -64,7 +64,7 @@ func (d *Data) GetFuncNodeDB(dbPath string) (*sqllite.StaticDBImpl, error) {
 		}
 		d.log.Infof("create func node db: %s", dbPath)
 		var err error
-		funcNodeDB, err = sqllite.NewFuncNodeDB(dbPath)
+		funcNodeDB, err = sqlite.NewStaticEntDBImpl(dbPath)
 		if err != nil {
 			d.log.Errorf("get func node db failed: %s", err)
 			return nil, err

@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -61,7 +60,7 @@ func (s *FileManagerService) GetFileInfo(ctx context.Context, req *v1.GetFileInf
 // ListFiles 获取文件列表
 func (s *FileManagerService) ListFiles(ctx context.Context, req *v1.ListFilesRequest) (*v1.ListFilesReply, error) {
 	// 转换文件类型
-	fileType := entity.FileType(strings.ToLower(v1.FileType_name[int32(req.FileType)]))
+	fileType := entity.NewFileType(req.FileType)
 
 	// 获取文件列表
 	fileInfos, err := s.fileBiz.ListFiles(fileType, int(req.Limit), int(req.Offset))
@@ -131,6 +130,7 @@ func convertToProtoFileInfo(fileInfo *entity.FileInfo) *v1.FileInfo {
 	return &v1.FileInfo{
 		Id:          fileInfo.ID,
 		FileName:    fileInfo.FileName,
+		FilePath:    fileInfo.FilePath,
 		FileType:    fileType,
 		FileSize:    fileInfo.FileSize,
 		ContentType: fileInfo.ContentType,

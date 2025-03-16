@@ -1,0 +1,248 @@
+package sqlite
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"entgo.io/ent/dialect"
+	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/repo"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcnode"
+)
+
+var _ repo.StaticDBStore = (*StaticEntDBImpl)(nil)
+
+// StaticEntDBImpl 使用 Ent 框架的静态分析数据库实现
+type StaticEntDBImpl struct {
+	client *gen.Client
+}
+
+// NewStaticEntDBImpl 创建函数节点数据库（使用 Ent 框架）
+func NewStaticEntDBImpl(dbPath string) (*StaticEntDBImpl, error) {
+	// 创建 Ent 客户端
+	client, err := gen.Open(dialect.SQLite, ParseDBPath(dbPath))
+	if err != nil {
+		return nil, fmt.Errorf("create ent client failed: %w", err)
+	}
+
+	return &StaticEntDBImpl{client: client}, nil
+}
+
+// InitTable 初始化数据库表
+func (s *StaticEntDBImpl) InitTable() error {
+	ctx := context.Background()
+	// 自动创建表结构
+	if err := s.client.Schema.Create(ctx); err != nil {
+		return fmt.Errorf("创建表结构失败: %w", err)
+	}
+	return nil
+}
+
+// SaveFuncNode 保存函数节点
+func (s *StaticEntDBImpl) SaveFuncNode(node *entity.FuncNode) error {
+	ctx := context.Background()
+
+	// 检查节点是否已存在
+	exists, err := s.client.FuncNode.
+		Query().
+		Where(funcnode.Key(node.Key)).
+		Exist(ctx)
+	if err != nil {
+		return fmt.Errorf("检查函数节点是否存在失败: %w", err)
+	}
+
+	if exists {
+		// 更新节点
+		_, err = s.client.FuncNode.
+			Update().
+			Where(funcnode.Key(node.Key)).
+			SetPkg(node.Pkg).
+			SetName(node.Name).
+			Save(ctx)
+	} else {
+		// 创建节点
+		_, err = s.client.FuncNode.
+			Create().
+			SetKey(node.Key).
+			SetPkg(node.Pkg).
+			SetName(node.Name).
+			Save(ctx)
+	}
+
+	if err != nil {
+		return fmt.Errorf("保存函数节点失败: %w", err)
+	}
+
+	return nil
+}
+
+// SaveFuncEdge 保存函数调用关系
+func (s *StaticEntDBImpl) SaveFuncEdge(edge *entity.FuncEdge) error {
+	ctx := context.Background()
+
+	_, err := s.client.FuncEdge.Create().
+		SetCallerKey(edge.CallerKey).
+		SetCalleeKey(edge.CalleeKey).
+		SetCreatedAt(time.Now()).
+		SetUpdatedAt(time.Now()).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("save func edge failed: %w", err)
+	}
+	return nil
+}
+
+// GetFuncNodeByKey 根据Key获取函数节点
+func (s *StaticEntDBImpl) GetFuncNodeByKey(key string) (*entity.FuncNode, error) {
+	ctx := context.Background()
+
+	// 查询函数节点
+	funcEnt, err := s.client.FuncNode.
+		Query().
+		Where(funcnode.Key(key)).
+		Only(ctx)
+	if err != nil {
+		if gen.IsNotFound(err) {
+			return nil, nil // 节点不存在
+		}
+		return nil, fmt.Errorf("查询函数节点失败: %w", err)
+	}
+
+	// 转换为业务实体
+	node := &entity.FuncNode{
+		Key:      funcEnt.Key,
+		Pkg:      funcEnt.Pkg,
+		Name:     funcEnt.Name,
+		Parent:   []string{},
+		Children: []string{},
+	}
+
+	// 获取父节点
+	parents, err := s.GetCallerEdges(key)
+	if err == nil {
+		for _, p := range parents {
+			node.Parent = append(node.Parent, p.Key)
+		}
+	}
+
+	// 获取子节点
+	children, err := s.GetCalleeEdges(key)
+	if err == nil {
+		for _, c := range children {
+			node.Children = append(node.Children, c.Key)
+		}
+	}
+
+	return node, nil
+}
+
+// GetCallerEdges 获取调用该函数的所有节点
+func (s *StaticEntDBImpl) GetCallerEdges(calleeKey string) ([]*entity.FuncNode, error) {
+	ctx := context.Background()
+
+	// 查询调用该函数的节点
+	callers, err := s.client.FuncNode.
+		Query().
+		Where(funcnode.Key(calleeKey)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get caller edges failed: %w", err)
+	}
+
+	// 转换为业务实体
+	var nodes []*entity.FuncNode
+	for _, caller := range callers {
+		node := &entity.FuncNode{
+			Key:  caller.Key,
+			Pkg:  caller.Pkg,
+			Name: caller.Name,
+		}
+		nodes = append(nodes, node)
+	}
+
+	return nodes, nil
+}
+
+// GetCalleeEdges 获取该函数调用的所有节点
+func (s *StaticEntDBImpl) GetCalleeEdges(callerKey string) ([]*entity.FuncNode, error) {
+	ctx := context.Background()
+
+	// 查询调用该函数的节点
+	callers, err := s.client.FuncNode.
+		Query().
+		Where(funcnode.Key(callerKey)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get caller edges failed: %w", err)
+	}
+
+	// 转换为业务实体
+	var nodes []*entity.FuncNode
+	for _, caller := range callers {
+		node := &entity.FuncNode{
+			Key:  caller.Key,
+			Pkg:  caller.Pkg,
+			Name: caller.Name,
+		}
+		nodes = append(nodes, node)
+	}
+	return nodes, nil
+}
+
+// GetAllFuncNodes 获取所有函数节点
+func (s *StaticEntDBImpl) GetAllFuncNodes() ([]*entity.FuncNode, error) {
+	ctx := context.Background()
+
+	// 查询所有函数节点
+	funcEnts, err := s.client.FuncNode.
+		Query().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("查询所有函数节点失败: %w", err)
+	}
+
+	// 转换为业务实体
+	var nodes []*entity.FuncNode
+	for _, funcEnt := range funcEnts {
+		node := &entity.FuncNode{
+			Key:  funcEnt.Key,
+			Pkg:  funcEnt.Pkg,
+			Name: funcEnt.Name,
+		}
+		nodes = append(nodes, node)
+	}
+
+	return nodes, nil
+}
+
+// GetAllFuncEdges 获取所有函数调用边
+func (s *StaticEntDBImpl) GetAllFuncEdges() ([]*entity.FuncEdge, error) {
+	ctx := context.Background()
+
+	// 查询所有函数调用边
+	funcEdges, err := s.client.FuncEdge.
+		Query().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("查询所有函数调用边失败: %w", err)
+	}
+
+	// 转换为业务实体
+	var edges []*entity.FuncEdge
+	for _, funcEdge := range funcEdges {
+		edge := &entity.FuncEdge{
+			CallerKey: funcEdge.CallerKey,
+			CalleeKey: funcEdge.CalleeKey,
+		}
+		edges = append(edges, edge)
+	}
+
+	return edges, nil
+}
+
+// Close 关闭数据库连接
+func (s *StaticEntDBImpl) Close() error {
+	return s.client.Close()
+}

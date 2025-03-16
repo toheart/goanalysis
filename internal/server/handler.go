@@ -145,6 +145,7 @@ func (h *HttpServer) HandleChunkUpload(w http.ResponseWriter, r *http.Request) {
 		}
 		isSQLite = isSQLiteFile(header)
 		if !isSQLite {
+			os.Remove(filePath)
 			http.Error(w, "file is not a sqlite database", http.StatusBadRequest)
 			return
 		}

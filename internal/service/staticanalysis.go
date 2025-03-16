@@ -1254,3 +1254,45 @@ func (s *StaticAnalysisService) mergeNodes(nodes []*v1.GraphNode) []*v1.GraphNod
 
 	return mergedNodes
 }
+
+// GetTreeGraph 获取静态分析树状图数据
+func (s *StaticAnalysisService) GetTreeGraph(ctx context.Context, req *v1.GetTreeGraphReq) (*v1.GetTreeGraphReply, error) {
+	s.log.Infof("get tree graph, function: %s, dbpath: %s", req.FunctionName, req.DbPath)
+
+	// 调用业务逻辑获取树状图数据
+	treeGraph, err := s.uc.GetTreeGraph(req.FunctionName, req.DbPath)
+	if err != nil {
+		s.log.Errorf("get tree graph failed: %v", err)
+		return nil, err
+	}
+
+	// 转换为API响应格式
+	reply := &v1.GetTreeGraphReply{
+		Root: s.convertTreeNodeToProto(treeGraph.Root),
+	}
+
+	return reply, nil
+}
+
+// 将实体TreeNode转换为proto TreeNode
+func (s *StaticAnalysisService) convertTreeNodeToProto(node *entity.TreeNode) *v1.TreeNode {
+	if node == nil {
+		return nil
+	}
+
+	protoNode := &v1.TreeNode{
+		Name:      node.Name,
+		Value:     node.Value,
+		Collapsed: true,
+	}
+
+	// 递归转换子节点
+	if len(node.Children) > 0 {
+		protoNode.Children = make([]*v1.TreeNode, 0, len(node.Children))
+		for _, child := range node.Children {
+			protoNode.Children = append(protoNode.Children, s.convertTreeNodeToProto(child))
+		}
+	}
+
+	return protoNode
+}

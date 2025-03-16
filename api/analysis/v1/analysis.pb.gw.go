@@ -90,7 +90,7 @@ func request_Analysis_GetAnalysisByGID_0(ctx context.Context, marshaler runtime.
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "gid")
 	}
-	protoReq.Gid, err = runtime.String(val)
+	protoReq.Gid, err = runtime.Uint64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "gid", err)
 	}
@@ -111,7 +111,7 @@ func local_request_Analysis_GetAnalysisByGID_0(ctx context.Context, marshaler ru
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "gid")
 	}
-	protoReq.Gid, err = runtime.String(val)
+	protoReq.Gid, err = runtime.Uint64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "gid", err)
 	}
@@ -575,6 +575,126 @@ func local_request_Analysis_GetUnfinishedFunctions_0(ctx context.Context, marsha
 	return msg, metadata, err
 }
 
+func request_Analysis_GetTreeGraph_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetTreeGraphReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetTreeGraph(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_GetTreeGraph_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetTreeGraphReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetTreeGraph(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_Analysis_GetTreeGraphByGID_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetTreeGraphByGIDReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetTreeGraphByGID(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_GetTreeGraphByGID_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetTreeGraphByGIDReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetTreeGraphByGID(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_Analysis_GetFunctionHotPaths_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetFunctionHotPathsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetFunctionHotPaths(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_GetFunctionHotPaths_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetFunctionHotPathsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetFunctionHotPaths(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_Analysis_GetFunctionCallStats_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetFunctionCallStatsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetFunctionCallStats(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_GetFunctionCallStats_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetFunctionCallStatsReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetFunctionCallStats(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_Analysis_GetPerformanceAnomalies_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetPerformanceAnomaliesReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetPerformanceAnomalies(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_GetPerformanceAnomalies_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetPerformanceAnomaliesReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetPerformanceAnomalies(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 // RegisterAnalysisHandlerServer registers the http handlers for service Analysis to "mux".
 // UnaryRPC     :call AnalysisServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -941,6 +1061,106 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		}
 		forward_Analysis_GetUnfinishedFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetTreeGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetTreeGraph", runtime.WithHTTPPathPattern("/api/runtime/tree-graph"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_GetTreeGraph_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetTreeGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetTreeGraphByGID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetTreeGraphByGID", runtime.WithHTTPPathPattern("/api/runtime/tree-graph/gid"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_GetTreeGraphByGID_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetTreeGraphByGID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionHotPaths_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionHotPaths", runtime.WithHTTPPathPattern("/api/runtime/hot-paths"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_GetFunctionHotPaths_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetFunctionHotPaths_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionCallStats_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallStats", runtime.WithHTTPPathPattern("/api/runtime/call-stats"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_GetFunctionCallStats_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetFunctionCallStats_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetPerformanceAnomalies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetPerformanceAnomalies", runtime.WithHTTPPathPattern("/api/runtime/performance-anomalies"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_GetPerformanceAnomalies_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetPerformanceAnomalies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 
 	return nil
 }
@@ -1287,47 +1507,142 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		}
 		forward_Analysis_GetUnfinishedFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetTreeGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetTreeGraph", runtime.WithHTTPPathPattern("/api/runtime/tree-graph"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_GetTreeGraph_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetTreeGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetTreeGraphByGID_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetTreeGraphByGID", runtime.WithHTTPPathPattern("/api/runtime/tree-graph/gid"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_GetTreeGraphByGID_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetTreeGraphByGID_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionHotPaths_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionHotPaths", runtime.WithHTTPPathPattern("/api/runtime/hot-paths"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_GetFunctionHotPaths_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetFunctionHotPaths_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetFunctionCallStats_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetFunctionCallStats", runtime.WithHTTPPathPattern("/api/runtime/call-stats"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_GetFunctionCallStats_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetFunctionCallStats_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Analysis_GetPerformanceAnomalies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetPerformanceAnomalies", runtime.WithHTTPPathPattern("/api/runtime/performance-anomalies"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_GetPerformanceAnomalies_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetPerformanceAnomalies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
 var (
-	pattern_Analysis_GetAnalysis_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"analysis", "name"}, ""))
-	pattern_Analysis_GetAnalysisByGID_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "traces", "gid"}, ""))
-	pattern_Analysis_GetAllGIDs_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "gids"}, ""))
-	pattern_Analysis_GetParamsByID_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "params", "id"}, ""))
-	pattern_Analysis_GetAllFunctionName_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "functions"}, ""))
-	pattern_Analysis_GetGidsByFunctionName_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "gids", "function"}, ""))
-	pattern_Analysis_VerifyProjectPath_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "verify", "path"}, ""))
-	pattern_Analysis_GetTraceGraph_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "traces", "graph"}, ""))
-	pattern_Analysis_GetTracesByParentFunc_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "runtime", "traces", "parent", "parent_id"}, ""))
-	pattern_Analysis_GetAllParentIds_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "functions", "parent-ids"}, ""))
-	pattern_Analysis_GetChildFunctions_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "functions", "parent_id", "children"}, ""))
-	pattern_Analysis_GetHotFunctions_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "hot-functions"}, ""))
-	pattern_Analysis_GetGoroutineStats_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "goroutine-stats"}, ""))
-	pattern_Analysis_GetFunctionAnalysis_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "analysis"}, ""))
-	pattern_Analysis_GetFunctionCallGraph_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "function", "function_name", "graph"}, ""))
-	pattern_Analysis_GetFunctionCallGraph_1   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "graph"}, ""))
-	pattern_Analysis_InstrumentProject_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "instrument"}, ""))
-	pattern_Analysis_GetUnfinishedFunctions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "unfinished-functions"}, ""))
+	pattern_Analysis_GetAnalysis_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"analysis", "name"}, ""))
+	pattern_Analysis_GetAnalysisByGID_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "traces", "gid"}, ""))
+	pattern_Analysis_GetAllGIDs_0              = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "gids"}, ""))
+	pattern_Analysis_GetParamsByID_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "runtime", "params", "id"}, ""))
+	pattern_Analysis_GetAllFunctionName_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "functions"}, ""))
+	pattern_Analysis_GetGidsByFunctionName_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "gids", "function"}, ""))
+	pattern_Analysis_VerifyProjectPath_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "verify", "path"}, ""))
+	pattern_Analysis_GetTraceGraph_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "traces", "graph"}, ""))
+	pattern_Analysis_GetTracesByParentFunc_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "runtime", "traces", "parent", "parent_id"}, ""))
+	pattern_Analysis_GetAllParentIds_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "functions", "parent-ids"}, ""))
+	pattern_Analysis_GetChildFunctions_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "functions", "parent_id", "children"}, ""))
+	pattern_Analysis_GetHotFunctions_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "hot-functions"}, ""))
+	pattern_Analysis_GetGoroutineStats_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "goroutine-stats"}, ""))
+	pattern_Analysis_GetFunctionAnalysis_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "analysis"}, ""))
+	pattern_Analysis_GetFunctionCallGraph_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "runtime", "function", "function_name", "graph"}, ""))
+	pattern_Analysis_GetFunctionCallGraph_1    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "graph"}, ""))
+	pattern_Analysis_InstrumentProject_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "instrument"}, ""))
+	pattern_Analysis_GetUnfinishedFunctions_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "unfinished-functions"}, ""))
+	pattern_Analysis_GetTreeGraph_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "tree-graph"}, ""))
+	pattern_Analysis_GetTreeGraphByGID_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "tree-graph", "gid"}, ""))
+	pattern_Analysis_GetFunctionHotPaths_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "hot-paths"}, ""))
+	pattern_Analysis_GetFunctionCallStats_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "call-stats"}, ""))
+	pattern_Analysis_GetPerformanceAnomalies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "performance-anomalies"}, ""))
 )
 
 var (
-	forward_Analysis_GetAnalysis_0            = runtime.ForwardResponseMessage
-	forward_Analysis_GetAnalysisByGID_0       = runtime.ForwardResponseMessage
-	forward_Analysis_GetAllGIDs_0             = runtime.ForwardResponseMessage
-	forward_Analysis_GetParamsByID_0          = runtime.ForwardResponseMessage
-	forward_Analysis_GetAllFunctionName_0     = runtime.ForwardResponseMessage
-	forward_Analysis_GetGidsByFunctionName_0  = runtime.ForwardResponseMessage
-	forward_Analysis_VerifyProjectPath_0      = runtime.ForwardResponseMessage
-	forward_Analysis_GetTraceGraph_0          = runtime.ForwardResponseMessage
-	forward_Analysis_GetTracesByParentFunc_0  = runtime.ForwardResponseMessage
-	forward_Analysis_GetAllParentIds_0        = runtime.ForwardResponseMessage
-	forward_Analysis_GetChildFunctions_0      = runtime.ForwardResponseMessage
-	forward_Analysis_GetHotFunctions_0        = runtime.ForwardResponseMessage
-	forward_Analysis_GetGoroutineStats_0      = runtime.ForwardResponseMessage
-	forward_Analysis_GetFunctionAnalysis_0    = runtime.ForwardResponseMessage
-	forward_Analysis_GetFunctionCallGraph_0   = runtime.ForwardResponseMessage
-	forward_Analysis_GetFunctionCallGraph_1   = runtime.ForwardResponseMessage
-	forward_Analysis_InstrumentProject_0      = runtime.ForwardResponseMessage
-	forward_Analysis_GetUnfinishedFunctions_0 = runtime.ForwardResponseMessage
+	forward_Analysis_GetAnalysis_0             = runtime.ForwardResponseMessage
+	forward_Analysis_GetAnalysisByGID_0        = runtime.ForwardResponseMessage
+	forward_Analysis_GetAllGIDs_0              = runtime.ForwardResponseMessage
+	forward_Analysis_GetParamsByID_0           = runtime.ForwardResponseMessage
+	forward_Analysis_GetAllFunctionName_0      = runtime.ForwardResponseMessage
+	forward_Analysis_GetGidsByFunctionName_0   = runtime.ForwardResponseMessage
+	forward_Analysis_VerifyProjectPath_0       = runtime.ForwardResponseMessage
+	forward_Analysis_GetTraceGraph_0           = runtime.ForwardResponseMessage
+	forward_Analysis_GetTracesByParentFunc_0   = runtime.ForwardResponseMessage
+	forward_Analysis_GetAllParentIds_0         = runtime.ForwardResponseMessage
+	forward_Analysis_GetChildFunctions_0       = runtime.ForwardResponseMessage
+	forward_Analysis_GetHotFunctions_0         = runtime.ForwardResponseMessage
+	forward_Analysis_GetGoroutineStats_0       = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionAnalysis_0     = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionCallGraph_0    = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionCallGraph_1    = runtime.ForwardResponseMessage
+	forward_Analysis_InstrumentProject_0       = runtime.ForwardResponseMessage
+	forward_Analysis_GetUnfinishedFunctions_0  = runtime.ForwardResponseMessage
+	forward_Analysis_GetTreeGraph_0            = runtime.ForwardResponseMessage
+	forward_Analysis_GetTreeGraphByGID_0       = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionHotPaths_0     = runtime.ForwardResponseMessage
+	forward_Analysis_GetFunctionCallStats_0    = runtime.ForwardResponseMessage
+	forward_Analysis_GetPerformanceAnomalies_0 = runtime.ForwardResponseMessage
 )

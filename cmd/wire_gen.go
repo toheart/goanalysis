@@ -15,7 +15,7 @@ import (
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
-	"github.com/toheart/goanalysis/internal/data/sqllite"
+	"github.com/toheart/goanalysis/internal/data/sqlite"
 	"github.com/toheart/goanalysis/internal/server"
 	"github.com/toheart/goanalysis/internal/service"
 )
@@ -27,17 +27,17 @@ func wireApp(confServer *conf.Server, biz *conf.Biz, confData *conf.Data, logger
 	dataData := data.NewData(logger)
 	channelManager := chanMgr.NewChannelManager()
 	staticAnalysisBiz := staticanalysis.NewStaticAnalysisBiz(biz, dataData, channelManager, logger)
-	staticAnalysisService := service.NewStaticAnalysisService(staticAnalysisBiz, logger)
-	analysisBiz := analysis.NewAnalysisBiz(biz, dataData, logger)
-	analysisService := service.NewAnalysisService(analysisBiz, logger)
-	fileRepo, err := sqllite.NewFileDB(confData)
+	fileRepo, err := sqlite.NewFileEntDB(confData)
 	if err != nil {
 		return nil, nil, err
 	}
 	fileBiz := filemanager.NewFileBiz(biz, logger, fileRepo)
+	staticAnalysisService := service.NewStaticAnalysisService(staticAnalysisBiz, logger)
+	analysisBiz := analysis.NewAnalysisBiz(biz, dataData, logger)
+	analysisService := service.NewAnalysisService(analysisBiz, logger)
 	fileManagerService := service.NewFileManagerService(fileBiz, logger)
 	v := service.NewHttpServiceList(staticAnalysisService, analysisService, fileManagerService)
-	httpServer := server.NewHTTPServer(confServer, logger, staticAnalysisBiz, v...)
+	httpServer := server.NewHTTPServer(confServer, logger, staticAnalysisBiz, fileBiz, v...)
 	grpcServer := server.NewGRPCServer(confServer, logger, v...)
 	v2 := server.NewServerList(httpServer, grpcServer)
 	app := newApp(logger, v2)
