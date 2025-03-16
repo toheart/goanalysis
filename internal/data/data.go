@@ -1,14 +1,19 @@
 package data
 
 import (
+	"database/sql"
 	"sync"
 
-	sqlite "github.com/toheart/goanalysis/internal/data/sqlite"
+	"github.com/toheart/goanalysis/internal/data/sqlite"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
-	_ "github.com/mattn/go-sqlite3" // 引入 sqlite3 驱动
+	msqlite "modernc.org/sqlite"
 )
+
+func init() {
+	sql.Register("sqlite3", &msqlite.Driver{})
+}
 
 // ProviderSet is data providers.
 var ProviderSet = wire.NewSet(NewData, sqlite.NewTraceEntDB, sqlite.NewStaticEntDBImpl, sqlite.NewFileEntDB)
