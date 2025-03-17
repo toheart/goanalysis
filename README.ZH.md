@@ -47,7 +47,10 @@ go install github.com/toheart/goanalysis@v1.1.0
 ### 基本使用
 1. 准备测试项目：
 ```bash
-git clone github.com/toheart/goanalysis.git
+git clone https://github.com/toheart/goanalysis.git
+
+# or
+git clone git@github.com:toheart/goanalysis.git
 ```
 
 2. 执行代码重写：
