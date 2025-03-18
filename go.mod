@@ -112,4 +112,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-exclude github.com/mattn/go-sqlite3 v2.0.0+incompatible
