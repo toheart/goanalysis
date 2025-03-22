@@ -118,10 +118,10 @@ func (s *StaticAnalysisBiz) GetStaticDBPath() string {
 }
 
 // GetHotFunctions 获取热点函数
-func (s *StaticAnalysisBiz) GetHotFunctions(sortBy string) ([]entity.HotFunction, error) {
+func (s *StaticAnalysisBiz) GetHotFunctions(sortBy string) ([]entity.Function, error) {
 	// 这里实现获取热点函数的逻辑
 	// 示例数据
-	return []entity.HotFunction{
+	return []entity.Function{
 		{
 			Name:      "main.main",
 			Package:   "main",

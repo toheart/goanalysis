@@ -12,6 +12,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
+	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.11.1
 	github.com/toheart/functrace v1.1.1
 	github.com/xanzy/go-gitlab v0.115.0
@@ -111,4 +112,3 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-

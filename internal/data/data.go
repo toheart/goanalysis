@@ -34,7 +34,6 @@ func NewData(logger log.Logger) *Data {
 		log:        log.NewHelper(logger),
 	}
 }
-
 func (d *Data) GetTraceDB(dbPath string) (*sqlite.TraceEntDB, error) {
 	d.RLock()
 	traceDB := d.traceDB[dbPath]
@@ -47,7 +46,8 @@ func (d *Data) GetTraceDB(dbPath string) (*sqlite.TraceEntDB, error) {
 			return traceDB, nil
 		}
 		d.log.Infof("create trace db: %s", dbPath)
-		traceDB, err := sqlite.NewTraceEntDB(dbPath)
+		var err error
+		traceDB, err = sqlite.NewTraceEntDB(dbPath)
 		if err != nil {
 			return nil, err
 		}

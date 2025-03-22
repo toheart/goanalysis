@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/pkg/errors"
 	"github.com/toheart/functrace"
 	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/conf"
@@ -105,17 +107,17 @@ func (a *AnalysisBiz) GetTracesByParentFunc(dbpath string, parentId int64) ([]en
 }
 
 // GetAllParentIds 获取所有的父函数ID
-func (a *AnalysisBiz) GetAllParentIds(dbpath string) ([]int64, error) {
+func (a *AnalysisBiz) GetParentFunctions(dbpath string, functionName string) ([]*entity.Function, error) {
 	a.log.Infof("get all parent ids from db: %s", dbpath)
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err
 	}
-	return traceDB.GetAllParentIds()
+	return traceDB.GetAllParentFunctions(functionName)
 }
 
 // GetChildFunctions 获取函数的子函数
-func (a *AnalysisBiz) GetChildFunctions(dbpath string, parentId int64) ([]string, error) {
+func (a *AnalysisBiz) GetChildFunctions(dbpath string, parentId int64) ([]*entity.Function, error) {
 	a.log.Infof("get child functions of parent id: %d from db: %s", parentId, dbpath)
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
@@ -125,7 +127,7 @@ func (a *AnalysisBiz) GetChildFunctions(dbpath string, parentId int64) ([]string
 }
 
 // GetHotFunctions 获取热点函数分析数据
-func (a *AnalysisBiz) GetHotFunctions(dbpath string, sortBy string) ([]entity.HotFunction, error) {
+func (a *AnalysisBiz) GetHotFunctions(dbpath string, sortBy string) ([]entity.Function, error) {
 	a.log.Infof("get hot functions, sort by: %s from db: %s", sortBy, dbpath)
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
@@ -152,16 +154,6 @@ func (a *AnalysisBiz) GetFunctionAnalysis(dbpath string, functionName string, qu
 		return nil, err
 	}
 	return traceDB.GetFunctionAnalysis(functionName, queryType)
-}
-
-// GetFunctionCallGraph 获取函数调用关系图
-func (a *AnalysisBiz) GetFunctionCallGraph(dbpath string, functionName string, depth int, direction string) (*entity.FunctionCallGraph, error) {
-	a.log.Infof("get function call graph, function: %s, depth: %d, direction: %s from db: %s", functionName, depth, direction, dbpath)
-	traceDB, err := a.data.GetTraceDB(dbpath)
-	if err != nil {
-		return nil, err
-	}
-	return traceDB.GetFunctionCallGraph(functionName, depth, direction)
 }
 
 // GetGoroutineCallDepth 获取指定 Goroutine 的最大调用深度
@@ -258,31 +250,178 @@ func (a *AnalysisBiz) GetUnfinishedFunctions(dbpath string, threshold int64) ([]
 	return functions, nil
 }
 
-// GetTreeGraph 获取运行时的树状图数据
-func (a *AnalysisBiz) GetTreeGraph(dbpath string, functionName string, chainType string) ([]*entity.TreeNode, error) {
-	a.log.Infof("get tree graph, function: %s, chain type: %s, dbpath: %s", functionName, chainType, dbpath)
-
-	// 获取追踪数据库
+func (a *AnalysisBiz) GetUpstreamTreeGraph(dbpath string, functionName string, depth int) ([]*entity.TreeNode, error) {
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err
 	}
 
+	// 获取指定函数的所有跟踪数据
+	traces, err := traceDB.GetTracesByFuncName(functionName)
+	if err != nil {
+		return nil, err
+	}
+
+	// 存储所有生成的树节点
+	var trees []*entity.TreeNode
+
+	// 为每个跟踪数据创建一个树
+	for _, trace := range traces {
+		// 创建根节点
+		rootNode := &entity.TreeNode{
+			Name:  functionName,
+			Value: trace.ID,
+		}
+
+		// 递归构建上游调用树
+		err = a.buildUpstreamTree(traceDB, rootNode, trace.ParentId, depth-1)
+		if err != nil {
+			return nil, err
+		}
+
+		trees = append(trees, rootNode)
+	}
+
+	return trees, nil
+}
+
+// 递归构建上游调用树
+func (a *AnalysisBiz) buildUpstreamTree(traceDB *sqlite.TraceEntDB, currentNode *entity.TreeNode, parentId uint64, remainingDepth int) error {
+	// 如果父ID为0或者已达到最大深度，则停止递归
+	if parentId == 0 || remainingDepth <= 0 {
+		return nil
+	}
+
+	// 获取父函数的跟踪数据
+	parentTrace, err := traceDB.GetTraceByID(int(parentId))
+	if err != nil {
+		return err
+	}
+
+	if parentTrace == nil {
+		return nil // 父跟踪不存在，可能是根调用
+	}
+
+	// 创建父节点
+	parentNode := &entity.TreeNode{
+		Name:  parentTrace.Name,
+		Value: parentTrace.ID,
+	}
+
+	// 将当前节点添加为父节点的子节点
+	if parentNode.Children == nil {
+		parentNode.Children = []*entity.TreeNode{}
+	}
+	parentNode.Children = append(parentNode.Children, currentNode)
+
+	// 继续向上递归构建树
+	return a.buildUpstreamTree(traceDB, parentNode, parentTrace.ParentId, remainingDepth-1)
+}
+
+func (a *AnalysisBiz) GetDownstreamTreeGraph(dbpath string, functionName string, depth int) (*entity.TreeNode, error) {
+	a.log.Infof("get downstream tree graph, function: %s, depth: %d, dbpath: %s", functionName, depth, dbpath)
+
+	// 获取追踪数据库
+	traceDB, err := a.data.GetTraceDB(dbpath)
+	if err != nil {
+		return nil, fmt.Errorf("get trace db failed: %w", err)
+	}
+
+	// 获取函数的所有调用记录
+	traces, err := traceDB.GetTracesByFuncName(functionName)
+	if err != nil {
+		return nil, fmt.Errorf("get traces by func name failed: %w", err)
+	}
+
+	// 如果没有找到调用记录，返回空数组
+	if len(traces) == 0 {
+		return nil, nil
+	}
+
+	// 为每个trace创建一个根节点
+	root := &entity.TreeNode{
+		Name:     functionName,
+		Value:    traces[0].ID,
+		Children: []*entity.TreeNode{},
+	}
+	parentIds := []int64{}
+
+	for _, trace := range traces {
+		parentIds = append(parentIds, trace.ID)
+	}
+
+	// 递归构建下游调用树
+	err = a.buildDownstreamTree(traceDB, root, parentIds, depth)
+	if err != nil {
+		return nil, fmt.Errorf("build downstream tree failed: %w", err)
+	}
+
+	return root, nil
+}
+
+// 递归构建下游调用树
+func (a *AnalysisBiz) buildDownstreamTree(traceDB *sqlite.TraceEntDB, currentNode *entity.TreeNode, parentIds []int64, remainingDepth int) error {
+	// 如果已达到最大深度，则停止递归
+	if remainingDepth <= 0 || currentNode == nil {
+		return nil
+	}
+
+	for _, parentId := range parentIds {
+		// 获取当前函数调用的子函数
+		childFunctions, err := traceDB.GetTracesByParentId(parentId)
+		if err != nil {
+			return err
+		}
+
+		// 为每个子函数创建节点
+		for _, childFunc := range childFunctions {
+			// 获取子函数的统计信息
+
+			// 创建子节点
+			childNode := &entity.TreeNode{
+				Name:     childFunc.Name,
+				Children: []*entity.TreeNode{},
+			}
+
+			// 递归构建子节点的下游调用
+			err = a.buildDownstreamTree(traceDB, childNode, []int64{childFunc.ID}, remainingDepth-1)
+			if err != nil {
+				return err
+			}
+			currentNode.Children = append(currentNode.Children, childNode)
+		}
+	}
+
+	return nil
+}
+
+// GetTreeGraph 获取运行时的树状图数据
+func (a *AnalysisBiz) GetTreeGraph(dbpath string, functionName string, chainType string, depth int) ([]*entity.TreeNode, error) {
+	a.log.Infof("get tree graph, function: %s, chain type: %s, dbpath: %s", functionName, chainType, dbpath)
+
 	// 根据链路类型选择不同的查询方向
-	var direction string
+	var trees []*entity.TreeNode
+	var err error
 	switch chainType {
 	case "upstream":
-		direction = "incoming" // 上游调用
+		trees, err = a.GetUpstreamTreeGraph(dbpath, functionName, depth)
+		if err != nil {
+			return nil, err
+		}
 	case "downstream":
-		direction = "outgoing" // 下游调用
+		tree, err := a.GetDownstreamTreeGraph(dbpath, functionName, depth)
+		if err != nil {
+			return nil, err
+		}
+		trees = append(trees, tree)
 	case "full":
 		// 全链路需要分别获取上游和下游调用，然后合并
-		upstreamGraph, err := traceDB.GetFunctionCallGraph(functionName, 5, "incoming")
+		upstreamGraph, err := a.GetUpstreamTreeGraph(dbpath, functionName, depth)
 		if err != nil {
 			a.log.Warnf("get upstream call graph failed: %v", err)
 		}
 
-		downstreamGraph, err := traceDB.GetFunctionCallGraph(functionName, 5, "outgoing")
+		downstreamGraph, err := a.GetDownstreamTreeGraph(dbpath, functionName, depth)
 		if err != nil {
 			a.log.Warnf("get downstream call graph failed: %v", err)
 		}
@@ -294,214 +433,45 @@ func (a *AnalysisBiz) GetTreeGraph(dbpath string, functionName string, chainType
 		}
 		return trees, nil
 	default:
-		direction = "outgoing" // 默认为下游调用
-	}
-
-	// 非全链路情况下，使用单一方向的调用图
-	if chainType != "full" {
-		callGraph, err := traceDB.GetFunctionCallGraph(functionName, 5, direction)
-		if err != nil {
-			a.log.Errorf("get function call graph failed: %v", err)
-			// 返回只有根节点的树
-			root := &entity.TreeNode{
-				Name: functionName,
-			}
-			return []*entity.TreeNode{root}, nil
-		}
-
-		// 创建节点映射，用于快速查找
-		nodeMap := make(map[string]*entity.TreeNode)
-		root := &entity.TreeNode{
-			Name: functionName,
-		}
-		nodeMap[functionName] = root
-
-		// 从调用图构建树状图
-		for _, edge := range callGraph.Edges {
-			// 上游调用和下游调用的边类型判断不同
-			var isValidEdge bool
-			var sourceName, targetName string
-
-			sourceName = getNodeNameById(callGraph.Nodes, edge.Source)
-			targetName = getNodeNameById(callGraph.Nodes, edge.Target)
-
-			if direction == "outgoing" && (edge.EdgeType == "root_to_callee" || sourceName == functionName) {
-				isValidEdge = true
-			} else if direction == "incoming" && (edge.EdgeType == "caller_to_root" || targetName == functionName) {
-				isValidEdge = true
-			}
-
-			if !isValidEdge {
-				continue
-			}
-
-			sourceNode, exists := nodeMap[sourceName]
-			if !exists {
-				sourceNode = &entity.TreeNode{
-					Name: sourceName,
-				}
-				nodeMap[sourceName] = sourceNode
-			}
-
-			targetNode, exists := nodeMap[targetName]
-			if !exists {
-				targetNode = &entity.TreeNode{
-					Name: targetName,
-				}
-				nodeMap[targetName] = targetNode
-
-				// 为节点添加调用次数值（如果可以从边标签解析）
-				if count, err := parseCallCount(edge.Label); err == nil {
-					targetNode.Value = int64(count)
-				}
-			}
-
-			// 添加子节点关系
-			if direction == "outgoing" {
-				sourceNode.Children = append(sourceNode.Children, targetNode)
-			} else {
-				// 对于上游调用，关系是反向的，但在树中仍然是从上到下
-				targetNode.Children = append(targetNode.Children, sourceNode)
-			}
-		}
-
-		// 对于上游调用，我们需要找到最顶层的节点作为根
-		if direction == "incoming" {
-			// 找出没有被其他节点引用的节点作为根
-			referenced := make(map[string]bool)
-			for _, node := range nodeMap {
-				for _, child := range node.Children {
-					referenced[child.Name] = true
-				}
-			}
-
-			var topLevelNodes []*entity.TreeNode
-			for name, node := range nodeMap {
-				if !referenced[name] {
-					topLevelNodes = append(topLevelNodes, node)
-				}
-			}
-
-			// 如果找到了多个顶层节点，直接返回这些顶层节点
-			if len(topLevelNodes) > 0 {
-				return topLevelNodes, nil
-			}
-		}
-
-		// 下游调用或者没有找到顶层节点的情况，返回单个根节点
-		return []*entity.TreeNode{root}, nil
-	}
-
-	// 如果以上逻辑都未返回，返回默认的单节点树
-	defaultRoot := &entity.TreeNode{
-		Name: functionName,
-	}
-	return []*entity.TreeNode{defaultRoot}, nil
-}
-
-// buildFullChainTreeNodes 构建完整链路树状节点列表
-func (a *AnalysisBiz) buildFullChainTreeNodes(functionName string, upstreamGraph, downstreamGraph *entity.FunctionCallGraph) ([]*entity.TreeNode, error) {
-	// 如果没有上游或下游调用图
-	if (upstreamGraph == nil || len(upstreamGraph.Edges) == 0) &&
-		(downstreamGraph == nil || len(downstreamGraph.Edges) == 0) {
-		root := &entity.TreeNode{
-			Name: functionName,
-		}
-		return []*entity.TreeNode{root}, nil
-	}
-
-	var trees []*entity.TreeNode
-
-	// 创建主函数节点
-	root := &entity.TreeNode{
-		Name: functionName,
-	}
-
-	// 创建节点映射，用于快速查找
-	nodeMap := make(map[string]*entity.TreeNode)
-	nodeMap[functionName] = root
-
-	// 处理下游调用图
-	if downstreamGraph != nil && len(downstreamGraph.Edges) > 0 {
-		for _, edge := range downstreamGraph.Edges {
-			if edge.EdgeType == "root_to_callee" {
-				sourceName := getNodeNameById(downstreamGraph.Nodes, edge.Source)
-				targetName := getNodeNameById(downstreamGraph.Nodes, edge.Target)
-
-				sourceNode, exists := nodeMap[sourceName]
-				if !exists {
-					continue // 跳过未知源节点
-				}
-
-				// 获取或创建目标节点
-				targetNode, exists := nodeMap[targetName]
-				if !exists {
-					targetNode = &entity.TreeNode{
-						Name: targetName,
-					}
-					nodeMap[targetName] = targetNode
-
-					// 为节点添加调用次数值
-					if count, err := parseCallCount(edge.Label); err == nil {
-						targetNode.Value = int64(count)
-					}
-				}
-
-				// 添加为子节点
-				sourceNode.Children = append(sourceNode.Children, targetNode)
-			}
-		}
-
-		// 添加主函数节点（包含下游调用）
-		trees = append(trees, root)
-	}
-
-	// 处理上游调用图 - 单独构建上游调用树
-	if upstreamGraph != nil && len(upstreamGraph.Edges) > 0 {
-		// 存储所有上游调用节点
-		var callerNodes []*entity.TreeNode
-
-		for _, edge := range upstreamGraph.Edges {
-			if edge.EdgeType == "caller_to_root" {
-				sourceName := getNodeNameById(upstreamGraph.Nodes, edge.Source)
-				targetName := getNodeNameById(upstreamGraph.Nodes, edge.Target)
-
-				// 确保目标是主函数
-				if targetName != functionName {
-					continue
-				}
-
-				// 获取或创建调用方节点
-				callerNode, exists := nodeMap[sourceName]
-				if !exists {
-					callerNode = &entity.TreeNode{
-						Name: sourceName,
-					}
-					nodeMap[sourceName] = callerNode
-
-					// 为节点添加调用次数值
-					if count, err := parseCallCount(edge.Label); err == nil {
-						callerNode.Value = int64(count)
-					}
-
-					// 添加到上游调用集合
-					callerNodes = append(callerNodes, callerNode)
-				}
-			}
-		}
-
-		// 如果找到了上游调用节点，直接添加到结果中
-		if len(callerNodes) > 0 {
-			trees = append(trees, callerNodes...)
-		}
-	}
-
-	// 如果没有找到任何树，返回主函数节点
-	if len(trees) == 0 {
-		trees = append(trees, root)
+		return nil, fmt.Errorf("invalid chain type: %s", chainType)
 	}
 
 	return trees, nil
+}
+
+func (a *AnalysisBiz) buildFullChainTreeNodes(functionName string, upstreamGraph []*entity.TreeNode, downstreamGraph *entity.TreeNode) ([]*entity.TreeNode, error) {
+	// 如果上游图为空，直接返回下游图
+	if len(upstreamGraph) == 0 {
+		return []*entity.TreeNode{downstreamGraph}, nil
+	}
+
+	for _, node := range upstreamGraph {
+		// 递归查找叶子节点
+		var findLeafNodes func(node *entity.TreeNode) *entity.TreeNode
+		findLeafNodes = func(node *entity.TreeNode) *entity.TreeNode {
+			// 如果节点没有子节点，则为叶子节点
+			if len(node.Children) == 0 {
+				return node
+			}
+
+			// 递归处理所有子节点
+			for _, child := range node.Children {
+				leafNode := findLeafNodes(child)
+				if leafNode != nil {
+					return leafNode
+				}
+			}
+			return nil
+		}
+
+		// 对当前节点执行递归查找
+		leafNode := findLeafNodes(node)
+		if leafNode != nil {
+			leafNode.Children = append(leafNode.Children, downstreamGraph)
+		}
+	}
+
+	return upstreamGraph, nil
 }
 
 // 根据节点ID获取节点名称
@@ -628,151 +598,8 @@ func buildTreeFromTrace(node *entity.TreeNode, traceId int64, tracesByParentId m
 
 // GetFunctionHotPaths 获取函数热点路径分析
 func (a *AnalysisBiz) GetFunctionHotPaths(dbpath string, functionName string, limit int) ([]entity.HotPathInfo, error) {
-	a.log.Infof("获取函数热点路径，函数：%s，数据库：%s，限制：%d", functionName, dbpath, limit)
-
-	// 获取追踪数据库
-	traceDB, err := a.data.GetTraceDB(dbpath)
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取函数调用数据
-	var hotPaths []entity.HotPathInfo
-
-	// 如果指定了函数名，则获取该函数的热点路径
-	if functionName != "" {
-		// 获取函数调用图，用较大深度以捕获更多路径
-		callGraph, err := traceDB.GetFunctionCallGraph(functionName, 10, "outgoing")
-		if err != nil {
-			a.log.Errorf("获取函数调用图失败: %v", err)
-			return nil, err
-		}
-
-		// 使用DFS获取所有从根节点到叶子节点的路径
-		paths := a.findAllPaths(callGraph, functionName)
-
-		// 统计每条路径的调用次数和执行时间
-		for _, path := range paths {
-			// 获取路径上的所有函数名称
-			functionNames := make([]string, len(path))
-			for i, nodeID := range path {
-				for _, node := range callGraph.Nodes {
-					if node.ID == nodeID {
-						functionNames[i] = node.Name
-						break
-					}
-				}
-			}
-
-			// 统计该路径的调用次数和执行时间
-			callCount, totalTime, avgTime := a.calculatePathStats(traceDB, functionNames)
-
-			hotPaths = append(hotPaths, entity.HotPathInfo{
-				Path:      functionNames,
-				CallCount: callCount,
-				TotalTime: totalTime,
-				AvgTime:   avgTime,
-			})
-		}
-	} else {
-		// 获取所有热点函数
-		hotFunctions, err := traceDB.GetHotFunctions("calls")
-		if err != nil {
-			a.log.Errorf("获取热点函数失败: %v", err)
-			return nil, err
-		}
-
-		// 对于每个热点函数，获取其热点路径
-		for _, hotFunc := range hotFunctions {
-			callGraph, err := traceDB.GetFunctionCallGraph(hotFunc.Name, 3, "outgoing")
-			if err != nil {
-				a.log.Warnf("获取函数%s的调用图失败: %v", hotFunc.Name, err)
-				continue
-			}
-
-			paths := a.findAllPaths(callGraph, hotFunc.Name)
-
-			for _, path := range paths {
-				// 获取路径上的所有函数名称
-				functionNames := make([]string, len(path))
-				for i, nodeID := range path {
-					for _, node := range callGraph.Nodes {
-						if node.ID == nodeID {
-							functionNames[i] = node.Name
-							break
-						}
-					}
-				}
-
-				// 统计该路径的调用次数和执行时间
-				callCount, totalTime, avgTime := a.calculatePathStats(traceDB, functionNames)
-
-				hotPaths = append(hotPaths, entity.HotPathInfo{
-					Path:      functionNames,
-					CallCount: callCount,
-					TotalTime: totalTime,
-					AvgTime:   avgTime,
-				})
-			}
-		}
-	}
-
-	// 按调用次数排序
-	a.sortHotPathsByCallCount(hotPaths)
-
-	// 限制返回数量
-	if limit > 0 && len(hotPaths) > limit {
-		hotPaths = hotPaths[:limit]
-	}
-
-	return hotPaths, nil
-}
-
-// findAllPaths 使用DFS查找从指定节点到所有叶子节点的路径
-func (a *AnalysisBiz) findAllPaths(graph *entity.FunctionCallGraph, startFuncName string) [][]string {
-	var paths [][]string
-
-	// 创建函数名到ID的映射
-	funcNameToID := make(map[string]string)
-	for _, node := range graph.Nodes {
-		funcNameToID[node.Name] = node.ID
-	}
-
-	// 创建邻接表
-	adjList := make(map[string][]string)
-	for _, edge := range graph.Edges {
-		if edge.EdgeType == "root_to_callee" {
-			adjList[edge.Source] = append(adjList[edge.Source], edge.Target)
-		}
-	}
-
-	// 获取起始节点ID
-	startID := funcNameToID[startFuncName]
-	if startID == "" {
-		return paths
-	}
-
-	// DFS算法
-	var dfs func(node string, path []string)
-	dfs = func(node string, path []string) {
-		currentPath := append(path, node)
-
-		// 如果该节点没有子节点，则为叶子节点，添加路径
-		children, hasChildren := adjList[node]
-		if !hasChildren || len(children) == 0 {
-			paths = append(paths, currentPath)
-			return
-		}
-
-		// 遍历所有子节点
-		for _, child := range children {
-			dfs(child, currentPath)
-		}
-	}
-
-	dfs(startID, []string{})
-
-	return paths
+	// TODO 没想法怎么做
+	return nil, nil
 }
 
 // calculatePathStats 计算路径的调用统计信息
@@ -840,21 +667,21 @@ func (a *AnalysisBiz) GetFunctionCallStats(dbpath string, functionName string) (
 		// 获取函数的所有调用记录
 		traces, err := traceDB.GetTracesByFuncName(functionName)
 		if err != nil {
-			a.log.Errorf("获取函数%s的调用记录失败: %v", functionName, err)
+			a.log.Errorf("get function call stats failed: %v", err)
 			return nil, err
 		}
 
 		// 获取调用该函数的函数集合（调用方）
 		callers, err := traceDB.GetCallerFunctions(functionName)
 		if err != nil {
-			a.log.Warnf("获取函数%s的调用方失败: %v", functionName, err)
+			a.log.Warnf("get function call stats failed: %v", err)
 			callers = []string{}
 		}
 
 		// 获取该函数调用的函数集合（被调用方）
 		callees, err := traceDB.GetCalleeFunctions(functionName)
 		if err != nil {
-			a.log.Warnf("获取函数%s的被调用方失败: %v", functionName, err)
+			a.log.Warnf("get function call stats failed: %v", err)
 			callees = []string{}
 		}
 
@@ -1268,4 +1095,31 @@ func formatTime(timeMs float64) string {
 	} else {
 		return fmt.Sprintf("%.3f s", timeMs/1000)
 	}
+}
+
+// SearchFunctions 搜索函数
+func (a *AnalysisBiz) SearchFunctions(ctx context.Context, dbPath string, query string, limit int32) ([]*entity.Function, int32, error) {
+	// 验证参数
+	if dbPath == "" {
+		return nil, 0, errors.New("database path is required")
+	}
+	if query == "" {
+		return nil, 0, errors.New("search query is required")
+	}
+	if limit <= 0 {
+		limit = 10 // 默认限制返回10条结果
+	}
+	a.log.Infof("search functions, dbpath: %s, query: %s, limit: %d", dbPath, query, limit)
+	traceDB, err := a.data.GetTraceDB(dbPath)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get trace db: %v", err)
+	}
+
+	// 调用数据层执行搜索
+	functions, total, err := traceDB.SearchFunctions(ctx, dbPath, query, limit)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to search functions: %v", err)
+	}
+
+	return functions, total, nil
 }

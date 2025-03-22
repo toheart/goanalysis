@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -178,6 +177,7 @@ func sanitizeMermaidText(text string) string {
 }
 
 func (a *AnalysisService) GetAllFunctionName(ctx context.Context, in *v1.GetAllFunctionNameReq) (*v1.GetAllFunctionNameReply, error) {
+	a.log.Infof("get all function name from db: %s", in.Dbpath)
 	functionNames, err := a.uc.GetAllFunctionName(in.Dbpath)
 	if err != nil {
 		return nil, err
@@ -275,215 +275,6 @@ func (s *AnalysisService) VerifyProjectPath(ctx context.Context, in *v1.VerifyPr
 	return &v1.VerifyProjectPathReply{Verified: verified}, nil
 }
 
-// 以下是需要保留的动态分析相关方法，但需要移除静态分析相关的方法
-// 保留的方法：
-// - GetTraceGraph
-// - GetTracesByParentFunc
-// - GetAllParentFuncNames
-// - GetChildFunctions
-// - GetHotFunctions
-// - GetGoroutineStats
-// - GetFunctionAnalysis
-// - GetFunctionCallGraph
-
-// 定义图形数据的结构
-type GraphNode struct {
-	ID        string `json:"id"`        // 节点唯一标识
-	Name      string `json:"name"`      // 函数名称
-	CallCount int    `json:"callCount"` // 调用次数
-	Package   string `json:"package"`   // 包名
-	TimeCost  string `json:"timeCost"`  // 执行耗时
-}
-
-type GraphEdge struct {
-	Source string `json:"source"` // 源节点ID
-	Target string `json:"target"` // 目标节点ID
-	Label  string `json:"label"`  // 边标签（通常是耗时）
-	Count  int    `json:"count"`  // 调用次数
-}
-
-type GraphData struct {
-	Nodes []GraphNode `json:"nodes"`
-	Edges []GraphEdge `json:"edges"`
-}
-
-func (a *AnalysisService) GetTraceGraph(ctx context.Context, in *v1.GetTraceGraphReq) (*v1.GetTraceGraphReply, error) {
-	// 记录请求信息
-	a.log.WithContext(ctx).Infof("GetTraceGraph request received: gid=%d, dbpath=%s", in.Gid, in.Dbpath)
-
-	// 参数验证
-	if in.Gid == 0 {
-		a.log.WithContext(ctx).Errorf("GetTraceGraph failed: gid is empty")
-		return nil, errors.New("gid is required")
-	}
-
-	if in.Dbpath == "" {
-		a.log.WithContext(ctx).Errorf("GetTraceGraph failed: dbpath is empty")
-		return nil, errors.New("dbpath is required")
-	}
-
-	// 获取指定GID的调用跟踪数据
-	traces, err := a.uc.GetTracesByGID(in.Dbpath, in.Gid)
-	if err != nil {
-		a.log.WithContext(ctx).Errorf("Failed to get traces for GID %s: %v", in.Gid, err)
-		return nil, fmt.Errorf("failed to get traces: %w", err)
-	}
-
-	// 检查是否有数据
-	if len(traces) == 0 {
-		a.log.WithContext(ctx).Warnf("No trace data found for GID %s", in.Gid)
-		// 返回空结果而不是错误
-		return &v1.GetTraceGraphReply{
-			Nodes: []*v1.GraphNode{},
-			Edges: []*v1.GraphEdge{},
-		}, nil
-	}
-
-	// 构建图形数据
-	a.log.WithContext(ctx).Infof("Building graph from %d traces", len(traces))
-	graphData := buildGraphFromTraces(traces)
-
-	// 记录节点和边的数量
-	a.log.WithContext(ctx).Infof("Graph built with %d nodes and %d edges",
-		len(graphData.Nodes), len(graphData.Edges))
-
-	// 转换为protobuf类型并返回
-	return &v1.GetTraceGraphReply{
-		Nodes: convertToProtoNodes(graphData.Nodes),
-		Edges: convertToProtoEdges(graphData.Edges),
-	}, nil
-}
-
-func buildGraphFromTraces(traces []entity.TraceData) *GraphData {
-	// 初始化图数据结构
-	graphData := &GraphData{
-		Nodes: []GraphNode{},
-		Edges: []GraphEdge{},
-	}
-
-	// 如果没有跟踪数据，直接返回空图
-	if len(traces) == 0 {
-		return graphData
-	}
-
-	// 使用map来跟踪已添加的节点，避免重复
-	nodeMap := make(map[string]bool)
-
-	// 跟踪函数调用次数
-	callCounts := make(map[string]int)
-
-	// 使用map来存储节点信息，便于后续构建
-	nodeInfoMap := make(map[string]entity.TraceData)
-
-	// 使用栈来跟踪调用关系
-	stack := make([]entity.TraceData, 0, 32) // 预分配一定容量以提高性能
-
-	// 第一遍遍历：构建调用关系和统计调用次数
-	for _, trace := range traces {
-		// 根据缩进级别调整栈
-		for len(stack) > 0 && stack[len(stack)-1].Indent >= trace.Indent {
-			stack = stack[:len(stack)-1] // 弹出栈顶元素
-		}
-
-		// 生成节点ID
-		nodeID := fmt.Sprintf("n%d", trace.ID)
-
-		// 记录节点信息
-		nodeInfoMap[nodeID] = trace
-
-		// 统计调用次数
-		if !nodeMap[nodeID] {
-			nodeMap[nodeID] = true
-			callCounts[trace.Name]++
-		}
-
-		// 如果有父节点，添加边
-		if len(stack) > 0 {
-			parentID := fmt.Sprintf("n%d", stack[len(stack)-1].ID)
-
-			// 添加边
-			graphData.Edges = append(graphData.Edges, GraphEdge{
-				Source: parentID,
-				Target: nodeID,
-				Label:  trace.TimeCost,
-				Count:  callCounts[trace.Name],
-			})
-		}
-
-		// 将当前节点压入栈
-		stack = append(stack, trace)
-	}
-
-	// 第二遍：构建节点列表
-	// 预分配节点数组以提高性能
-	graphData.Nodes = make([]GraphNode, 0, len(nodeMap))
-
-	// 按照ID顺序添加节点，使图形布局更稳定
-	nodeIDs := make([]string, 0, len(nodeMap))
-	for id := range nodeMap {
-		nodeIDs = append(nodeIDs, id)
-	}
-	sort.Strings(nodeIDs)
-
-	for _, id := range nodeIDs {
-		if trace, ok := nodeInfoMap[id]; ok {
-			// 提取包名
-			packageName := extractPackageName(trace.Name)
-
-			graphData.Nodes = append(graphData.Nodes, GraphNode{
-				ID:        id,
-				Name:      trace.Name,
-				CallCount: callCounts[trace.Name],
-				Package:   packageName,
-				TimeCost:  trace.TimeCost,
-			})
-		}
-	}
-
-	return graphData
-}
-
-// 从函数名中提取包名
-func extractPackageName(funcName string) string {
-	parts := strings.Split(funcName, ".")
-	if len(parts) <= 1 {
-		return "main" // 默认包名
-	}
-
-	// 如果是形如 github.com/user/repo/pkg.Func 的格式
-	return strings.Join(parts[:len(parts)-1], ".")
-}
-
-// 转换为protobuf类型的辅助函数
-func convertToProtoNodes(nodes []GraphNode) []*v1.GraphNode {
-	protoNodes := make([]*v1.GraphNode, len(nodes))
-	for i, node := range nodes {
-		protoNodes[i] = &v1.GraphNode{
-			Id:        node.ID,
-			Name:      node.Name,
-			CallCount: int32(node.CallCount),
-			// 暂时注释掉不存在的字段，等proto文件更新后再启用
-			// Package:   node.Package,
-			// TimeCost:  node.TimeCost,
-		}
-	}
-	return protoNodes
-}
-
-func convertToProtoEdges(edges []GraphEdge) []*v1.GraphEdge {
-	protoEdges := make([]*v1.GraphEdge, len(edges))
-	for i, edge := range edges {
-		protoEdges[i] = &v1.GraphEdge{
-			Source: edge.Source,
-			Target: edge.Target,
-			Label:  edge.Label,
-			// 暂时注释掉不存在的字段，等proto文件更新后再启用
-			// Count:  int32(edge.Count),
-		}
-	}
-	return protoEdges
-}
-
 // GetTracesByParentFunc 根据父函数ID获取函数调用
 func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetTracesByParentFuncReq) (*v1.GetTracesByParentFuncReply, error) {
 	traces, err := a.uc.GetTracesByParentFunc(in.Dbpath, in.ParentId)
@@ -509,14 +300,23 @@ func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetT
 }
 
 // GetAllParentIds 获取所有的父函数ID
-func (a *AnalysisService) GetAllParentIds(ctx context.Context, in *v1.GetAllParentIdsReq) (*v1.GetAllParentIdsReply, error) {
-	parentIds, err := a.uc.GetAllParentIds(in.Dbpath)
+func (a *AnalysisService) GetParentFunctions(ctx context.Context, in *v1.GetParentFunctionsReq) (*v1.GetParentFunctionsReply, error) {
+	parentFunctions, err := a.uc.GetParentFunctions(in.Dbpath, in.FunctionName)
 	if err != nil {
 		return nil, err
 	}
-	return &v1.GetAllParentIdsReply{
-		ParentIds: parentIds,
-	}, nil
+
+	reply := &v1.GetParentFunctionsReply{}
+	for _, function := range parentFunctions {
+		reply.Functions = append(reply.Functions, &v1.FunctionNode{
+			Id:        function.Id,
+			Name:      function.Name,
+			Package:   function.Package,
+			CallCount: int32(function.CallCount),
+			AvgTime:   function.AvgTime,
+		})
+	}
+	return reply, nil
 }
 
 // GetChildFunctions 获取函数的子函数
@@ -525,9 +325,18 @@ func (a *AnalysisService) GetChildFunctions(ctx context.Context, in *v1.GetChild
 	if err != nil {
 		return nil, err
 	}
-	return &v1.GetChildFunctionsReply{
-		ChildFunctions: childFunctions,
-	}, nil
+
+	reply := &v1.GetChildFunctionsReply{}
+	for _, function := range childFunctions {
+		reply.Functions = append(reply.Functions, &v1.FunctionNode{
+			Id:        function.Id,
+			Name:      function.Name,
+			Package:   function.Package,
+			CallCount: int32(function.CallCount),
+			AvgTime:   function.AvgTime,
+		})
+	}
+	return reply, nil
 }
 
 // GetHotFunctions 获取热点函数分析数据
@@ -566,7 +375,7 @@ func (a *AnalysisService) GetGoroutineStats(ctx context.Context, in *v1.GetGorou
 
 // GetFunctionAnalysis 获取函数调用关系分析
 func (a *AnalysisService) GetFunctionAnalysis(ctx context.Context, in *v1.GetFunctionAnalysisReq) (*v1.GetFunctionAnalysisReply, error) {
-	functionNodes, err := a.uc.GetFunctionAnalysis(in.Path, in.FunctionName, in.Type)
+	functionNodes, err := a.uc.GetFunctionAnalysis(in.Dbpath, in.FunctionName, in.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -595,42 +404,6 @@ func convertToProtoFunctionNodes(nodes []entity.FunctionNode) []*v1.GetFunctionA
 		protoNodes[i] = protoNode
 	}
 	return protoNodes
-}
-
-// GetFunctionCallGraph 获取函数调用关系图
-func (a *AnalysisService) GetFunctionCallGraph(ctx context.Context, in *v1.GetFunctionCallGraphReq) (*v1.GetFunctionCallGraphReply, error) {
-	callGraph, err := a.uc.GetFunctionCallGraph(in.Dbpath, in.FunctionName, int(in.Depth), in.Direction)
-	if err != nil {
-		return nil, err
-	}
-
-	reply := &v1.GetFunctionCallGraphReply{}
-
-	// 转换节点
-	for _, node := range callGraph.Nodes {
-		protoNode := &v1.GetFunctionCallGraphReply_GraphNode{
-			Id:        node.ID,
-			Name:      node.Name,
-			Package:   node.Package,
-			CallCount: int32(node.CallCount),
-			AvgTime:   node.AvgTime,
-			NodeType:  node.NodeType,
-		}
-		reply.Nodes = append(reply.Nodes, protoNode)
-	}
-
-	// 转换边
-	for _, edge := range callGraph.Edges {
-		protoEdge := &v1.GetFunctionCallGraphReply_GraphEdge{
-			Source:   edge.Source,
-			Target:   edge.Target,
-			Label:    edge.Label,
-			EdgeType: edge.EdgeType,
-		}
-		reply.Edges = append(reply.Edges, protoEdge)
-	}
-
-	return reply, nil
 }
 
 // InstrumentProject 对项目进行插桩
@@ -733,10 +506,10 @@ func (a *AnalysisService) GetUnfinishedFunctions(ctx context.Context, in *v1.Get
 
 // GetTreeGraph 获取树状图
 func (a *AnalysisService) GetTreeGraph(ctx context.Context, req *v1.GetTreeGraphReq) (*v1.GetTreeGraphReply, error) {
-	a.log.Infof("get tree graph, function: %s, dbpath: %s, chain_type: %s", req.FunctionName, req.DbPath, req.ChainType)
+	a.log.Infof("get tree graph, function: %s, dbpath: %s, chain_type: %s, depth: %d", req.FunctionName, req.DbPath, req.ChainType, req.Depth)
 
 	// 调用业务逻辑获取树状图数据
-	trees, err := a.uc.GetTreeGraph(req.DbPath, req.FunctionName, req.ChainType)
+	trees, err := a.uc.GetTreeGraph(req.DbPath, req.FunctionName, req.ChainType, int(req.Depth))
 	if err != nil {
 		a.log.Errorf("get tree graph failed: %v", err)
 		return nil, err
@@ -804,43 +577,14 @@ func (a *AnalysisService) GetTreeGraphByGID(ctx context.Context, req *v1.GetTree
 	return reply, nil
 }
 
-// GetFunctionHotPaths 获取函数热点路径分析
-func (a *AnalysisService) GetFunctionHotPaths(ctx context.Context, req *v1.GetFunctionHotPathsReq) (*v1.GetFunctionHotPathsReply, error) {
-	a.log.Infof("获取函数热点路径, 函数: %s, dbpath: %s, 限制: %d", req.FunctionName, req.DbPath, req.Limit)
-
-	// 调用业务逻辑获取热点路径数据
-	hotPaths, err := a.uc.GetFunctionHotPaths(req.DbPath, req.FunctionName, int(req.Limit))
-	if err != nil {
-		a.log.Errorf("获取函数热点路径失败: %v", err)
-		return nil, err
-	}
-
-	// 转换为API响应格式
-	reply := &v1.GetFunctionHotPathsReply{
-		Paths: make([]*v1.HotPathInfo, 0, len(hotPaths)),
-	}
-
-	for _, path := range hotPaths {
-		hotPathInfo := &v1.HotPathInfo{
-			Path:      path.Path,
-			CallCount: int32(path.CallCount),
-			TotalTime: path.TotalTime,
-			AvgTime:   path.AvgTime,
-		}
-		reply.Paths = append(reply.Paths, hotPathInfo)
-	}
-
-	return reply, nil
-}
-
 // GetFunctionCallStats 获取函数调用统计分析
 func (a *AnalysisService) GetFunctionCallStats(ctx context.Context, req *v1.GetFunctionCallStatsReq) (*v1.GetFunctionCallStatsReply, error) {
-	a.log.Infof("获取函数调用统计, 函数: %s, dbpath: %s", req.FunctionName, req.DbPath)
+	a.log.Infof("get function call stats, function: %s, dbpath: %s", req.FunctionName, req.DbPath)
 
 	// 调用业务逻辑获取函数调用统计数据
 	stats, err := a.uc.GetFunctionCallStats(req.DbPath, req.FunctionName)
 	if err != nil {
-		a.log.Errorf("获取函数调用统计失败: %v", err)
+		a.log.Errorf("get function call stats failed: %v", err)
 		return nil, err
 	}
 
@@ -893,6 +637,30 @@ func (a *AnalysisService) GetPerformanceAnomalies(ctx context.Context, req *v1.G
 			Details:     anomaly.Details,
 		}
 		reply.Anomalies = append(reply.Anomalies, performanceAnomaly)
+	}
+
+	return reply, nil
+}
+
+// SearchFunctions 实现函数搜索服务
+func (s *AnalysisService) SearchFunctions(ctx context.Context, req *v1.SearchFunctionsReq) (*v1.SearchFunctionsReply, error) {
+	functions, total, err := s.uc.SearchFunctions(ctx, req.Dbpath, req.Query, req.Limit)
+	if err != nil {
+		return nil, err
+	}
+
+	reply := &v1.SearchFunctionsReply{
+		Functions: make([]*v1.SearchFunctionsReply_FunctionInfo, 0, len(functions)),
+		Total:     total,
+	}
+
+	for _, f := range functions {
+		reply.Functions = append(reply.Functions, &v1.SearchFunctionsReply_FunctionInfo{
+			Name:      f.Name,
+			Package:   f.Package,
+			CallCount: int32(f.CallCount),
+			AvgTime:   f.AvgTime,
+		})
 	}
 
 	return reply, nil

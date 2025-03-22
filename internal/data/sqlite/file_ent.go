@@ -179,5 +179,5 @@ func (f *FileEntDB) Close() error {
 
 // ParseDBPath 解析数据库路径
 func ParseDBPath(dbPath string) string {
-	return fmt.Sprintf("file:%s?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)", dbPath)
+	return fmt.Sprintf("file:%s?_pragma=foreign_keys(1)&cache=shared&_journal_mode=WAL", dbPath)
 }

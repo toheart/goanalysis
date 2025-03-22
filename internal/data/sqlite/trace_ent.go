@@ -312,33 +312,50 @@ func (d *TraceEntDB) GetTracesByParentId(parentId int64) ([]entity.TraceData, er
 }
 
 // GetAllParentIds 获取所有的父函数 ID
-func (d *TraceEntDB) GetAllParentIds() ([]int64, error) {
+func (d *TraceEntDB) GetAllParentFunctions(functionName string) ([]*entity.Function, error) {
 	ctx := context.Background()
 
 	// 查询所有不为空的父 ID
 	parentIds, err := d.client.TraceData.
 		Query().
 		Where(
-			tracedata.ParentIdNotNil(),
 			tracedata.ParentIdNEQ(0),
+			tracedata.Name(functionName),
 		).
 		GroupBy(tracedata.FieldParentId).
 		Ints(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("查询所有父函数 ID 失败: %w", err)
+		return nil, fmt.Errorf("find parent function id failed: %w", err)
+	}
+	parentIdInt64 := make([]int64, len(parentIds))
+	for i, id := range parentIds {
+		parentIdInt64[i] = int64(id)
+	}
+
+	// 查询所有父函数
+	parentFunctions, err := d.client.TraceData.
+		Query().
+		Where(
+			tracedata.ParentIdIn(parentIdInt64...),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("find parent function failed: %w", err)
 	}
 
 	// 转换为 int64 类型
-	var result []int64
-	for _, id := range parentIds {
-		result = append(result, int64(id))
+	var result []*entity.Function
+	for _, item := range parentFunctions {
+		f := entity.NewFunction(int64(item.ID), item.Name, 0, "0ms", "0ms")
+		f.SetPackage()
+		result = append(result, f)
 	}
 
 	return result, nil
 }
 
 // GetChildFunctions 获取函数的子函数
-func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]string, error) {
+func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]*entity.Function, error) {
 	ctx := context.Background()
 
 	// 查询具有指定父 ID 的所有不同函数名
@@ -350,17 +367,22 @@ func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]string, error) {
 				s.Where(sql.EQ(tracedata.FieldParentId, parentId))
 			},
 		).
-		GroupBy(tracedata.FieldName).
-		Strings(ctx)
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("查询子函数失败: %w", err)
 	}
+	result := make([]*entity.Function, 0)
+	for _, item := range childFunctions {
+		f := entity.NewFunction(int64(item.ID), item.Name, 0, "0ms", "0ms")
+		f.SetPackage()
+		result = append(result, f)
+	}
 
-	return childFunctions, nil
+	return result, nil
 }
 
 // GetHotFunctions 获取热点函数分析数据
-func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]entity.HotFunction, error) {
+func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]entity.Function, error) {
 	ctx := context.Background()
 
 	// 查询所有跟踪数据
@@ -400,7 +422,7 @@ func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]entity.HotFunction, error
 	}
 
 	// 转换为热点函数列表
-	var hotFunctions []entity.HotFunction
+	var hotFunctions []entity.Function
 	for name, stats := range funcStats {
 		// 提取包名
 		parts := strings.Split(name, ".")
@@ -431,7 +453,7 @@ func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]entity.HotFunction, error
 			avgTimeStr = fmt.Sprintf("%.2fms", avgTime)
 		}
 
-		hotFunctions = append(hotFunctions, entity.HotFunction{
+		hotFunctions = append(hotFunctions, entity.Function{
 			Name:      name,
 			Package:   pkg,
 			CallCount: stats.CallCount,
@@ -824,209 +846,6 @@ func (d *TraceEntDB) getFunctionStats(functionName string) (*functionStats, erro
 	}, nil
 }
 
-// GetFunctionCallGraph 获取函数调用关系图
-func (d *TraceEntDB) GetFunctionCallGraph(functionName string, depth int, direction string) (*entity.FunctionCallGraph, error) {
-	ctx := context.Background()
-
-	// 初始化结果
-	graph := &entity.FunctionCallGraph{
-		Nodes: []entity.FunctionGraphNode{},
-		Edges: []entity.FunctionGraphEdge{},
-	}
-
-	// 生成唯一ID
-	nextID := 1
-	generateID := func() string {
-		id := fmt.Sprintf("node_%d", nextID)
-		nextID++
-		return id
-	}
-
-	// 节点ID映射，避免重复添加节点
-	nodeMap := make(map[string]string) // 函数名 -> 节点ID
-
-	// 添加根节点
-	rootID := generateID()
-	rootNode := entity.FunctionGraphNode{
-		ID:       rootID,
-		Name:     functionName,
-		NodeType: "root",
-	}
-
-	// 提取包名
-	parts := strings.Split(functionName, ".")
-	if len(parts) > 1 {
-		rootNode.Package = strings.Join(parts[:len(parts)-1], ".")
-	} else {
-		rootNode.Package = "main"
-	}
-
-	// 获取根节点的调用次数和平均时间
-	stats, err := d.getFunctionStats(functionName)
-	if err == nil && stats != nil {
-		rootNode.CallCount = stats.CallCount
-		rootNode.AvgTime = stats.AvgTime
-	}
-
-	// 添加根节点到图中
-	graph.Nodes = append(graph.Nodes, rootNode)
-	nodeMap[functionName] = rootID
-
-	// 处理调用者（向上查询）
-	if direction == "caller" || direction == "both" {
-		err := d.addCallerNodes(ctx, graph, nodeMap, functionName, rootID, depth, generateID)
-		if err != nil {
-			return nil, fmt.Errorf("add caller nodes failed: %w", err)
-		}
-	}
-
-	// 处理被调用者（向下查询）
-	if direction == "callee" || direction == "both" {
-		err := d.addCalleeNodes(ctx, graph, nodeMap, functionName, rootID, depth, generateID)
-		if err != nil {
-			return nil, fmt.Errorf("add callee nodes failed: %w", err)
-		}
-	}
-
-	return graph, nil
-}
-
-// 添加调用者节点（向上查询）
-func (d *TraceEntDB) addCallerNodes(ctx context.Context, graph *entity.FunctionCallGraph, nodeMap map[string]string, funcName string, parentID string, depth int, generateID func() string) error {
-	if depth <= 0 {
-		return nil
-	}
-
-	// 获取调用者列表
-	callers, err := d.GetCallerFunctions(funcName)
-	if err != nil {
-		return err
-	}
-
-	for _, caller := range callers {
-		var nodeID string
-
-		// 检查节点是否已存在
-		if id, exists := nodeMap[caller]; exists {
-			nodeID = id
-		} else {
-			// 创建新节点
-			nodeID = generateID()
-			callerNode := entity.FunctionGraphNode{
-				ID:       nodeID,
-				Name:     caller,
-				NodeType: "caller",
-			}
-
-			// 提取包名
-			parts := strings.Split(caller, ".")
-			if len(parts) > 1 {
-				callerNode.Package = strings.Join(parts[:len(parts)-1], ".")
-			} else {
-				callerNode.Package = "main"
-			}
-
-			// 获取调用者的调用次数和平均时间
-			stats, err := d.getFunctionStats(caller)
-			if err == nil && stats != nil {
-				callerNode.CallCount = stats.CallCount
-				callerNode.AvgTime = stats.AvgTime
-			}
-
-			// 添加节点到图中
-			graph.Nodes = append(graph.Nodes, callerNode)
-			nodeMap[caller] = nodeID
-		}
-
-		// 添加边
-		edge := entity.FunctionGraphEdge{
-			Source:   nodeID,
-			Target:   parentID,
-			Label:    "调用",
-			EdgeType: "caller_to_root",
-		}
-		graph.Edges = append(graph.Edges, edge)
-
-		// 递归处理上一级调用者
-		if depth > 1 {
-			err := d.addCallerNodes(ctx, graph, nodeMap, caller, nodeID, depth-1, generateID)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// 添加被调用者节点（向下查询）
-func (d *TraceEntDB) addCalleeNodes(ctx context.Context, graph *entity.FunctionCallGraph, nodeMap map[string]string, funcName string, parentID string, depth int, generateID func() string) error {
-	if depth <= 0 {
-		return nil
-	}
-
-	// 获取被调用者列表
-	callees, err := d.GetCalleeFunctions(funcName)
-	if err != nil {
-		return err
-	}
-
-	for _, callee := range callees {
-		var nodeID string
-
-		// 检查节点是否已存在
-		if id, exists := nodeMap[callee]; exists {
-			nodeID = id
-		} else {
-			// 创建新节点
-			nodeID = generateID()
-			calleeNode := entity.FunctionGraphNode{
-				ID:       nodeID,
-				Name:     callee,
-				NodeType: "callee",
-			}
-
-			// 提取包名
-			parts := strings.Split(callee, ".")
-			if len(parts) > 1 {
-				calleeNode.Package = strings.Join(parts[:len(parts)-1], ".")
-			} else {
-				calleeNode.Package = "main"
-			}
-
-			// 获取被调用者的调用次数和平均时间
-			stats, err := d.getFunctionStats(callee)
-			if err == nil && stats != nil {
-				calleeNode.CallCount = stats.CallCount
-				calleeNode.AvgTime = stats.AvgTime
-			}
-
-			// 添加节点到图中
-			graph.Nodes = append(graph.Nodes, calleeNode)
-			nodeMap[callee] = nodeID
-		}
-
-		// 添加边
-		edge := entity.FunctionGraphEdge{
-			Source:   parentID,
-			Target:   nodeID,
-			Label:    "调用",
-			EdgeType: "root_to_callee",
-		}
-		graph.Edges = append(graph.Edges, edge)
-
-		// 递归处理下一级被调用者
-		if depth > 1 {
-			err := d.addCalleeNodes(ctx, graph, nodeMap, callee, nodeID, depth-1, generateID)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 // GetGoroutineCallDepth 获取指定 Goroutine 的最大调用深度
 func (d *TraceEntDB) GetGoroutineCallDepth(gid uint64) (int, error) {
 	ctx := context.Background()
@@ -1160,6 +979,27 @@ func (d *TraceEntDB) GetAllUnfinishedFunctions(threshold int64) ([]entity.AllUnf
 	}
 
 	return unfinishedFunctions, nil
+}
+
+func (d *TraceEntDB) SearchFunctions(ctx context.Context, dbPath string, query string, limit int32) ([]*entity.Function, int32, error) {
+	traces, err := d.client.TraceData.Query().
+		Where(tracedata.NameContains(query)).
+		Limit(int(limit)).
+		All(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("search functions failed: %w", err)
+	}
+	var functions []*entity.Function
+	for _, trace := range traces {
+		stats, err := d.getFunctionStats(trace.Name)
+		if err != nil {
+			return nil, 0, fmt.Errorf("get function stats failed: %w", err)
+		}
+		f := entity.NewFunction(int64(trace.ID), trace.Name, stats.CallCount, stats.AvgTime, stats.AvgTime)
+		f.SetPackage()
+		functions = append(functions, f)
+	}
+	return functions, int32(len(functions)), nil
 }
 
 func formatTime(totalTime int64) string {

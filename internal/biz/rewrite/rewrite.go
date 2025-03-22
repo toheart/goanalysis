@@ -209,6 +209,10 @@ func (r *Rewrite) RewriteFile() {
 		if !ok {
 			continue
 		}
+		if strings.ToLower(funcDel.Name.Name) == "string" {
+			continue
+		}
+
 		// 判断是否需要插入defer函数
 		if r.HasSameDefer(funcDel) {
 			continue
