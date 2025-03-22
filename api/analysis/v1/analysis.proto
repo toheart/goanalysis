@@ -56,26 +56,18 @@ service Analysis {
       body: "*"
     };
   }
-
-  rpc GetTraceGraph(GetTraceGraphReq) returns (GetTraceGraphReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/traces/graph"
-      body: "*"
-    };
-  }
-
   // GetTracesByParentFunc 根据父函数ID获取函数调用
   rpc GetTracesByParentFunc(GetTracesByParentFuncReq) returns (GetTracesByParentFuncReply) {
     option (google.api.http) = {
-      post: "/api/runtime/traces/parent/{parent_id}"
+      post: "/api/runtime/traces/parent/{parentId}"
       body: "*"
     };
   }
   
-  // GetAllParentIds 获取所有的父函数ID
-  rpc GetAllParentIds(GetAllParentIdsReq) returns (GetAllParentIdsReply) {
+  // GetParentFunctions 获取所有的父函数
+  rpc GetParentFunctions(GetParentFunctionsReq) returns (GetParentFunctionsReply) {
     option (google.api.http) = {
-      post: "/api/runtime/functions/parent-ids"
+      post: "/api/runtime/functions/parents"
       body: "*"
     };
   }
@@ -83,7 +75,7 @@ service Analysis {
   // GetChildFunctions 获取函数的子函数
   rpc GetChildFunctions(GetChildFunctionsReq) returns (GetChildFunctionsReply) {
     option (google.api.http) = {
-      post: "/api/runtime/functions/{parent_id}/children"
+      post: "/api/runtime/functions/children"
       body: "*"
     };
   }
@@ -112,17 +104,6 @@ service Analysis {
     };
   }
 
-  // GetFunctionCallGraph 获取函数调用关系图
-  rpc GetFunctionCallGraph(GetFunctionCallGraphReq) returns (GetFunctionCallGraphReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/function/{function_name}/graph"
-      body: "*"
-      additional_bindings {
-        post: "/api/runtime/function/graph"
-        body: "*"
-      }
-    };
-  }
 
   // InstrumentProject 对项目进行插桩
   rpc InstrumentProject(InstrumentProjectReq) returns (InstrumentProjectReply) {
@@ -156,18 +137,11 @@ service Analysis {
     };
   }
   
-  // GetFunctionHotPaths 获取函数热点路径分析
-  rpc GetFunctionHotPaths(GetFunctionHotPathsReq) returns (GetFunctionHotPathsReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/hot-paths"
-      body: "*"
-    };
-  }
   
   // GetFunctionCallStats 获取函数调用统计分析
   rpc GetFunctionCallStats(GetFunctionCallStatsReq) returns (GetFunctionCallStatsReply) {
     option (google.api.http) = {
-      post: "/api/runtime/call-stats"
+      post: "/api/runtime/function/stats"
       body: "*"
     };
   }
@@ -175,7 +149,15 @@ service Analysis {
   // GetPerformanceAnomalies 获取性能异常检测结果
   rpc GetPerformanceAnomalies(GetPerformanceAnomaliesReq) returns (GetPerformanceAnomaliesReply) {
     option (google.api.http) = {
-      post: "/api/runtime/performance-anomalies"
+      post: "/api/runtime/function/anomalies"
+      body: "*"
+    };
+  }
+
+  // SearchFunctions 搜索函数
+  rpc SearchFunctions(SearchFunctionsReq) returns (SearchFunctionsReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/functions/search"
       body: "*"
     };
   }
@@ -255,9 +237,9 @@ message TraceData {
   repeated TraceParams params = 5;
   int32 paramCount = 6;
   string timeCost = 7;
-  int64 parent_id = 8; // 父函数ID
+  int64 parentId = 8; // 父函数ID
 }
-  repeated TraceData trace_data = 1;
+  repeated TraceData traceData = 1;
 }
 
 message GetAllGIDsReq {
@@ -291,9 +273,9 @@ message GetParamsByIDReply {
 message GraphNode {
   string id = 1;
   string name = 2;
-  int32 call_count = 3;
+  int32 callCount = 3;
   string package = 4;  // 包名
-  string time_cost = 5; // 执行耗时
+  string timeCost = 5; // 执行耗时
 }
 
 message GraphEdge {
@@ -315,7 +297,7 @@ message GetTraceGraphReply {
 
 // GetTracesByParentFuncReq 根据父函数ID获取函数调用的请求
 message GetTracesByParentFuncReq {
-  int64 parent_id = 1;
+  int64 parentId = 1;
   string dbpath = 2; // 数据库路径
 }
 
@@ -329,48 +311,38 @@ message GetTracesByParentFuncReply {
     repeated TraceParams params = 5;
     int32 paramCount = 6;
     string timeCost = 7;
-    int64 parent_id = 8; // 父函数ID
+    int64 parentId = 8; // 父函数ID
   }
-  repeated TraceData trace_data = 1;
+  repeated TraceData traceData = 1;
 }
 
-// GetAllParentIdsReq 获取所有的父函数ID的请求
-message GetAllParentIdsReq {
+message GetParentFunctionsReq {
   string dbpath = 1; // 数据库路径
+  string functionName = 2; // 函数名称
 }
 
-// GetAllParentIdsReply 获取所有的父函数ID的响应
-message GetAllParentIdsReply {
-  repeated int64 parent_ids = 1;
+  message FunctionNode {
+    int64 id = 1;
+    string name = 2;
+    string package = 3;
+    int32 callCount = 4;
+    string avgTime = 5;
+  }
+
+message GetParentFunctionsReply {
+  repeated FunctionNode functions = 1;
 }
+
 
 // GetChildFunctionsReq 获取函数的子函数的请求
 message GetChildFunctionsReq {
-  int64 parent_id = 1;
+  int64 parentId = 1;
   string dbpath = 2; // 数据库路径
 }
 
 // GetChildFunctionsReply 获取函数的子函数的响应
 message GetChildFunctionsReply {
-  repeated string child_functions = 1;
-}
-
-// GetHotFunctionsReq 获取热点函数的请求
-message GetHotFunctionsReq {
-  string sort_by = 1; // 排序方式: "calls" 或 "time"
-  string dbpath = 2; // 数据库路径
-}
-
-// GetHotFunctionsReply 获取热点函数的响应
-message GetHotFunctionsReply {
-  message HotFunction {
-    string name = 1;     // 函数名称
-    string package = 2;  // 包名
-    int32 call_count = 3; // 调用次数
-    string total_time = 4; // 总耗时
-    string avg_time = 5;   // 平均耗时
-  }
-  repeated HotFunction functions = 1; // 热点函数列表
+  repeated FunctionNode functions = 1;
 }
 
 // GetGoroutineStatsReq 获取Goroutine统计信息的请求
@@ -381,15 +353,15 @@ message GetGoroutineStatsReq {
 // GetGoroutineStatsReply 获取Goroutine统计信息的响应
 message GetGoroutineStatsReply {
   int32 active = 1;       // 活跃Goroutine数量
-  string avg_time = 2;    // 平均执行时间
-  int32 max_depth = 3;    // 最大调用深度
+  string avgTime = 2;    // 平均执行时间
+  int32 maxDepth = 3;    // 最大调用深度
 }
 
 // GetFunctionAnalysisReq 获取函数调用关系分析的请求
 message GetFunctionAnalysisReq {
   string functionName = 1; // 函数名称
   string type = 2;         // 查询类型: "caller" 或 "callee"
-  string path = 3;         // 项目路径
+  string dbpath = 3;         // 项目路径
 }
 
 // GetFunctionAnalysisReply 获取函数调用关系分析的响应
@@ -398,61 +370,13 @@ message GetFunctionAnalysisReply {
     string id = 1;           // 节点ID
     string name = 2;         // 函数名称
     string package = 3;      // 包名
-    int32 call_count = 4;    // 调用次数
-    string avg_time = 5;     // 平均耗时
+    int32 callCount = 4;    // 调用次数
+    string avgTime = 5;     // 平均耗时
     repeated FunctionNode children = 6; // 子节点
   }
   
   repeated FunctionNode callData = 1; // 调用关系数据
 }
-
-// GetFunctionCallGraphReq 获取函数调用关系图的请求
-message GetFunctionCallGraphReq {
-  string function_name = 1; // 函数名称
-  int32 depth = 2;          // 调用深度，默认为2
-  string direction = 3;     // 方向: "caller"(调用者), "callee"(被调用), "both"(双向)
-  string dbpath = 4;        // 数据库路径
-}
-
-// GetFunctionCallGraphReply 获取函数调用关系图的响应
-message GetFunctionCallGraphReply {
-  message GraphNode {
-    string id = 1;           // 节点ID
-    string name = 2;         // 函数名称
-    string package = 3;      // 包名
-    int32 call_count = 4;    // 调用次数
-    string avg_time = 5;     // 平均耗时
-    string node_type = 6;    // 节点类型: "root", "caller", "callee"
-  }
-  
-  message GraphEdge {
-    string source = 1;       // 源节点ID
-    string target = 2;       // 目标节点ID
-    string label = 3;        // 边标签
-    string edge_type = 4;    // 边类型: "caller_to_root", "root_to_callee"
-  }
-  
-  repeated GraphNode nodes = 1; // 图节点
-  repeated GraphEdge edges = 2; // 图边
-}
-
-// 获取静态分析数据库文件列表请求
-message GetStaticDbFilesRequest {
-}
-
-// 静态分析数据库文件信息
-message DbFileInfo {
-  string path = 1;
-  string name = 2;
-  int64 size = 3;
-  string create_time = 4;
-}
-
-// 获取静态分析数据库文件列表响应
-message GetStaticDbFilesResponse {
-  repeated DbFileInfo files = 1;
-}
-
 // 分析项目路径请求
 message AnalyzeProjectPathRequest {
   string path = 1;
@@ -462,12 +386,12 @@ message AnalyzeProjectPathRequest {
 message AnalyzeProjectPathResponse {
   bool success = 1;
   string message = 2;
-  string db_path = 3;
+  string dbPath = 3;
 }
 
 // 分析数据库文件请求
 message AnalyzeDbFileRequest {
-  string db_path = 1;
+  string dbPath = 1;
 }
 
 // 包依赖关系
@@ -485,11 +409,11 @@ message HotFunction {
 
 // 分析数据库文件响应
 message AnalyzeDbFileResponse {
-  int32 total_functions = 1;
-  int32 total_calls = 2;
-  int32 total_packages = 3;
-  repeated PackageDependency package_dependencies = 4;
-  repeated HotFunction hot_functions = 5;
+  int32 totalFunctions = 1;
+  int32 totalCalls = 2;
+  int32 totalPackages = 3;
+  repeated PackageDependency packageDependencies = 4;
+  repeated HotFunction hotFunctions = 5;
 }
 
 // 插桩请求
@@ -516,9 +440,9 @@ message GetUnfinishedFunctionsReply {
   message UnfinishedFunction {
     string name = 1; // 函数名称
     uint64 gid = 2; // goroutine ID
-    string running_time = 3; // 运行时间
-    bool is_blocking = 4; // 是否阻塞
-    int64 function_id = 5; // 函数ID
+    string runningTime = 3; // 运行时间
+    bool isBlocking = 4; // 是否阻塞
+    int64 functionId = 5; // 函数ID
   }
   repeated UnfinishedFunction functions = 1; // 未完成函数列表
   int32 total = 2; // 总数
@@ -526,9 +450,10 @@ message GetUnfinishedFunctionsReply {
 
 // 获取树状图请求
 message GetTreeGraphReq {
-  string db_path = 1; // 数据库路径
-  string function_name = 2; // 函数名称
-  string chain_type = 3; // 链路类型: "upstream"(上游调用), "downstream"(下游调用), "full"(全链路)
+  string dbPath = 1; // 数据库路径
+  string functionName = 2; // 函数名称
+  string chainType = 3; // 链路类型: "upstream"(上游调用), "downstream"(下游调用), "full"(全链路)
+  int32 depth = 4; // 深度
 }
 
 
@@ -547,7 +472,7 @@ message GetTreeGraphReply {
 
 // 根据GID获取树状图请求
 message GetTreeGraphByGIDReq {
-  string db_path = 1; // 数据库路径
+  string dbPath = 1; // 数据库路径
   uint64 gid = 2;     // Goroutine ID
 }
 
@@ -556,43 +481,24 @@ message GetTreeGraphByGIDReply {
   repeated TreeNode trees = 1; // 多棵树
 }
 
-// 获取函数热点路径请求
-message GetFunctionHotPathsReq {
-  string db_path = 1; // 数据库路径
-  string function_name = 2; // 函数名称（可选，不提供则分析所有函数）
-  int32 limit = 3; // 返回结果数量限制
-}
-
-// 热点路径信息
-message HotPathInfo {
-  repeated string path = 1; // 路径上的函数名称序列
-  int32 call_count = 2; // 调用次数
-  string total_time = 3; // 总耗时
-  string avg_time = 4; // 平均耗时
-}
-
-// 获取函数热点路径响应
-message GetFunctionHotPathsReply {
-  repeated HotPathInfo paths = 1; // 热点路径列表
-}
 
 // 获取函数调用统计请求
 message GetFunctionCallStatsReq {
-  string db_path = 1; // 数据库路径
-  string function_name = 2; // 函数名称（可选，不提供则分析所有函数）
+  string dbPath = 1; // 数据库路径
+  string functionName = 2; // 函数名称（可选，不提供则分析所有函数）
 }
 
 // 函数调用统计信息
 message FunctionCallStats {
   string name = 1; // 函数名称
   string package = 2; // 包名
-  int32 call_count = 3; // 调用次数
-  int32 caller_count = 4; // 调用方数量
-  int32 callee_count = 5; // 被调用方数量
-  string avg_time = 6; // 平均执行时间
-  string max_time = 7; // 最大执行时间
-  string min_time = 8; // 最小执行时间
-  double time_std_dev = 9; // 执行时间标准差
+  int32 callCount = 3; // 调用次数
+  int32 callerCount = 4; // 调用方数量
+  int32 calleeCount = 5; // 被调用方数量
+  string avgTime = 6; // 平均执行时间
+  string maxTime = 7; // 最大执行时间
+  string minTime = 8; // 最小执行时间
+  double timeStdDev = 9; // 执行时间标准差
 }
 
 // 获取函数调用统计响应
@@ -602,8 +508,8 @@ message GetFunctionCallStatsReply {
 
 // 获取性能异常检测请求
 message GetPerformanceAnomaliesReq {
-  string db_path = 1; // 数据库路径
-  string function_name = 2; // 函数名称（可选，不提供则检测所有函数）
+  string dbPath = 1; // 数据库路径
+  string functionName = 2; // 函数名称（可选，不提供则检测所有函数）
   double threshold = 3; // 异常阈值（标准差倍数），默认为2.0
 }
 
@@ -611,7 +517,7 @@ message GetPerformanceAnomaliesReq {
 message PerformanceAnomaly {
   string name = 1; // 函数名称
   string package = 2; // 包名
-  string anomaly_type = 3; // 异常类型: "time_variance"(时间波动), "depth_anomaly"(调用深度异常), "frequency_anomaly"(调用频率异常)
+  string anomalyType = 3; // 异常类型: "time_variance"(时间波动), "depth_anomaly"(调用深度异常), "frequency_anomaly"(调用频率异常)
   string description = 4; // 异常描述
   double severity = 5; // 严重程度 (0.0-1.0)
   map<string, string> details = 6; // 详细信息
@@ -620,4 +526,41 @@ message PerformanceAnomaly {
 // 获取性能异常检测响应
 message GetPerformanceAnomaliesReply {
   repeated PerformanceAnomaly anomalies = 1; // 性能异常列表
+}
+
+// GetHotFunctionsReq 获取热点函数的请求
+message GetHotFunctionsReq {
+  string sort_by = 1; // 排序方式: "calls" 或 "time"
+  string dbpath = 2; // 数据库路径
+}
+
+// GetHotFunctionsReply 获取热点函数的响应
+message GetHotFunctionsReply {
+  message HotFunction {
+    string name = 1;     // 函数名称
+    string package = 2;  // 包名
+    int32 call_count = 3; // 调用次数
+    string total_time = 4; // 总耗时
+    string avg_time = 5;   // 平均耗时
+  }
+  repeated HotFunction functions = 1; // 热点函数列表
+}
+
+// 搜索函数请求
+message SearchFunctionsReq {
+  string dbpath = 1; // 项目路径
+  string query = 2;  // 搜索关键词
+  int32 limit = 3;   // 返回结果数量限制
+}
+
+// 函数搜索结果
+message SearchFunctionsReply {
+  message FunctionInfo {
+    string name = 1;      // 函数名称
+    string package = 2;   // 包名
+    int32 callCount = 3; // 调用次数
+    string avgTime = 4;  // 平均执行时间
+  }
+  repeated FunctionInfo functions = 1; // 搜索到的函数列表
+  int32 total = 2;                    // 总匹配数量
 }

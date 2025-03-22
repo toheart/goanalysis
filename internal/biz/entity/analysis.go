@@ -1,6 +1,9 @@
 package entity
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 const (
 	AnalysisEventStart = iota
@@ -52,13 +55,38 @@ type AnalysisEvent struct {
 	Message string // 消息
 }
 
-// HotFunction 热点函数
-type HotFunction struct {
+// 热点函数
+type Function struct {
+	Id        int64  // 函数ID
 	Name      string // 函数名称
 	Package   string // 包名
+	ParentId  int64  // 父函数ID
 	CallCount int    // 调用次数
 	TotalTime string // 总耗时
 	AvgTime   string // 平均耗时
+}
+
+func NewFunction(id int64, name string, callCount int, totalTime string, avgTime string) *Function {
+	f := &Function{
+		Id:        id,
+		Name:      name,
+		CallCount: callCount,
+		TotalTime: totalTime,
+		AvgTime:   avgTime,
+	}
+	f.SetPackage()
+	return f
+}
+
+func (f *Function) SetPackage() {
+	parts := strings.Split(f.Name, "/")
+	packageName := "main"
+	if len(parts) > 1 {
+		lastPart := parts[len(parts)-1] // 取最后一个部分作为函数名
+		packageNames := strings.Split(lastPart, ".")
+		packageName = packageNames[0]
+	}
+	f.Package = packageName
 }
 
 // UnfinishedFunction 未完成的函数

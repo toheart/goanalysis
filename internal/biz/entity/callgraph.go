@@ -30,7 +30,7 @@ type StaticAnalysisResult struct {
 	TotalCalls          int                 `json:"totalCalls"`
 	TotalPackages       int                 `json:"totalPackages"`
 	PackageDependencies []PackageDependency `json:"packageDependencies"`
-	HotFunctions        []HotFunction       `json:"hotFunctions"`
+	HotFunctions        []Function          `json:"hotFunctions"`
 }
 
 // 包依赖结构

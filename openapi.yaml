@@ -122,25 +122,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/filemanager.v1.DownloadFileReply'
-    /api/runtime/call-stats:
-        post:
-            tags:
-                - Analysis
-            description: GetFunctionCallStats 获取函数调用统计分析
-            operationId: Analysis_GetFunctionCallStats
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetFunctionCallStatsReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetFunctionCallStatsReply'
     /api/runtime/function/analysis:
         post:
             tags:
@@ -160,17 +141,17 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetFunctionAnalysisReply'
-    /api/runtime/function/graph:
+    /api/runtime/function/anomalies:
         post:
             tags:
                 - Analysis
-            description: GetFunctionCallGraph 获取函数调用关系图
-            operationId: Analysis_GetFunctionCallGraph
+            description: GetPerformanceAnomalies 获取性能异常检测结果
+            operationId: Analysis_GetPerformanceAnomalies
             requestBody:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/analysis.v1.GetFunctionCallGraphReq'
+                            $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReq'
                 required: true
             responses:
                 "200":
@@ -178,24 +159,18 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/analysis.v1.GetFunctionCallGraphReply'
-    /api/runtime/function/{functionName}/graph:
+                                $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReply'
+    /api/runtime/function/stats:
         post:
             tags:
                 - Analysis
-            description: GetFunctionCallGraph 获取函数调用关系图
-            operationId: Analysis_GetFunctionCallGraph
-            parameters:
-                - name: functionName
-                  in: path
-                  required: true
-                  schema:
-                    type: string
+            description: GetFunctionCallStats 获取函数调用统计分析
+            operationId: Analysis_GetFunctionCallStats
             requestBody:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/analysis.v1.GetFunctionCallGraphReq'
+                            $ref: '#/components/schemas/analysis.v1.GetFunctionCallStatsReq'
                 required: true
             responses:
                 "200":
@@ -203,7 +178,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/analysis.v1.GetFunctionCallGraphReply'
+                                $ref: '#/components/schemas/analysis.v1.GetFunctionCallStatsReply'
     /api/runtime/functions:
         post:
             tags:
@@ -222,37 +197,12 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetAllFunctionNameReply'
-    /api/runtime/functions/parent-ids:
-        post:
-            tags:
-                - Analysis
-            description: GetAllParentIds 获取所有的父函数ID
-            operationId: Analysis_GetAllParentIds
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetAllParentIdsReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetAllParentIdsReply'
-    /api/runtime/functions/{parentId}/children:
+    /api/runtime/functions/children:
         post:
             tags:
                 - Analysis
             description: GetChildFunctions 获取函数的子函数
             operationId: Analysis_GetChildFunctions
-            parameters:
-                - name: parentId
-                  in: path
-                  required: true
-                  schema:
-                    type: string
             requestBody:
                 content:
                     application/json:
@@ -266,6 +216,44 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetChildFunctionsReply'
+    /api/runtime/functions/parents:
+        post:
+            tags:
+                - Analysis
+            description: GetParentFunctions 获取所有的父函数
+            operationId: Analysis_GetParentFunctions
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetParentFunctionsReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetParentFunctionsReply'
+    /api/runtime/functions/search:
+        post:
+            tags:
+                - Analysis
+            description: SearchFunctions 搜索函数
+            operationId: Analysis_SearchFunctions
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.SearchFunctionsReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.SearchFunctionsReply'
     /api/runtime/gids:
         post:
             tags:
@@ -340,25 +328,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetHotFunctionsReply'
-    /api/runtime/hot-paths:
-        post:
-            tags:
-                - Analysis
-            description: GetFunctionHotPaths 获取函数热点路径分析
-            operationId: Analysis_GetFunctionHotPaths
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetFunctionHotPathsReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetFunctionHotPathsReply'
     /api/runtime/instrument:
         post:
             tags:
@@ -403,43 +372,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetParamsByIDReply'
-    /api/runtime/performance-anomalies:
-        post:
-            tags:
-                - Analysis
-            description: GetPerformanceAnomalies 获取性能异常检测结果
-            operationId: Analysis_GetPerformanceAnomalies
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReply'
-    /api/runtime/traces/graph:
-        post:
-            tags:
-                - Analysis
-            operationId: Analysis_GetTraceGraph
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetTraceGraphReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetTraceGraphReply'
     /api/runtime/traces/parent/{parentId}:
         post:
             tags:
@@ -954,6 +886,20 @@ components:
                     type: number
                     format: double
             description: 函数调用统计信息
+        analysis.v1.FunctionNode:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                package:
+                    type: string
+                callCount:
+                    type: integer
+                    format: int32
+                avgTime:
+                    type: string
         analysis.v1.GetAllFunctionNameReply:
             type: object
             properties:
@@ -1003,27 +949,13 @@ components:
                     type: boolean
                 dbpath:
                     type: string
-        analysis.v1.GetAllParentIdsReply:
-            type: object
-            properties:
-                parentIds:
-                    type: array
-                    items:
-                        type: string
-            description: GetAllParentIdsReply 获取所有的父函数ID的响应
-        analysis.v1.GetAllParentIdsReq:
-            type: object
-            properties:
-                dbpath:
-                    type: string
-            description: GetAllParentIdsReq 获取所有的父函数ID的请求
         analysis.v1.GetChildFunctionsReply:
             type: object
             properties:
-                childFunctions:
+                functions:
                     type: array
                     items:
-                        type: string
+                        $ref: '#/components/schemas/analysis.v1.FunctionNode'
             description: GetChildFunctionsReply 获取函数的子函数的响应
         analysis.v1.GetChildFunctionsReq:
             type: object
@@ -1066,61 +998,9 @@ components:
                     type: string
                 type:
                     type: string
-                path:
-                    type: string
-            description: GetFunctionAnalysisReq 获取函数调用关系分析的请求
-        analysis.v1.GetFunctionCallGraphReply:
-            type: object
-            properties:
-                nodes:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.GetFunctionCallGraphReply_GraphNode'
-                edges:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.GetFunctionCallGraphReply_GraphEdge'
-            description: GetFunctionCallGraphReply 获取函数调用关系图的响应
-        analysis.v1.GetFunctionCallGraphReply_GraphEdge:
-            type: object
-            properties:
-                source:
-                    type: string
-                target:
-                    type: string
-                label:
-                    type: string
-                edgeType:
-                    type: string
-        analysis.v1.GetFunctionCallGraphReply_GraphNode:
-            type: object
-            properties:
-                id:
-                    type: string
-                name:
-                    type: string
-                package:
-                    type: string
-                callCount:
-                    type: integer
-                    format: int32
-                avgTime:
-                    type: string
-                nodeType:
-                    type: string
-        analysis.v1.GetFunctionCallGraphReq:
-            type: object
-            properties:
-                functionName:
-                    type: string
-                depth:
-                    type: integer
-                    format: int32
-                direction:
-                    type: string
                 dbpath:
                     type: string
-            description: GetFunctionCallGraphReq 获取函数调用关系图的请求
+            description: GetFunctionAnalysisReq 获取函数调用关系分析的请求
         analysis.v1.GetFunctionCallStatsReply:
             type: object
             properties:
@@ -1137,25 +1017,6 @@ components:
                 functionName:
                     type: string
             description: 获取函数调用统计请求
-        analysis.v1.GetFunctionHotPathsReply:
-            type: object
-            properties:
-                paths:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.HotPathInfo'
-            description: 获取函数热点路径响应
-        analysis.v1.GetFunctionHotPathsReq:
-            type: object
-            properties:
-                dbPath:
-                    type: string
-                functionName:
-                    type: string
-                limit:
-                    type: integer
-                    format: int32
-            description: 获取函数热点路径请求
         analysis.v1.GetGidsByFunctionNameReply:
             type: object
             properties:
@@ -1252,6 +1113,20 @@ components:
                     format: int32
                 dbpath:
                     type: string
+        analysis.v1.GetParentFunctionsReply:
+            type: object
+            properties:
+                functions:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.FunctionNode'
+        analysis.v1.GetParentFunctionsReq:
+            type: object
+            properties:
+                dbpath:
+                    type: string
+                functionName:
+                    type: string
         analysis.v1.GetPerformanceAnomaliesReply:
             type: object
             properties:
@@ -1271,24 +1146,6 @@ components:
                     type: number
                     format: double
             description: 获取性能异常检测请求
-        analysis.v1.GetTraceGraphReply:
-            type: object
-            properties:
-                nodes:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.GraphNode'
-                edges:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.GraphEdge'
-        analysis.v1.GetTraceGraphReq:
-            type: object
-            properties:
-                gid:
-                    type: string
-                dbpath:
-                    type: string
         analysis.v1.GetTracesByParentFuncReply:
             type: object
             properties:
@@ -1363,6 +1220,9 @@ components:
                     type: string
                 chainType:
                     type: string
+                depth:
+                    type: integer
+                    format: int32
             description: 获取树状图请求
         analysis.v1.GetUnfinishedFunctionsReply:
             type: object
@@ -1402,47 +1262,6 @@ components:
                     type: integer
                     format: int32
             description: GetUnfinishedFunctions 请求
-        analysis.v1.GraphEdge:
-            type: object
-            properties:
-                source:
-                    type: string
-                target:
-                    type: string
-                label:
-                    type: string
-                count:
-                    type: integer
-                    format: int32
-        analysis.v1.GraphNode:
-            type: object
-            properties:
-                id:
-                    type: string
-                name:
-                    type: string
-                callCount:
-                    type: integer
-                    format: int32
-                package:
-                    type: string
-                timeCost:
-                    type: string
-        analysis.v1.HotPathInfo:
-            type: object
-            properties:
-                path:
-                    type: array
-                    items:
-                        type: string
-                callCount:
-                    type: integer
-                    format: int32
-                totalTime:
-                    type: string
-                avgTime:
-                    type: string
-            description: 热点路径信息
         analysis.v1.InstrumentProjectReply:
             type: object
             properties:
@@ -1476,6 +1295,40 @@ components:
                     additionalProperties:
                         type: string
             description: 性能异常信息
+        analysis.v1.SearchFunctionsReply:
+            type: object
+            properties:
+                functions:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.SearchFunctionsReply_FunctionInfo'
+                total:
+                    type: integer
+                    format: int32
+            description: 函数搜索结果
+        analysis.v1.SearchFunctionsReply_FunctionInfo:
+            type: object
+            properties:
+                name:
+                    type: string
+                package:
+                    type: string
+                callCount:
+                    type: integer
+                    format: int32
+                avgTime:
+                    type: string
+        analysis.v1.SearchFunctionsReq:
+            type: object
+            properties:
+                dbpath:
+                    type: string
+                query:
+                    type: string
+                limit:
+                    type: integer
+                    format: int32
+            description: 搜索函数请求
         analysis.v1.TraceParams:
             type: object
             properties:

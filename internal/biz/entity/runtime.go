@@ -61,12 +61,6 @@ type FunctionGraphEdge struct {
 	EdgeType string // 边类型: "caller_to_root", "root_to_callee"
 }
 
-// FunctionCallGraph 函数调用关系图
-type FunctionCallGraph struct {
-	Nodes []FunctionGraphNode // 图节点
-	Edges []FunctionGraphEdge // 图边
-}
-
 // UnfinishedFunction 未完成的函数
 type AllUnfinishedFunction struct {
 	Name        string `json:"name"`        // 函数名称
