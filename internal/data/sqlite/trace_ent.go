@@ -39,13 +39,15 @@ func NewTraceEntDB(dbPath string) (*TraceEntDB, error) {
 }
 
 // GetTracesByGID 根据 GID 获取跟踪数据
-func (d *TraceEntDB) GetTracesByGID(gid uint64) ([]entity.TraceData, error) {
+func (d *TraceEntDB) GetTracesByGID(gid uint64, depth int, createTime string) ([]entity.TraceData, error) {
 	ctx := context.Background()
 
 	// 查询跟踪数据
 	traces, err := d.client.TraceData.
 		Query().
-		Where(tracedata.Gid(gid)).
+		Where(tracedata.Gid(gid),
+			tracedata.IndentLT(depth-1),
+			tracedata.CreatedAtGTE(createTime)).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query trace data failed: %w", err)
@@ -373,8 +375,9 @@ func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]*entity.Function, erro
 	}
 	result := make([]*entity.Function, 0)
 	for _, item := range childFunctions {
-		f := entity.NewFunction(int64(item.ID), item.Name, 0, "0ms", "0ms")
-		f.SetPackage()
+		f := entity.NewFunction(int64(item.ID), item.Name, 0, item.TimeCost, "0ms")
+		f.Params = item.Params
+		f.Depth = item.Indent + 1
 		result = append(result, f)
 	}
 

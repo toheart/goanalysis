@@ -3,6 +3,8 @@ package entity
 import (
 	"strings"
 	"time"
+
+	"github.com/toheart/functrace"
 )
 
 const (
@@ -55,15 +57,16 @@ type AnalysisEvent struct {
 	Message string // 消息
 }
 
-// 热点函数
 type Function struct {
-	Id        int64  // 函数ID
-	Name      string // 函数名称
-	Package   string // 包名
-	ParentId  int64  // 父函数ID
-	CallCount int    // 调用次数
-	TotalTime string // 总耗时
-	AvgTime   string // 平均耗时
+	Id        int64                   // 函数ID
+	Name      string                  // 函数名称
+	Package   string                  // 包名
+	ParentId  int64                   // 父函数ID
+	CallCount int                     // 调用次数
+	TotalTime string                  // 总耗时
+	AvgTime   string                  // 平均耗时
+	Params    []functrace.TraceParams // 参数
+	Depth     int                     // 深度
 }
 
 func NewFunction(id int64, name string, callCount int, totalTime string, avgTime string) *Function {

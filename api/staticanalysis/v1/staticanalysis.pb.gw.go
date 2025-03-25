@@ -10,6 +10,7 @@ package v1
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 
@@ -24,596 +25,452 @@ import (
 )
 
 // Suppress "imported and not used" errors
-var _ codes.Code
-var _ io.Reader
-var _ status.Status
-var _ = runtime.String
-var _ = utilities.NewDoubleArray
-var _ = metadata.Join
+var (
+	_ codes.Code
+	_ io.Reader
+	_ status.Status
+	_ = errors.New
+	_ = runtime.String
+	_ = utilities.NewDoubleArray
+	_ = metadata.Join
+)
 
 func request_StaticAnalysis_GetStaticDbFiles_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetStaticDbFilesRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetStaticDbFilesRequest
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
 	msg, err := client.GetStaticDbFiles(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetStaticDbFiles_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetStaticDbFilesRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetStaticDbFilesRequest
+		metadata runtime.ServerMetadata
+	)
 	msg, err := server.GetStaticDbFiles(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_GetAnalysisTaskStatus_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAnalysisTaskStatusRequest
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetAnalysisTaskStatusRequest
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["task_id"]
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["task_id"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "task_id")
 	}
-
 	protoReq.TaskId, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "task_id", err)
 	}
-
 	msg, err := client.GetAnalysisTaskStatus(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetAnalysisTaskStatus_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetAnalysisTaskStatusRequest
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetAnalysisTaskStatusRequest
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["task_id"]
+	val, ok := pathParams["task_id"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "task_id")
 	}
-
 	protoReq.TaskId, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "task_id", err)
 	}
-
 	msg, err := server.GetAnalysisTaskStatus(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_AnalyzeProjectPath_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AnalyzeProjectPathRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq AnalyzeProjectPathRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.AnalyzeProjectPath(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_AnalyzeProjectPath_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AnalyzeProjectPathRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq AnalyzeProjectPathRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.AnalyzeProjectPath(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_AnalyzeDbFile_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AnalyzeDbFileRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq AnalyzeDbFileRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.AnalyzeDbFile(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_AnalyzeDbFile_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AnalyzeDbFileRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq AnalyzeDbFileRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.AnalyzeDbFile(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_GetFunctionAnalysis_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionAnalysisReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionAnalysisReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetFunctionAnalysis(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetFunctionAnalysis_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionAnalysisReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionAnalysisReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetFunctionAnalysis(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_StaticAnalysis_GetFunctionCallGraph_0 = &utilities.DoubleArray{Encoding: map[string]int{"function_name": 0, "functionName": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
-)
+var filter_StaticAnalysis_GetFunctionCallGraph_0 = &utilities.DoubleArray{Encoding: map[string]int{"function_name": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
 func request_StaticAnalysis_GetFunctionCallGraph_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionCallGraphReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetFunctionCallGraphReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["function_name"]
+	io.Copy(io.Discard, req.Body)
+	val, ok := pathParams["function_name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "function_name")
 	}
-
 	protoReq.FunctionName, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "function_name", err)
 	}
-
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_StaticAnalysis_GetFunctionCallGraph_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetFunctionCallGraph(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetFunctionCallGraph_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionCallGraphReq
-	var metadata runtime.ServerMetadata
-
 	var (
-		val string
-		ok  bool
-		err error
-		_   = err
+		protoReq GetFunctionCallGraphReq
+		metadata runtime.ServerMetadata
+		err      error
 	)
-
-	val, ok = pathParams["function_name"]
+	val, ok := pathParams["function_name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "function_name")
 	}
-
 	protoReq.FunctionName, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "function_name", err)
 	}
-
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_StaticAnalysis_GetFunctionCallGraph_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetFunctionCallGraph(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
-var (
-	filter_StaticAnalysis_GetFunctionCallGraph_1 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
+var filter_StaticAnalysis_GetFunctionCallGraph_1 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 
 func request_StaticAnalysis_GetFunctionCallGraph_1(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionCallGraphReq
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetFunctionCallGraphReq
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_StaticAnalysis_GetFunctionCallGraph_1); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetFunctionCallGraph(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetFunctionCallGraph_1(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionCallGraphReq
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq GetFunctionCallGraphReq
+		metadata runtime.ServerMetadata
+	)
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_StaticAnalysis_GetFunctionCallGraph_1); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetFunctionCallGraph(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_ListGitLabRepositories_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListGitLabRepositoriesRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq ListGitLabRepositoriesRequest
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
 	msg, err := client.ListGitLabRepositories(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_ListGitLabRepositories_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListGitLabRepositoriesRequest
-	var metadata runtime.ServerMetadata
-
+	var (
+		protoReq ListGitLabRepositoriesRequest
+		metadata runtime.ServerMetadata
+	)
 	msg, err := server.ListGitLabRepositories(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_CloneGitLabRepository_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CloneGitLabRepositoryRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq CloneGitLabRepositoryRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.CloneGitLabRepository(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_CloneGitLabRepository_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq CloneGitLabRepositoryRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq CloneGitLabRepositoryRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.CloneGitLabRepository(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_GetPackageDependencies_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPackageDependenciesRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetPackageDependenciesRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetPackageDependencies(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetPackageDependencies_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetPackageDependenciesRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetPackageDependenciesRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetPackageDependencies(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_GetHotFunctions_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetHotFunctionsRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetHotFunctionsRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetHotFunctions(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetHotFunctions_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetHotFunctionsRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetHotFunctionsRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetHotFunctions(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_SearchFunctions_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq SearchFunctionsRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq SearchFunctionsRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.SearchFunctions(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_SearchFunctions_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq SearchFunctionsRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq SearchFunctionsRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.SearchFunctions(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_GetFunctionUpstream_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionUpstreamRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionUpstreamRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetFunctionUpstream(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetFunctionUpstream_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionUpstreamRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionUpstreamRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetFunctionUpstream(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_GetFunctionDownstream_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionDownstreamRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionDownstreamRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetFunctionDownstream(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetFunctionDownstream_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionDownstreamRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionDownstreamRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetFunctionDownstream(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_GetFunctionFullChain_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionFullChainRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionFullChainRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetFunctionFullChain(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetFunctionFullChain_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetFunctionFullChainRequest
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetFunctionFullChainRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetFunctionFullChain(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 func request_StaticAnalysis_GetTreeGraph_0(ctx context.Context, marshaler runtime.Marshaler, client StaticAnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTreeGraphReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetTreeGraphReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := client.GetTreeGraph(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-
 }
 
 func local_request_StaticAnalysis_GetTreeGraph_0(ctx context.Context, marshaler runtime.Marshaler, server StaticAnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTreeGraphReq
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+	var (
+		protoReq GetTreeGraphReq
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
 	msg, err := server.GetTreeGraph(ctx, &protoReq)
 	return msg, metadata, err
-
 }
 
 // RegisterStaticAnalysisHandlerServer registers the http handlers for service StaticAnalysis to "mux".
 // UnaryRPC     :call StaticAnalysisServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterStaticAnalysisHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, server StaticAnalysisServer) error {
-
-	mux.Handle("GET", pattern_StaticAnalysis_GetStaticDbFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_GetStaticDbFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetStaticDbFiles", runtime.WithHTTPPathPattern("/api/static/dbfiles"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetStaticDbFiles", runtime.WithHTTPPathPattern("/api/static/dbfiles"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -625,20 +482,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetStaticDbFiles_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_StaticAnalysis_GetAnalysisTaskStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_GetAnalysisTaskStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetAnalysisTaskStatus", runtime.WithHTTPPathPattern("/api/static/task/{task_id}/status"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetAnalysisTaskStatus", runtime.WithHTTPPathPattern("/api/static/task/{task_id}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -650,20 +502,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetAnalysisTaskStatus_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_AnalyzeProjectPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_AnalyzeProjectPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/AnalyzeProjectPath", runtime.WithHTTPPathPattern("/api/static/analyze/path"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/AnalyzeProjectPath", runtime.WithHTTPPathPattern("/api/static/analyze/path"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -675,20 +522,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_AnalyzeProjectPath_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_AnalyzeDbFile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_AnalyzeDbFile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/AnalyzeDbFile", runtime.WithHTTPPathPattern("/api/static/analyze"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/AnalyzeDbFile", runtime.WithHTTPPathPattern("/api/static/analyze"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -700,20 +542,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_AnalyzeDbFile_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetFunctionAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetFunctionAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionAnalysis", runtime.WithHTTPPathPattern("/api/static/function/analysis"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionAnalysis", runtime.WithHTTPPathPattern("/api/static/function/analysis"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -725,20 +562,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionAnalysis_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_StaticAnalysis_GetFunctionCallGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_GetFunctionCallGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/static/function/{function_name}/graph"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/static/function/{function_name}/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -750,20 +582,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionCallGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_StaticAnalysis_GetFunctionCallGraph_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_GetFunctionCallGraph_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/static/function/graph"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/static/function/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -775,20 +602,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionCallGraph_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_StaticAnalysis_ListGitLabRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_ListGitLabRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/ListGitLabRepositories", runtime.WithHTTPPathPattern("/api/static/gitlab/repositories"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/ListGitLabRepositories", runtime.WithHTTPPathPattern("/api/static/gitlab/repositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -800,20 +622,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_ListGitLabRepositories_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_CloneGitLabRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_CloneGitLabRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/CloneGitLabRepository", runtime.WithHTTPPathPattern("/api/static/gitlab/clone"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/CloneGitLabRepository", runtime.WithHTTPPathPattern("/api/static/gitlab/clone"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -825,20 +642,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_CloneGitLabRepository_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetPackageDependencies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetPackageDependencies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetPackageDependencies", runtime.WithHTTPPathPattern("/api/static/package-dependencies"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetPackageDependencies", runtime.WithHTTPPathPattern("/api/static/package-dependencies"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -850,20 +662,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetPackageDependencies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetHotFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetHotFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetHotFunctions", runtime.WithHTTPPathPattern("/api/static/hot-functions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetHotFunctions", runtime.WithHTTPPathPattern("/api/static/hot-functions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -875,20 +682,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetHotFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_SearchFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_SearchFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/SearchFunctions", runtime.WithHTTPPathPattern("/api/static/search-functions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/SearchFunctions", runtime.WithHTTPPathPattern("/api/static/search-functions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -900,20 +702,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_SearchFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetFunctionUpstream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetFunctionUpstream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionUpstream", runtime.WithHTTPPathPattern("/api/static/function-upstream"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionUpstream", runtime.WithHTTPPathPattern("/api/static/function-upstream"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -925,20 +722,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionUpstream_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetFunctionDownstream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetFunctionDownstream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionDownstream", runtime.WithHTTPPathPattern("/api/static/function-downstream"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionDownstream", runtime.WithHTTPPathPattern("/api/static/function-downstream"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -950,20 +742,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionDownstream_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetFunctionFullChain_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetFunctionFullChain_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionFullChain", runtime.WithHTTPPathPattern("/api/static/function-fullchain"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionFullChain", runtime.WithHTTPPathPattern("/api/static/function-fullchain"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -975,20 +762,15 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionFullChain_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetTreeGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetTreeGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetTreeGraph", runtime.WithHTTPPathPattern("/api/static/tree-graph"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetTreeGraph", runtime.WithHTTPPathPattern("/api/static/tree-graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1000,9 +782,7 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetTreeGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
 
 	return nil
@@ -1011,25 +791,24 @@ func RegisterStaticAnalysisHandlerServer(ctx context.Context, mux *runtime.Serve
 // RegisterStaticAnalysisHandlerFromEndpoint is same as RegisterStaticAnalysisHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
 func RegisterStaticAnalysisHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
-	conn, err := grpc.Dial(endpoint, opts...)
+	conn, err := grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 			return
 		}
 		go func() {
 			<-ctx.Done()
 			if cerr := conn.Close(); cerr != nil {
-				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+				grpclog.Errorf("Failed to close conn to %s: %v", endpoint, cerr)
 			}
 		}()
 	}()
-
 	return RegisterStaticAnalysisHandler(ctx, mux, conn)
 }
 
@@ -1043,16 +822,13 @@ func RegisterStaticAnalysisHandler(ctx context.Context, mux *runtime.ServeMux, c
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "StaticAnalysisClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "StaticAnalysisClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "StaticAnalysisClient" to call the correct interceptors.
+// "StaticAnalysisClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, client StaticAnalysisClient) error {
-
-	mux.Handle("GET", pattern_StaticAnalysis_GetStaticDbFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_GetStaticDbFiles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetStaticDbFiles", runtime.WithHTTPPathPattern("/api/static/dbfiles"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetStaticDbFiles", runtime.WithHTTPPathPattern("/api/static/dbfiles"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1063,18 +839,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetStaticDbFiles_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_StaticAnalysis_GetAnalysisTaskStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_GetAnalysisTaskStatus_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetAnalysisTaskStatus", runtime.WithHTTPPathPattern("/api/static/task/{task_id}/status"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetAnalysisTaskStatus", runtime.WithHTTPPathPattern("/api/static/task/{task_id}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1085,18 +856,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetAnalysisTaskStatus_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_AnalyzeProjectPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_AnalyzeProjectPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/AnalyzeProjectPath", runtime.WithHTTPPathPattern("/api/static/analyze/path"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/AnalyzeProjectPath", runtime.WithHTTPPathPattern("/api/static/analyze/path"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1107,18 +873,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_AnalyzeProjectPath_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_AnalyzeDbFile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_AnalyzeDbFile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/AnalyzeDbFile", runtime.WithHTTPPathPattern("/api/static/analyze"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/AnalyzeDbFile", runtime.WithHTTPPathPattern("/api/static/analyze"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1129,18 +890,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_AnalyzeDbFile_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetFunctionAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetFunctionAnalysis_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionAnalysis", runtime.WithHTTPPathPattern("/api/static/function/analysis"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionAnalysis", runtime.WithHTTPPathPattern("/api/static/function/analysis"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1151,18 +907,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionAnalysis_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_StaticAnalysis_GetFunctionCallGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_GetFunctionCallGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/static/function/{function_name}/graph"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/static/function/{function_name}/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1173,18 +924,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionCallGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_StaticAnalysis_GetFunctionCallGraph_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_GetFunctionCallGraph_1, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/static/function/graph"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph", runtime.WithHTTPPathPattern("/api/static/function/graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1195,18 +941,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionCallGraph_1(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("GET", pattern_StaticAnalysis_ListGitLabRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_StaticAnalysis_ListGitLabRepositories_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/ListGitLabRepositories", runtime.WithHTTPPathPattern("/api/static/gitlab/repositories"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/ListGitLabRepositories", runtime.WithHTTPPathPattern("/api/static/gitlab/repositories"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1217,18 +958,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_ListGitLabRepositories_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_CloneGitLabRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_CloneGitLabRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/CloneGitLabRepository", runtime.WithHTTPPathPattern("/api/static/gitlab/clone"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/CloneGitLabRepository", runtime.WithHTTPPathPattern("/api/static/gitlab/clone"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1239,18 +975,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_CloneGitLabRepository_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetPackageDependencies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetPackageDependencies_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetPackageDependencies", runtime.WithHTTPPathPattern("/api/static/package-dependencies"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetPackageDependencies", runtime.WithHTTPPathPattern("/api/static/package-dependencies"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1261,18 +992,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetPackageDependencies_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetHotFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetHotFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetHotFunctions", runtime.WithHTTPPathPattern("/api/static/hot-functions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetHotFunctions", runtime.WithHTTPPathPattern("/api/static/hot-functions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1283,18 +1009,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetHotFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_SearchFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_SearchFunctions_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/SearchFunctions", runtime.WithHTTPPathPattern("/api/static/search-functions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/SearchFunctions", runtime.WithHTTPPathPattern("/api/static/search-functions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1305,18 +1026,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_SearchFunctions_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetFunctionUpstream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetFunctionUpstream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionUpstream", runtime.WithHTTPPathPattern("/api/static/function-upstream"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionUpstream", runtime.WithHTTPPathPattern("/api/static/function-upstream"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1327,18 +1043,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionUpstream_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetFunctionDownstream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetFunctionDownstream_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionDownstream", runtime.WithHTTPPathPattern("/api/static/function-downstream"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionDownstream", runtime.WithHTTPPathPattern("/api/static/function-downstream"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1349,18 +1060,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionDownstream_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetFunctionFullChain_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetFunctionFullChain_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionFullChain", runtime.WithHTTPPathPattern("/api/static/function-fullchain"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetFunctionFullChain", runtime.WithHTTPPathPattern("/api/static/function-fullchain"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1371,18 +1077,13 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetFunctionFullChain_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
-	mux.Handle("POST", pattern_StaticAnalysis_GetTreeGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodPost, pattern_StaticAnalysis_GetTreeGraph_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetTreeGraph", runtime.WithHTTPPathPattern("/api/static/tree-graph"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/staticanalysis.v1.StaticAnalysis/GetTreeGraph", runtime.WithHTTPPathPattern("/api/static/tree-graph"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1393,78 +1094,45 @@ func RegisterStaticAnalysisHandlerClient(ctx context.Context, mux *runtime.Serve
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
-
 		forward_StaticAnalysis_GetTreeGraph_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
 	})
-
 	return nil
 }
 
 var (
-	pattern_StaticAnalysis_GetStaticDbFiles_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "dbfiles"}, ""))
-
-	pattern_StaticAnalysis_GetAnalysisTaskStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "static", "task", "task_id", "status"}, ""))
-
-	pattern_StaticAnalysis_AnalyzeProjectPath_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "analyze", "path"}, ""))
-
-	pattern_StaticAnalysis_AnalyzeDbFile_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "analyze"}, ""))
-
-	pattern_StaticAnalysis_GetFunctionAnalysis_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "function", "analysis"}, ""))
-
-	pattern_StaticAnalysis_GetFunctionCallGraph_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "static", "function", "function_name", "graph"}, ""))
-
-	pattern_StaticAnalysis_GetFunctionCallGraph_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "function", "graph"}, ""))
-
+	pattern_StaticAnalysis_GetStaticDbFiles_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "dbfiles"}, ""))
+	pattern_StaticAnalysis_GetAnalysisTaskStatus_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "static", "task", "task_id", "status"}, ""))
+	pattern_StaticAnalysis_AnalyzeProjectPath_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "analyze", "path"}, ""))
+	pattern_StaticAnalysis_AnalyzeDbFile_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "analyze"}, ""))
+	pattern_StaticAnalysis_GetFunctionAnalysis_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "function", "analysis"}, ""))
+	pattern_StaticAnalysis_GetFunctionCallGraph_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "static", "function", "function_name", "graph"}, ""))
+	pattern_StaticAnalysis_GetFunctionCallGraph_1   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "function", "graph"}, ""))
 	pattern_StaticAnalysis_ListGitLabRepositories_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "gitlab", "repositories"}, ""))
-
-	pattern_StaticAnalysis_CloneGitLabRepository_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "gitlab", "clone"}, ""))
-
+	pattern_StaticAnalysis_CloneGitLabRepository_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "static", "gitlab", "clone"}, ""))
 	pattern_StaticAnalysis_GetPackageDependencies_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "package-dependencies"}, ""))
-
-	pattern_StaticAnalysis_GetHotFunctions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "hot-functions"}, ""))
-
-	pattern_StaticAnalysis_SearchFunctions_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "search-functions"}, ""))
-
-	pattern_StaticAnalysis_GetFunctionUpstream_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "function-upstream"}, ""))
-
-	pattern_StaticAnalysis_GetFunctionDownstream_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "function-downstream"}, ""))
-
-	pattern_StaticAnalysis_GetFunctionFullChain_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "function-fullchain"}, ""))
-
-	pattern_StaticAnalysis_GetTreeGraph_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "tree-graph"}, ""))
+	pattern_StaticAnalysis_GetHotFunctions_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "hot-functions"}, ""))
+	pattern_StaticAnalysis_SearchFunctions_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "search-functions"}, ""))
+	pattern_StaticAnalysis_GetFunctionUpstream_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "function-upstream"}, ""))
+	pattern_StaticAnalysis_GetFunctionDownstream_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "function-downstream"}, ""))
+	pattern_StaticAnalysis_GetFunctionFullChain_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "function-fullchain"}, ""))
+	pattern_StaticAnalysis_GetTreeGraph_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "static", "tree-graph"}, ""))
 )
 
 var (
-	forward_StaticAnalysis_GetStaticDbFiles_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetAnalysisTaskStatus_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_AnalyzeProjectPath_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_AnalyzeDbFile_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetFunctionAnalysis_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetFunctionCallGraph_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetFunctionCallGraph_1 = runtime.ForwardResponseMessage
-
+	forward_StaticAnalysis_GetStaticDbFiles_0       = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetAnalysisTaskStatus_0  = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_AnalyzeProjectPath_0     = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_AnalyzeDbFile_0          = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetFunctionAnalysis_0    = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetFunctionCallGraph_0   = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetFunctionCallGraph_1   = runtime.ForwardResponseMessage
 	forward_StaticAnalysis_ListGitLabRepositories_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_CloneGitLabRepository_0 = runtime.ForwardResponseMessage
-
+	forward_StaticAnalysis_CloneGitLabRepository_0  = runtime.ForwardResponseMessage
 	forward_StaticAnalysis_GetPackageDependencies_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetHotFunctions_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_SearchFunctions_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetFunctionUpstream_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetFunctionDownstream_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetFunctionFullChain_0 = runtime.ForwardResponseMessage
-
-	forward_StaticAnalysis_GetTreeGraph_0 = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetHotFunctions_0        = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_SearchFunctions_0        = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetFunctionUpstream_0    = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetFunctionDownstream_0  = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetFunctionFullChain_0   = runtime.ForwardResponseMessage
+	forward_StaticAnalysis_GetTreeGraph_0           = runtime.ForwardResponseMessage
 )

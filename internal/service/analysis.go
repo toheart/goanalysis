@@ -42,7 +42,7 @@ func (a *AnalysisService) GetAnalysis(ctx context.Context, in *v1.AnalysisReques
 }
 
 func (a *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisByGIDRequest) (*v1.AnalysisByGIDReply, error) {
-	traces, err := a.uc.GetTracesByGID(in.Dbpath, in.Gid)
+	traces, err := a.uc.GetTracesByGID(in)
 	if err != nil {
 		return nil, err
 	}
@@ -131,45 +131,6 @@ func (a *AnalysisService) GetParamsByID(ctx context.Context, in *v1.GetParamsByI
 	return reply, nil
 }
 
-func (a *AnalysisService) GenerateImage(ctx context.Context, in *v1.GenerateImageReq) (*v1.GenerateImageReply, error) {
-	traces, err := a.uc.GetTracesByGID(in.Dbpath, in.Gid)
-	if err != nil {
-		return nil, err
-	}
-
-	// 构建Mermaid图表
-	var mermaidText strings.Builder
-	mermaidText.WriteString("graph TD\n")
-
-	// 使用栈来跟踪调用关系
-	stack := make([]entity.TraceData, 0)
-
-	for _, trace := range traces {
-		// 根据缩进级别调整栈
-		for len(stack) > 0 && stack[len(stack)-1].Indent >= trace.Indent {
-			stack = stack[:len(stack)-1] // 弹出栈顶元素
-		}
-
-		// 添加节点
-		nodeID := fmt.Sprintf("n%d", trace.ID)
-		nodeName := sanitizeMermaidText(trace.Name)
-		mermaidText.WriteString(fmt.Sprintf("    %s[\"%s\"]\n", nodeID, nodeName))
-
-		// 如果有父节点，添加边
-		if len(stack) > 0 {
-			parentID := fmt.Sprintf("n%d", stack[len(stack)-1].ID)
-			mermaidText.WriteString(fmt.Sprintf("    %s --> |%s| %s\n", parentID, trace.TimeCost, nodeID))
-		}
-
-		// 将当前节点压入栈
-		stack = append(stack, trace)
-	}
-
-	return &v1.GenerateImageReply{
-		Image: mermaidText.String(),
-	}, nil
-}
-
 func sanitizeMermaidText(text string) string {
 	// 替换可能导致Mermaid语法问题的字符
 	text = strings.ReplaceAll(text, "\"", "'")
@@ -200,7 +161,12 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 	// 过滤包含指定函数的GID
 	var matchingG []entity.GoroutineTrace
 	for _, g := range groutines {
-		traces, err := a.uc.GetTracesByGID(dbpath, uint64(g.ID))
+		traces, err := a.uc.GetTracesByGID(&v1.AnalysisByGIDRequest{
+			Dbpath:     dbpath,
+			Gid:        uint64(g.ID),
+			Depth:      3,
+			CreateTime: "",
+		})
 		if err != nil {
 			continue
 		}
@@ -329,11 +295,14 @@ func (a *AnalysisService) GetChildFunctions(ctx context.Context, in *v1.GetChild
 	reply := &v1.GetChildFunctionsReply{}
 	for _, function := range childFunctions {
 		reply.Functions = append(reply.Functions, &v1.FunctionNode{
-			Id:        function.Id,
-			Name:      function.Name,
-			Package:   function.Package,
-			CallCount: int32(function.CallCount),
-			AvgTime:   function.AvgTime,
+			Id:         function.Id,
+			Name:       function.Name,
+			Package:    function.Package,
+			CallCount:  int32(function.CallCount),
+			AvgTime:    function.AvgTime,
+			TimeCost:   function.TotalTime,
+			ParamCount: int32(len(function.Params)),
+			Depth:      int32(function.Depth),
 		})
 	}
 	return reply, nil

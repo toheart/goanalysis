@@ -120,6 +120,7 @@ service Analysis {
       body: "*"
     };
   }
+
   
   // 获取运行时树状图数据
   rpc GetTreeGraph (GetTreeGraphReq) returns (GetTreeGraphReply) {
@@ -221,6 +222,8 @@ message AnalysisReply {
 message AnalysisByGIDRequest {
   uint64 gid = 1;
   string dbpath = 2; // 数据库路径
+  int32 depth = 3; // 深度
+  string createTime = 4; // 创建时间
 }
 
 message TraceParams {
@@ -321,13 +324,16 @@ message GetParentFunctionsReq {
   string functionName = 2; // 函数名称
 }
 
-  message FunctionNode {
-    int64 id = 1;
-    string name = 2;
-    string package = 3;
-    int32 callCount = 4;
-    string avgTime = 5;
-  }
+message FunctionNode {
+  int64 id = 1;
+  string name = 2;
+  string package = 3;
+  int32 callCount = 4;
+  string avgTime = 5;
+  string timeCost = 6;
+  int32  paramCount= 7;
+  int32 depth = 8;
+}
 
 message GetParentFunctionsReply {
   repeated FunctionNode functions = 1;

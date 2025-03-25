@@ -846,6 +846,11 @@ components:
                     type: string
                 dbpath:
                     type: string
+                depth:
+                    type: integer
+                    format: int32
+                createTime:
+                    type: string
         analysis.v1.AnalysisReply:
             type: object
             properties:
@@ -900,6 +905,14 @@ components:
                     format: int32
                 avgTime:
                     type: string
+                timeCost:
+                    type: string
+                paramCount:
+                    type: integer
+                    format: int32
+                depth:
+                    type: integer
+                    format: int32
         analysis.v1.GetAllFunctionNameReply:
             type: object
             properties:
