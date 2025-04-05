@@ -6,7 +6,6 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
-	"github.com/toheart/functrace"
 )
 
 // TraceData holds the schema definition for the TraceData entity.
@@ -25,8 +24,9 @@ func (TraceData) Fields() []ent.Field {
 		field.Uint64("gid"),
 		field.Int("indent").
 			Default(0),
-		field.JSON("params", []functrace.TraceParams{}).
-			Optional(),
+		field.Int("paramsCount").
+			StorageKey("paramsCount").
+			Default(0),
 		field.String("timeCost").
 			StorageKey("timeCost").
 			Optional(),

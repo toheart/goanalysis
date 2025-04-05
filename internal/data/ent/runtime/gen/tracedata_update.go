@@ -9,9 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
-	"github.com/toheart/functrace"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/predicate"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/tracedata"
 )
@@ -85,21 +83,24 @@ func (tdu *TraceDataUpdate) AddIndent(i int) *TraceDataUpdate {
 	return tdu
 }
 
-// SetParams sets the "params" field.
-func (tdu *TraceDataUpdate) SetParams(fp []functrace.TraceParams) *TraceDataUpdate {
-	tdu.mutation.SetParams(fp)
+// SetParamsCount sets the "paramsCount" field.
+func (tdu *TraceDataUpdate) SetParamsCount(i int) *TraceDataUpdate {
+	tdu.mutation.ResetParamsCount()
+	tdu.mutation.SetParamsCount(i)
 	return tdu
 }
 
-// AppendParams appends fp to the "params" field.
-func (tdu *TraceDataUpdate) AppendParams(fp []functrace.TraceParams) *TraceDataUpdate {
-	tdu.mutation.AppendParams(fp)
+// SetNillableParamsCount sets the "paramsCount" field if the given value is not nil.
+func (tdu *TraceDataUpdate) SetNillableParamsCount(i *int) *TraceDataUpdate {
+	if i != nil {
+		tdu.SetParamsCount(*i)
+	}
 	return tdu
 }
 
-// ClearParams clears the value of the "params" field.
-func (tdu *TraceDataUpdate) ClearParams() *TraceDataUpdate {
-	tdu.mutation.ClearParams()
+// AddParamsCount adds i to the "paramsCount" field.
+func (tdu *TraceDataUpdate) AddParamsCount(i int) *TraceDataUpdate {
+	tdu.mutation.AddParamsCount(i)
 	return tdu
 }
 
@@ -253,16 +254,11 @@ func (tdu *TraceDataUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tdu.mutation.AddedIndent(); ok {
 		_spec.AddField(tracedata.FieldIndent, field.TypeInt, value)
 	}
-	if value, ok := tdu.mutation.Params(); ok {
-		_spec.SetField(tracedata.FieldParams, field.TypeJSON, value)
+	if value, ok := tdu.mutation.ParamsCount(); ok {
+		_spec.SetField(tracedata.FieldParamsCount, field.TypeInt, value)
 	}
-	if value, ok := tdu.mutation.AppendedParams(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, tracedata.FieldParams, value)
-		})
-	}
-	if tdu.mutation.ParamsCleared() {
-		_spec.ClearField(tracedata.FieldParams, field.TypeJSON)
+	if value, ok := tdu.mutation.AddedParamsCount(); ok {
+		_spec.AddField(tracedata.FieldParamsCount, field.TypeInt, value)
 	}
 	if value, ok := tdu.mutation.TimeCost(); ok {
 		_spec.SetField(tracedata.FieldTimeCost, field.TypeString, value)
@@ -364,21 +360,24 @@ func (tduo *TraceDataUpdateOne) AddIndent(i int) *TraceDataUpdateOne {
 	return tduo
 }
 
-// SetParams sets the "params" field.
-func (tduo *TraceDataUpdateOne) SetParams(fp []functrace.TraceParams) *TraceDataUpdateOne {
-	tduo.mutation.SetParams(fp)
+// SetParamsCount sets the "paramsCount" field.
+func (tduo *TraceDataUpdateOne) SetParamsCount(i int) *TraceDataUpdateOne {
+	tduo.mutation.ResetParamsCount()
+	tduo.mutation.SetParamsCount(i)
 	return tduo
 }
 
-// AppendParams appends fp to the "params" field.
-func (tduo *TraceDataUpdateOne) AppendParams(fp []functrace.TraceParams) *TraceDataUpdateOne {
-	tduo.mutation.AppendParams(fp)
+// SetNillableParamsCount sets the "paramsCount" field if the given value is not nil.
+func (tduo *TraceDataUpdateOne) SetNillableParamsCount(i *int) *TraceDataUpdateOne {
+	if i != nil {
+		tduo.SetParamsCount(*i)
+	}
 	return tduo
 }
 
-// ClearParams clears the value of the "params" field.
-func (tduo *TraceDataUpdateOne) ClearParams() *TraceDataUpdateOne {
-	tduo.mutation.ClearParams()
+// AddParamsCount adds i to the "paramsCount" field.
+func (tduo *TraceDataUpdateOne) AddParamsCount(i int) *TraceDataUpdateOne {
+	tduo.mutation.AddParamsCount(i)
 	return tduo
 }
 
@@ -562,16 +561,11 @@ func (tduo *TraceDataUpdateOne) sqlSave(ctx context.Context) (_node *TraceData, 
 	if value, ok := tduo.mutation.AddedIndent(); ok {
 		_spec.AddField(tracedata.FieldIndent, field.TypeInt, value)
 	}
-	if value, ok := tduo.mutation.Params(); ok {
-		_spec.SetField(tracedata.FieldParams, field.TypeJSON, value)
+	if value, ok := tduo.mutation.ParamsCount(); ok {
+		_spec.SetField(tracedata.FieldParamsCount, field.TypeInt, value)
 	}
-	if value, ok := tduo.mutation.AppendedParams(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, tracedata.FieldParams, value)
-		})
-	}
-	if tduo.mutation.ParamsCleared() {
-		_spec.ClearField(tracedata.FieldParams, field.TypeJSON)
+	if value, ok := tduo.mutation.AddedParamsCount(); ok {
+		_spec.AddField(tracedata.FieldParamsCount, field.TypeInt, value)
 	}
 	if value, ok := tduo.mutation.TimeCost(); ok {
 		_spec.SetField(tracedata.FieldTimeCost, field.TypeString, value)

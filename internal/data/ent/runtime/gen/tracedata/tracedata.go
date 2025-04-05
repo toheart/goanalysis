@@ -17,8 +17,8 @@ const (
 	FieldGid = "gid"
 	// FieldIndent holds the string denoting the indent field in the database.
 	FieldIndent = "indent"
-	// FieldParams holds the string denoting the params field in the database.
-	FieldParams = "params"
+	// FieldParamsCount holds the string denoting the paramscount field in the database.
+	FieldParamsCount = "paramsCount"
 	// FieldTimeCost holds the string denoting the timecost field in the database.
 	FieldTimeCost = "timeCost"
 	// FieldParentId holds the string denoting the parentid field in the database.
@@ -37,7 +37,7 @@ var Columns = []string{
 	FieldName,
 	FieldGid,
 	FieldIndent,
-	FieldParams,
+	FieldParamsCount,
 	FieldTimeCost,
 	FieldParentId,
 	FieldCreatedAt,
@@ -59,6 +59,8 @@ var (
 	NameValidator func(string) error
 	// DefaultIndent holds the default value on creation for the "indent" field.
 	DefaultIndent int
+	// DefaultParamsCount holds the default value on creation for the "paramsCount" field.
+	DefaultParamsCount int
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(int) error
 )
@@ -84,6 +86,11 @@ func ByGid(opts ...sql.OrderTermOption) OrderOption {
 // ByIndent orders the results by the indent field.
 func ByIndent(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIndent, opts...).ToFunc()
+}
+
+// ByParamsCount orders the results by the paramsCount field.
+func ByParamsCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldParamsCount, opts...).ToFunc()
 }
 
 // ByTimeCost orders the results by the timeCost field.

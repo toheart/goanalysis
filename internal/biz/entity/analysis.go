@@ -55,15 +55,16 @@ type AnalysisEvent struct {
 	Message string // 消息
 }
 
-// 热点函数
 type Function struct {
-	Id        int64  // 函数ID
-	Name      string // 函数名称
-	Package   string // 包名
-	ParentId  int64  // 父函数ID
-	CallCount int    // 调用次数
-	TotalTime string // 总耗时
-	AvgTime   string // 平均耗时
+	Id         int64  // 函数ID
+	Name       string // 函数名称
+	Package    string // 包名
+	ParentId   int64  // 父函数ID
+	CallCount  int    // 调用次数
+	TotalTime  string // 总耗时
+	AvgTime    string // 平均耗时
+	ParamCount int    // 参数数量
+	Depth      int    // 深度
 }
 
 func NewFunction(id int64, name string, callCount int, totalTime string, avgTime string) *Function {
@@ -129,4 +130,13 @@ type PerformanceAnomaly struct {
 	Description string            // 异常描述
 	Severity    float64           // 严重程度 (0.0-1.0)
 	Details     map[string]string // 详细信息
+}
+
+type TraceParams struct {
+	ID         int64  `json:"id"`         // 唯一标识符
+	TraceID    int64  `json:"traceId"`    // 关联的TraceData ID
+	Position   int    `json:"position"`   // 参数位置
+	Data       string `json:"data"`       // 参数JSON数据
+	IsReceiver bool   `json:"isReceiver"` // 是否为接收者参数
+	BaseID     int64  `json:"baseId"`     // 基础参数ID（自关联，当参数为增量存储时使用）
 }

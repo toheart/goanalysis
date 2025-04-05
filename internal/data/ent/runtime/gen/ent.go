@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/goroutinetrace"
+	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/paramstoredata"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/tracedata"
 )
 
@@ -75,6 +76,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			goroutinetrace.Table: goroutinetrace.ValidColumn,
+			paramstoredata.Table: paramstoredata.ValidColumn,
 			tracedata.Table:      tracedata.ValidColumn,
 		})
 	})

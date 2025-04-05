@@ -10,8 +10,8 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/toheart/functrace"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/goroutinetrace"
+	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/paramstoredata"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/predicate"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/tracedata"
 )
@@ -26,6 +26,7 @@ const (
 
 	// Node types.
 	TypeGoroutineTrace = "GoroutineTrace"
+	TypeParamStoreData = "ParamStoreData"
 	TypeTraceData      = "TraceData"
 )
 
@@ -726,28 +727,701 @@ func (m *GoroutineTraceMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown GoroutineTrace edge %s", name)
 }
 
-// TraceDataMutation represents an operation that mutates the TraceData nodes in the graph.
-type TraceDataMutation struct {
+// ParamStoreDataMutation represents an operation that mutates the ParamStoreData nodes in the graph.
+type ParamStoreDataMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
-	name          *string
-	gid           *uint64
-	addgid        *int64
-	indent        *int
-	addindent     *int
-	params        *[]functrace.TraceParams
-	appendparams  []functrace.TraceParams
-	timeCost      *string
-	parentId      *int64
-	addparentId   *int64
-	createdAt     *string
-	seq           *string
+	id            *int64
+	traceId       *int64
+	addtraceId    *int64
+	position      *int
+	addposition   *int
+	data          *string
+	isReceiver    *bool
+	baseId        *int64
+	addbaseId     *int64
 	clearedFields map[string]struct{}
 	done          bool
-	oldValue      func(context.Context) (*TraceData, error)
-	predicates    []predicate.TraceData
+	oldValue      func(context.Context) (*ParamStoreData, error)
+	predicates    []predicate.ParamStoreData
+}
+
+var _ ent.Mutation = (*ParamStoreDataMutation)(nil)
+
+// paramstoredataOption allows management of the mutation configuration using functional options.
+type paramstoredataOption func(*ParamStoreDataMutation)
+
+// newParamStoreDataMutation creates new mutation for the ParamStoreData entity.
+func newParamStoreDataMutation(c config, op Op, opts ...paramstoredataOption) *ParamStoreDataMutation {
+	m := &ParamStoreDataMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeParamStoreData,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withParamStoreDataID sets the ID field of the mutation.
+func withParamStoreDataID(id int64) paramstoredataOption {
+	return func(m *ParamStoreDataMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ParamStoreData
+		)
+		m.oldValue = func(ctx context.Context) (*ParamStoreData, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ParamStoreData.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withParamStoreData sets the old ParamStoreData of the mutation.
+func withParamStoreData(node *ParamStoreData) paramstoredataOption {
+	return func(m *ParamStoreDataMutation) {
+		m.oldValue = func(context.Context) (*ParamStoreData, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ParamStoreDataMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ParamStoreDataMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("gen: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ParamStoreData entities.
+func (m *ParamStoreDataMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ParamStoreDataMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ParamStoreDataMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ParamStoreData.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTraceId sets the "traceId" field.
+func (m *ParamStoreDataMutation) SetTraceId(i int64) {
+	m.traceId = &i
+	m.addtraceId = nil
+}
+
+// TraceId returns the value of the "traceId" field in the mutation.
+func (m *ParamStoreDataMutation) TraceId() (r int64, exists bool) {
+	v := m.traceId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTraceId returns the old "traceId" field's value of the ParamStoreData entity.
+// If the ParamStoreData object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ParamStoreDataMutation) OldTraceId(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTraceId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTraceId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTraceId: %w", err)
+	}
+	return oldValue.TraceId, nil
+}
+
+// AddTraceId adds i to the "traceId" field.
+func (m *ParamStoreDataMutation) AddTraceId(i int64) {
+	if m.addtraceId != nil {
+		*m.addtraceId += i
+	} else {
+		m.addtraceId = &i
+	}
+}
+
+// AddedTraceId returns the value that was added to the "traceId" field in this mutation.
+func (m *ParamStoreDataMutation) AddedTraceId() (r int64, exists bool) {
+	v := m.addtraceId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTraceId resets all changes to the "traceId" field.
+func (m *ParamStoreDataMutation) ResetTraceId() {
+	m.traceId = nil
+	m.addtraceId = nil
+}
+
+// SetPosition sets the "position" field.
+func (m *ParamStoreDataMutation) SetPosition(i int) {
+	m.position = &i
+	m.addposition = nil
+}
+
+// Position returns the value of the "position" field in the mutation.
+func (m *ParamStoreDataMutation) Position() (r int, exists bool) {
+	v := m.position
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPosition returns the old "position" field's value of the ParamStoreData entity.
+// If the ParamStoreData object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ParamStoreDataMutation) OldPosition(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPosition is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPosition requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPosition: %w", err)
+	}
+	return oldValue.Position, nil
+}
+
+// AddPosition adds i to the "position" field.
+func (m *ParamStoreDataMutation) AddPosition(i int) {
+	if m.addposition != nil {
+		*m.addposition += i
+	} else {
+		m.addposition = &i
+	}
+}
+
+// AddedPosition returns the value that was added to the "position" field in this mutation.
+func (m *ParamStoreDataMutation) AddedPosition() (r int, exists bool) {
+	v := m.addposition
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPosition resets all changes to the "position" field.
+func (m *ParamStoreDataMutation) ResetPosition() {
+	m.position = nil
+	m.addposition = nil
+}
+
+// SetData sets the "data" field.
+func (m *ParamStoreDataMutation) SetData(s string) {
+	m.data = &s
+}
+
+// Data returns the value of the "data" field in the mutation.
+func (m *ParamStoreDataMutation) Data() (r string, exists bool) {
+	v := m.data
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldData returns the old "data" field's value of the ParamStoreData entity.
+// If the ParamStoreData object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ParamStoreDataMutation) OldData(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldData is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldData requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldData: %w", err)
+	}
+	return oldValue.Data, nil
+}
+
+// ResetData resets all changes to the "data" field.
+func (m *ParamStoreDataMutation) ResetData() {
+	m.data = nil
+}
+
+// SetIsReceiver sets the "isReceiver" field.
+func (m *ParamStoreDataMutation) SetIsReceiver(b bool) {
+	m.isReceiver = &b
+}
+
+// IsReceiver returns the value of the "isReceiver" field in the mutation.
+func (m *ParamStoreDataMutation) IsReceiver() (r bool, exists bool) {
+	v := m.isReceiver
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsReceiver returns the old "isReceiver" field's value of the ParamStoreData entity.
+// If the ParamStoreData object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ParamStoreDataMutation) OldIsReceiver(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsReceiver is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsReceiver requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsReceiver: %w", err)
+	}
+	return oldValue.IsReceiver, nil
+}
+
+// ResetIsReceiver resets all changes to the "isReceiver" field.
+func (m *ParamStoreDataMutation) ResetIsReceiver() {
+	m.isReceiver = nil
+}
+
+// SetBaseId sets the "baseId" field.
+func (m *ParamStoreDataMutation) SetBaseId(i int64) {
+	m.baseId = &i
+	m.addbaseId = nil
+}
+
+// BaseId returns the value of the "baseId" field in the mutation.
+func (m *ParamStoreDataMutation) BaseId() (r int64, exists bool) {
+	v := m.baseId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBaseId returns the old "baseId" field's value of the ParamStoreData entity.
+// If the ParamStoreData object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ParamStoreDataMutation) OldBaseId(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBaseId is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBaseId requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBaseId: %w", err)
+	}
+	return oldValue.BaseId, nil
+}
+
+// AddBaseId adds i to the "baseId" field.
+func (m *ParamStoreDataMutation) AddBaseId(i int64) {
+	if m.addbaseId != nil {
+		*m.addbaseId += i
+	} else {
+		m.addbaseId = &i
+	}
+}
+
+// AddedBaseId returns the value that was added to the "baseId" field in this mutation.
+func (m *ParamStoreDataMutation) AddedBaseId() (r int64, exists bool) {
+	v := m.addbaseId
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearBaseId clears the value of the "baseId" field.
+func (m *ParamStoreDataMutation) ClearBaseId() {
+	m.baseId = nil
+	m.addbaseId = nil
+	m.clearedFields[paramstoredata.FieldBaseId] = struct{}{}
+}
+
+// BaseIdCleared returns if the "baseId" field was cleared in this mutation.
+func (m *ParamStoreDataMutation) BaseIdCleared() bool {
+	_, ok := m.clearedFields[paramstoredata.FieldBaseId]
+	return ok
+}
+
+// ResetBaseId resets all changes to the "baseId" field.
+func (m *ParamStoreDataMutation) ResetBaseId() {
+	m.baseId = nil
+	m.addbaseId = nil
+	delete(m.clearedFields, paramstoredata.FieldBaseId)
+}
+
+// Where appends a list predicates to the ParamStoreDataMutation builder.
+func (m *ParamStoreDataMutation) Where(ps ...predicate.ParamStoreData) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ParamStoreDataMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ParamStoreDataMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ParamStoreData, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ParamStoreDataMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ParamStoreDataMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ParamStoreData).
+func (m *ParamStoreDataMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ParamStoreDataMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.traceId != nil {
+		fields = append(fields, paramstoredata.FieldTraceId)
+	}
+	if m.position != nil {
+		fields = append(fields, paramstoredata.FieldPosition)
+	}
+	if m.data != nil {
+		fields = append(fields, paramstoredata.FieldData)
+	}
+	if m.isReceiver != nil {
+		fields = append(fields, paramstoredata.FieldIsReceiver)
+	}
+	if m.baseId != nil {
+		fields = append(fields, paramstoredata.FieldBaseId)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ParamStoreDataMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case paramstoredata.FieldTraceId:
+		return m.TraceId()
+	case paramstoredata.FieldPosition:
+		return m.Position()
+	case paramstoredata.FieldData:
+		return m.Data()
+	case paramstoredata.FieldIsReceiver:
+		return m.IsReceiver()
+	case paramstoredata.FieldBaseId:
+		return m.BaseId()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ParamStoreDataMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case paramstoredata.FieldTraceId:
+		return m.OldTraceId(ctx)
+	case paramstoredata.FieldPosition:
+		return m.OldPosition(ctx)
+	case paramstoredata.FieldData:
+		return m.OldData(ctx)
+	case paramstoredata.FieldIsReceiver:
+		return m.OldIsReceiver(ctx)
+	case paramstoredata.FieldBaseId:
+		return m.OldBaseId(ctx)
+	}
+	return nil, fmt.Errorf("unknown ParamStoreData field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ParamStoreDataMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case paramstoredata.FieldTraceId:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTraceId(v)
+		return nil
+	case paramstoredata.FieldPosition:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPosition(v)
+		return nil
+	case paramstoredata.FieldData:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetData(v)
+		return nil
+	case paramstoredata.FieldIsReceiver:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsReceiver(v)
+		return nil
+	case paramstoredata.FieldBaseId:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBaseId(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ParamStoreData field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ParamStoreDataMutation) AddedFields() []string {
+	var fields []string
+	if m.addtraceId != nil {
+		fields = append(fields, paramstoredata.FieldTraceId)
+	}
+	if m.addposition != nil {
+		fields = append(fields, paramstoredata.FieldPosition)
+	}
+	if m.addbaseId != nil {
+		fields = append(fields, paramstoredata.FieldBaseId)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ParamStoreDataMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case paramstoredata.FieldTraceId:
+		return m.AddedTraceId()
+	case paramstoredata.FieldPosition:
+		return m.AddedPosition()
+	case paramstoredata.FieldBaseId:
+		return m.AddedBaseId()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ParamStoreDataMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case paramstoredata.FieldTraceId:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTraceId(v)
+		return nil
+	case paramstoredata.FieldPosition:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPosition(v)
+		return nil
+	case paramstoredata.FieldBaseId:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBaseId(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ParamStoreData numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ParamStoreDataMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(paramstoredata.FieldBaseId) {
+		fields = append(fields, paramstoredata.FieldBaseId)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ParamStoreDataMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ParamStoreDataMutation) ClearField(name string) error {
+	switch name {
+	case paramstoredata.FieldBaseId:
+		m.ClearBaseId()
+		return nil
+	}
+	return fmt.Errorf("unknown ParamStoreData nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ParamStoreDataMutation) ResetField(name string) error {
+	switch name {
+	case paramstoredata.FieldTraceId:
+		m.ResetTraceId()
+		return nil
+	case paramstoredata.FieldPosition:
+		m.ResetPosition()
+		return nil
+	case paramstoredata.FieldData:
+		m.ResetData()
+		return nil
+	case paramstoredata.FieldIsReceiver:
+		m.ResetIsReceiver()
+		return nil
+	case paramstoredata.FieldBaseId:
+		m.ResetBaseId()
+		return nil
+	}
+	return fmt.Errorf("unknown ParamStoreData field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ParamStoreDataMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ParamStoreDataMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ParamStoreDataMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ParamStoreDataMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ParamStoreDataMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ParamStoreDataMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ParamStoreDataMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown ParamStoreData unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ParamStoreDataMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown ParamStoreData edge %s", name)
+}
+
+// TraceDataMutation represents an operation that mutates the TraceData nodes in the graph.
+type TraceDataMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *int
+	name           *string
+	gid            *uint64
+	addgid         *int64
+	indent         *int
+	addindent      *int
+	paramsCount    *int
+	addparamsCount *int
+	timeCost       *string
+	parentId       *int64
+	addparentId    *int64
+	createdAt      *string
+	seq            *string
+	clearedFields  map[string]struct{}
+	done           bool
+	oldValue       func(context.Context) (*TraceData, error)
+	predicates     []predicate.TraceData
 }
 
 var _ ent.Mutation = (*TraceDataMutation)(nil)
@@ -1002,69 +1676,60 @@ func (m *TraceDataMutation) ResetIndent() {
 	m.addindent = nil
 }
 
-// SetParams sets the "params" field.
-func (m *TraceDataMutation) SetParams(fp []functrace.TraceParams) {
-	m.params = &fp
-	m.appendparams = nil
+// SetParamsCount sets the "paramsCount" field.
+func (m *TraceDataMutation) SetParamsCount(i int) {
+	m.paramsCount = &i
+	m.addparamsCount = nil
 }
 
-// Params returns the value of the "params" field in the mutation.
-func (m *TraceDataMutation) Params() (r []functrace.TraceParams, exists bool) {
-	v := m.params
+// ParamsCount returns the value of the "paramsCount" field in the mutation.
+func (m *TraceDataMutation) ParamsCount() (r int, exists bool) {
+	v := m.paramsCount
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldParams returns the old "params" field's value of the TraceData entity.
+// OldParamsCount returns the old "paramsCount" field's value of the TraceData entity.
 // If the TraceData object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TraceDataMutation) OldParams(ctx context.Context) (v []functrace.TraceParams, err error) {
+func (m *TraceDataMutation) OldParamsCount(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldParams is only allowed on UpdateOne operations")
+		return v, errors.New("OldParamsCount is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldParams requires an ID field in the mutation")
+		return v, errors.New("OldParamsCount requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldParams: %w", err)
+		return v, fmt.Errorf("querying old value for OldParamsCount: %w", err)
 	}
-	return oldValue.Params, nil
+	return oldValue.ParamsCount, nil
 }
 
-// AppendParams adds fp to the "params" field.
-func (m *TraceDataMutation) AppendParams(fp []functrace.TraceParams) {
-	m.appendparams = append(m.appendparams, fp...)
-}
-
-// AppendedParams returns the list of values that were appended to the "params" field in this mutation.
-func (m *TraceDataMutation) AppendedParams() ([]functrace.TraceParams, bool) {
-	if len(m.appendparams) == 0 {
-		return nil, false
+// AddParamsCount adds i to the "paramsCount" field.
+func (m *TraceDataMutation) AddParamsCount(i int) {
+	if m.addparamsCount != nil {
+		*m.addparamsCount += i
+	} else {
+		m.addparamsCount = &i
 	}
-	return m.appendparams, true
 }
 
-// ClearParams clears the value of the "params" field.
-func (m *TraceDataMutation) ClearParams() {
-	m.params = nil
-	m.appendparams = nil
-	m.clearedFields[tracedata.FieldParams] = struct{}{}
+// AddedParamsCount returns the value that was added to the "paramsCount" field in this mutation.
+func (m *TraceDataMutation) AddedParamsCount() (r int, exists bool) {
+	v := m.addparamsCount
+	if v == nil {
+		return
+	}
+	return *v, true
 }
 
-// ParamsCleared returns if the "params" field was cleared in this mutation.
-func (m *TraceDataMutation) ParamsCleared() bool {
-	_, ok := m.clearedFields[tracedata.FieldParams]
-	return ok
-}
-
-// ResetParams resets all changes to the "params" field.
-func (m *TraceDataMutation) ResetParams() {
-	m.params = nil
-	m.appendparams = nil
-	delete(m.clearedFields, tracedata.FieldParams)
+// ResetParamsCount resets all changes to the "paramsCount" field.
+func (m *TraceDataMutation) ResetParamsCount() {
+	m.paramsCount = nil
+	m.addparamsCount = nil
 }
 
 // SetTimeCost sets the "timeCost" field.
@@ -1315,8 +1980,8 @@ func (m *TraceDataMutation) Fields() []string {
 	if m.indent != nil {
 		fields = append(fields, tracedata.FieldIndent)
 	}
-	if m.params != nil {
-		fields = append(fields, tracedata.FieldParams)
+	if m.paramsCount != nil {
+		fields = append(fields, tracedata.FieldParamsCount)
 	}
 	if m.timeCost != nil {
 		fields = append(fields, tracedata.FieldTimeCost)
@@ -1344,8 +2009,8 @@ func (m *TraceDataMutation) Field(name string) (ent.Value, bool) {
 		return m.Gid()
 	case tracedata.FieldIndent:
 		return m.Indent()
-	case tracedata.FieldParams:
-		return m.Params()
+	case tracedata.FieldParamsCount:
+		return m.ParamsCount()
 	case tracedata.FieldTimeCost:
 		return m.TimeCost()
 	case tracedata.FieldParentId:
@@ -1369,8 +2034,8 @@ func (m *TraceDataMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldGid(ctx)
 	case tracedata.FieldIndent:
 		return m.OldIndent(ctx)
-	case tracedata.FieldParams:
-		return m.OldParams(ctx)
+	case tracedata.FieldParamsCount:
+		return m.OldParamsCount(ctx)
 	case tracedata.FieldTimeCost:
 		return m.OldTimeCost(ctx)
 	case tracedata.FieldParentId:
@@ -1409,12 +2074,12 @@ func (m *TraceDataMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetIndent(v)
 		return nil
-	case tracedata.FieldParams:
-		v, ok := value.([]functrace.TraceParams)
+	case tracedata.FieldParamsCount:
+		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetParams(v)
+		m.SetParamsCount(v)
 		return nil
 	case tracedata.FieldTimeCost:
 		v, ok := value.(string)
@@ -1458,6 +2123,9 @@ func (m *TraceDataMutation) AddedFields() []string {
 	if m.addindent != nil {
 		fields = append(fields, tracedata.FieldIndent)
 	}
+	if m.addparamsCount != nil {
+		fields = append(fields, tracedata.FieldParamsCount)
+	}
 	if m.addparentId != nil {
 		fields = append(fields, tracedata.FieldParentId)
 	}
@@ -1473,6 +2141,8 @@ func (m *TraceDataMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedGid()
 	case tracedata.FieldIndent:
 		return m.AddedIndent()
+	case tracedata.FieldParamsCount:
+		return m.AddedParamsCount()
 	case tracedata.FieldParentId:
 		return m.AddedParentId()
 	}
@@ -1498,6 +2168,13 @@ func (m *TraceDataMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddIndent(v)
 		return nil
+	case tracedata.FieldParamsCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddParamsCount(v)
+		return nil
 	case tracedata.FieldParentId:
 		v, ok := value.(int64)
 		if !ok {
@@ -1513,9 +2190,6 @@ func (m *TraceDataMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *TraceDataMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(tracedata.FieldParams) {
-		fields = append(fields, tracedata.FieldParams)
-	}
 	if m.FieldCleared(tracedata.FieldTimeCost) {
 		fields = append(fields, tracedata.FieldTimeCost)
 	}
@@ -1539,9 +2213,6 @@ func (m *TraceDataMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *TraceDataMutation) ClearField(name string) error {
 	switch name {
-	case tracedata.FieldParams:
-		m.ClearParams()
-		return nil
 	case tracedata.FieldTimeCost:
 		m.ClearTimeCost()
 		return nil
@@ -1568,8 +2239,8 @@ func (m *TraceDataMutation) ResetField(name string) error {
 	case tracedata.FieldIndent:
 		m.ResetIndent()
 		return nil
-	case tracedata.FieldParams:
-		m.ResetParams()
+	case tracedata.FieldParamsCount:
+		m.ResetParamsCount()
 		return nil
 	case tracedata.FieldTimeCost:
 		m.ResetTimeCost()

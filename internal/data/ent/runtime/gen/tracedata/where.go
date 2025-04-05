@@ -67,6 +67,11 @@ func Indent(v int) predicate.TraceData {
 	return predicate.TraceData(sql.FieldEQ(FieldIndent, v))
 }
 
+// ParamsCount applies equality check predicate on the "paramsCount" field. It's identical to ParamsCountEQ.
+func ParamsCount(v int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldEQ(FieldParamsCount, v))
+}
+
 // TimeCost applies equality check predicate on the "timeCost" field. It's identical to TimeCostEQ.
 func TimeCost(v string) predicate.TraceData {
 	return predicate.TraceData(sql.FieldEQ(FieldTimeCost, v))
@@ -232,14 +237,44 @@ func IndentLTE(v int) predicate.TraceData {
 	return predicate.TraceData(sql.FieldLTE(FieldIndent, v))
 }
 
-// ParamsIsNil applies the IsNil predicate on the "params" field.
-func ParamsIsNil() predicate.TraceData {
-	return predicate.TraceData(sql.FieldIsNull(FieldParams))
+// ParamsCountEQ applies the EQ predicate on the "paramsCount" field.
+func ParamsCountEQ(v int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldEQ(FieldParamsCount, v))
 }
 
-// ParamsNotNil applies the NotNil predicate on the "params" field.
-func ParamsNotNil() predicate.TraceData {
-	return predicate.TraceData(sql.FieldNotNull(FieldParams))
+// ParamsCountNEQ applies the NEQ predicate on the "paramsCount" field.
+func ParamsCountNEQ(v int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldNEQ(FieldParamsCount, v))
+}
+
+// ParamsCountIn applies the In predicate on the "paramsCount" field.
+func ParamsCountIn(vs ...int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldIn(FieldParamsCount, vs...))
+}
+
+// ParamsCountNotIn applies the NotIn predicate on the "paramsCount" field.
+func ParamsCountNotIn(vs ...int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldNotIn(FieldParamsCount, vs...))
+}
+
+// ParamsCountGT applies the GT predicate on the "paramsCount" field.
+func ParamsCountGT(v int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldGT(FieldParamsCount, v))
+}
+
+// ParamsCountGTE applies the GTE predicate on the "paramsCount" field.
+func ParamsCountGTE(v int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldGTE(FieldParamsCount, v))
+}
+
+// ParamsCountLT applies the LT predicate on the "paramsCount" field.
+func ParamsCountLT(v int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldLT(FieldParamsCount, v))
+}
+
+// ParamsCountLTE applies the LTE predicate on the "paramsCount" field.
+func ParamsCountLTE(v int) predicate.TraceData {
+	return predicate.TraceData(sql.FieldLTE(FieldParamsCount, v))
 }
 
 // TimeCostEQ applies the EQ predicate on the "timeCost" field.

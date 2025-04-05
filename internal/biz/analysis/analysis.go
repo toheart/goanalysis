@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/pkg/errors"
-	"github.com/toheart/functrace"
+	v1 "github.com/toheart/goanalysis/api/analysis/v1"
 	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
@@ -45,13 +45,14 @@ func NewAnalysisBiz(conf *conf.Biz, data *data.Data, logger log.Logger) *Analysi
 	return &AnalysisBiz{conf: conf, data: data, log: log.NewHelper(logger)}
 }
 
-func (a *AnalysisBiz) GetTracesByGID(dbpath string, gid uint64) ([]entity.TraceData, error) {
-	a.log.Infof("get traces by gid: %s from db: %s", gid, dbpath)
-	traceDB, err := a.data.GetTraceDB(dbpath)
+func (a *AnalysisBiz) GetTracesByGID(req *v1.AnalysisByGIDRequest) ([]entity.TraceData, error) {
+	a.log.Infof("get traces by gid: %s from db: %s", req.Gid, req.Dbpath)
+	traceDB, err := a.data.GetTraceDB(req.Dbpath)
 	if err != nil {
 		return nil, err
 	}
-	return traceDB.GetTracesByGID(gid)
+
+	return traceDB.GetTracesByGID(req.Gid, int(req.Depth), req.CreateTime)
 }
 
 func (a *AnalysisBiz) GetAllGIDs(dbpath string, page int, limit int) ([]entity.GoroutineTrace, error) {
@@ -71,7 +72,7 @@ func (a *AnalysisBiz) GetInitialFunc(dbpath string, gid uint64) (string, error) 
 	return traceDB.GetInitialFunc(gid)
 }
 
-func (a *AnalysisBiz) GetParamsByID(dbpath string, id int32) ([]functrace.TraceParams, error) {
+func (a *AnalysisBiz) GetParamsByID(dbpath string, id int32) ([]entity.TraceParams, error) {
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err
@@ -505,7 +506,7 @@ func (a *AnalysisBiz) GetTreeGraphByGID(dbpath string, gid uint64) ([]*entity.Tr
 	}
 
 	// 获取指定GID的所有调用跟踪数据
-	traces, err := traceDB.GetTracesByGID(gid)
+	traces, err := traceDB.GetTracesByGID(gid, 3, "")
 	if err != nil {
 		return nil, err
 	}
@@ -564,7 +565,7 @@ func (a *AnalysisBiz) GetTreeGraphByGID(dbpath string, gid uint64) ([]*entity.Tr
 		}
 
 		// 递归构建子树
-		buildTreeFromTrace(rootNode, rootTrace.ID, tracesByParentId, 0, 5) // 限制最大深度为5层
+		buildTreeFromTrace(rootNode, rootTrace.ID, tracesByParentId, 0, 3) // 限制最大深度为5层
 
 		rootTrees = append(rootTrees, rootNode)
 	}

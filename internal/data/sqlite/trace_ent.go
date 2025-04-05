@@ -11,10 +11,11 @@ import (
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
-	"github.com/toheart/functrace"
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/goroutinetrace"
+	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/paramstoredata"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/tracedata"
 )
 
@@ -39,13 +40,15 @@ func NewTraceEntDB(dbPath string) (*TraceEntDB, error) {
 }
 
 // GetTracesByGID 根据 GID 获取跟踪数据
-func (d *TraceEntDB) GetTracesByGID(gid uint64) ([]entity.TraceData, error) {
+func (d *TraceEntDB) GetTracesByGID(gid uint64, depth int, createTime string) ([]entity.TraceData, error) {
 	ctx := context.Background()
 
 	// 查询跟踪数据
 	traces, err := d.client.TraceData.
 		Query().
-		Where(tracedata.Gid(gid)).
+		Where(tracedata.Gid(gid),
+			tracedata.IndentLT(depth),
+			tracedata.CreatedAtGTE(createTime)).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query trace data failed: %w", err)
@@ -60,15 +63,15 @@ func (d *TraceEntDB) GetTracesByGID(gid uint64) ([]entity.TraceData, error) {
 		}
 		// 创建业务实体
 		traceData := entity.TraceData{
-			ID:        int64(trace.ID),
-			Name:      trace.Name,
-			GID:       uint64(trace.Gid),
-			Indent:    trace.Indent,
-			Params:    trace.Params,
-			TimeCost:  trace.TimeCost,
-			ParentId:  uint64(trace.ParentId),
-			CreatedAt: createdAt.Format(time.RFC3339Nano),
-			Seq:       trace.Seq,
+			ID:         int64(trace.ID),
+			Name:       trace.Name,
+			GID:        uint64(trace.Gid),
+			Indent:     trace.Indent,
+			ParamCount: trace.ParamsCount,
+			TimeCost:   trace.TimeCost,
+			ParentId:   uint64(trace.ParentId),
+			CreatedAt:  createdAt.Format(time.RFC3339Nano),
+			Seq:        trace.Seq,
 		}
 
 		result = append(result, traceData)
@@ -97,15 +100,15 @@ func (d *TraceEntDB) GetTraceByID(id int) (*entity.TraceData, error) {
 
 	// 创建业务实体
 	traceData := &entity.TraceData{
-		ID:        int64(trace.ID),
-		Name:      trace.Name,
-		GID:       trace.Gid,
-		Indent:    trace.Indent,
-		Params:    trace.Params,
-		TimeCost:  trace.TimeCost,
-		ParentId:  uint64(trace.ParentId),
-		CreatedAt: createdAt.Format(time.RFC3339Nano),
-		Seq:       trace.Seq,
+		ID:         int64(trace.ID),
+		Name:       trace.Name,
+		GID:        trace.Gid,
+		Indent:     trace.Indent,
+		ParamCount: trace.ParamsCount,
+		TimeCost:   trace.TimeCost,
+		ParentId:   uint64(trace.ParentId),
+		CreatedAt:  createdAt.Format(time.RFC3339Nano),
+		Seq:        trace.Seq,
 	}
 
 	return traceData, nil
@@ -133,15 +136,15 @@ func (d *TraceEntDB) GetTraceChildren(parentID int64) ([]entity.TraceData, error
 		}
 		// 创建业务实体
 		traceData := entity.TraceData{
-			ID:        int64(trace.ID),
-			Name:      trace.Name,
-			GID:       trace.Gid,
-			Indent:    trace.Indent,
-			Params:    trace.Params,
-			TimeCost:  trace.TimeCost,
-			ParentId:  uint64(trace.ParentId),
-			CreatedAt: createdAt.Format(time.RFC3339Nano),
-			Seq:       trace.Seq,
+			ID:         int64(trace.ID),
+			Name:       trace.Name,
+			GID:        trace.Gid,
+			Indent:     trace.Indent,
+			ParamCount: trace.ParamsCount,
+			TimeCost:   trace.TimeCost,
+			ParentId:   uint64(trace.ParentId),
+			CreatedAt:  createdAt.Format(time.RFC3339Nano),
+			Seq:        trace.Seq,
 		}
 
 		result = append(result, traceData)
@@ -162,7 +165,7 @@ func (d *TraceEntDB) GetAllGIDs(page int, limit int) ([]entity.GoroutineTrace, e
 
 	// 查询所有不同的 GID
 	var gids []entity.GoroutineTrace
-	result, err := d.client.GoroutineTrace.Query().Order(gen.Desc(goroutinetrace.FieldIsFinished)).Offset(offset).Limit(limit).All(ctx)
+	result, err := d.client.GoroutineTrace.Query().Order(gen.Asc(goroutinetrace.FieldIsFinished)).Offset(offset).Limit(limit).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get all gids failed: %w", err)
 	}
@@ -199,19 +202,44 @@ func (d *TraceEntDB) GetAllFunctionName() ([]string, error) {
 }
 
 // GetParamsByID 根据 ID 获取参数
-func (d *TraceEntDB) GetParamsByID(id int32) ([]functrace.TraceParams, error) {
+func (d *TraceEntDB) GetParamsByID(id int32) ([]entity.TraceParams, error) {
 	ctx := context.Background()
 
 	// 查询跟踪数据
-	trace, err := d.client.TraceData.Get(ctx, int(id))
+	params, err := d.client.ParamStoreData.Query().Where(paramstoredata.TraceId(int64(id))).All(ctx)
 	if err != nil {
 		if gen.IsNotFound(err) {
 			return nil, nil // 跟踪数据不存在
 		}
-		return nil, fmt.Errorf("查询跟踪数据失败: %w", err)
+		return nil, fmt.Errorf("found params failed: %w", err)
+	}
+	var result []entity.TraceParams
+	// 获取receiver参数
+	for key, param := range params {
+		if param.IsReceiver && param.BaseId != nil && *param.BaseId != 0 {
+			// 通过BaseId 获取数据
+			parentParam, err := d.client.ParamStoreData.Query().Where(paramstoredata.ID(int64(*param.BaseId))).First(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("found parent param failed: %w", err)
+			}
+			// 使用jsonPath 恢复数据
+			data, err := jsonpatch.CreateMergePatch([]byte(parentParam.Data), []byte(param.Data))
+			if err != nil {
+				return nil, fmt.Errorf("create merge patch failed: %w", err)
+			}
+			params[key].Data = string(data)
+		}
+		result = append(result, entity.TraceParams{
+			ID:         param.ID,
+			TraceID:    param.TraceId,
+			Position:   param.Position,
+			Data:       param.Data,
+			IsReceiver: param.IsReceiver,
+			BaseID:     *param.BaseId,
+		})
 	}
 
-	return trace.Params, nil
+	return result, nil
 }
 
 // GetGidsByFunctionName 根据函数名获取 GID 列表
@@ -294,15 +322,15 @@ func (d *TraceEntDB) GetTracesByParentId(parentId int64) ([]entity.TraceData, er
 		}
 		// 创建业务实体
 		traceData := entity.TraceData{
-			ID:        int64(trace.ID),
-			Name:      trace.Name,
-			GID:       uint64(trace.Gid),
-			Indent:    trace.Indent,
-			Params:    trace.Params,
-			TimeCost:  trace.TimeCost,
-			ParentId:  uint64(trace.ParentId),
-			CreatedAt: createdAt.Format(time.RFC3339Nano),
-			Seq:       trace.Seq,
+			ID:         int64(trace.ID),
+			Name:       trace.Name,
+			GID:        uint64(trace.Gid),
+			Indent:     trace.Indent,
+			ParamCount: trace.ParamsCount,
+			TimeCost:   trace.TimeCost,
+			ParentId:   uint64(trace.ParentId),
+			CreatedAt:  createdAt.Format(time.RFC3339Nano),
+			Seq:        trace.Seq,
 		}
 
 		result = append(result, traceData)
@@ -373,8 +401,9 @@ func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]*entity.Function, erro
 	}
 	result := make([]*entity.Function, 0)
 	for _, item := range childFunctions {
-		f := entity.NewFunction(int64(item.ID), item.Name, 0, "0ms", "0ms")
-		f.SetPackage()
+		f := entity.NewFunction(int64(item.ID), item.Name, 0, item.TimeCost, "0ms")
+		f.ParamCount = item.ParamsCount
+		f.Depth = item.Indent + 1
 		result = append(result, f)
 	}
 
@@ -403,15 +432,7 @@ func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]entity.Function, error) {
 		// 解析时间消耗
 		var timeCost float64
 		if trace.TimeCost != "" {
-			// 处理时间格式，将 ms 和 s 转换为毫秒值
-			if strings.HasSuffix(trace.TimeCost, "ms") {
-				trace.TimeCost = strings.TrimSuffix(trace.TimeCost, "ms")
-				timeCost, _ = strconv.ParseFloat(trace.TimeCost, 64)
-			} else if strings.HasSuffix(trace.TimeCost, "s") {
-				trace.TimeCost = strings.TrimSuffix(trace.TimeCost, "s")
-				timeCostVal, _ := strconv.ParseFloat(trace.TimeCost, 64)
-				timeCost = timeCostVal * 1000 // 转换为毫秒
-			}
+			timeCost = parseTimeString(trace.TimeCost)
 		}
 
 		// 更新函数统计
@@ -757,15 +778,15 @@ func (d *TraceEntDB) GetTracesByFuncName(functionName string) ([]entity.TraceDat
 		}
 		// 创建业务实体
 		traceData := entity.TraceData{
-			ID:        int64(trace.ID),
-			Name:      trace.Name,
-			GID:       trace.Gid,
-			Indent:    trace.Indent,
-			Params:    trace.Params,
-			TimeCost:  trace.TimeCost,
-			ParentId:  uint64(trace.ParentId),
-			CreatedAt: createdAt.Format(time.RFC3339Nano),
-			Seq:       trace.Seq,
+			ID:         int64(trace.ID),
+			Name:       trace.Name,
+			GID:        trace.Gid,
+			Indent:     trace.Indent,
+			ParamCount: trace.ParamsCount,
+			TimeCost:   trace.TimeCost,
+			ParentId:   uint64(trace.ParentId),
+			CreatedAt:  createdAt.Format(time.RFC3339Nano),
+			Seq:        trace.Seq,
 		}
 
 		result = append(result, traceData)
@@ -873,13 +894,13 @@ func (d *TraceEntDB) GetLastFunction() (*entity.TraceData, error) {
 	}
 
 	return &entity.TraceData{
-		ID:        int64(trace.ID),
-		Name:      trace.Name,
-		Params:    trace.Params,
-		TimeCost:  trace.TimeCost,
-		ParentId:  uint64(trace.ParentId),
-		CreatedAt: trace.CreatedAt,
-		Seq:       trace.Seq,
+		ID:         int64(trace.ID),
+		Name:       trace.Name,
+		ParamCount: trace.ParamsCount,
+		TimeCost:   trace.TimeCost,
+		ParentId:   uint64(trace.ParentId),
+		CreatedAt:  trace.CreatedAt,
+		Seq:        trace.Seq,
 	}, nil
 }
 

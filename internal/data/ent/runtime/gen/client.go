@@ -15,6 +15,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/goroutinetrace"
+	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/paramstoredata"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/tracedata"
 )
 
@@ -25,6 +26,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// GoroutineTrace is the client for interacting with the GoroutineTrace builders.
 	GoroutineTrace *GoroutineTraceClient
+	// ParamStoreData is the client for interacting with the ParamStoreData builders.
+	ParamStoreData *ParamStoreDataClient
 	// TraceData is the client for interacting with the TraceData builders.
 	TraceData *TraceDataClient
 }
@@ -39,6 +42,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.GoroutineTrace = NewGoroutineTraceClient(c.config)
+	c.ParamStoreData = NewParamStoreDataClient(c.config)
 	c.TraceData = NewTraceDataClient(c.config)
 }
 
@@ -133,6 +137,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:            ctx,
 		config:         cfg,
 		GoroutineTrace: NewGoroutineTraceClient(cfg),
+		ParamStoreData: NewParamStoreDataClient(cfg),
 		TraceData:      NewTraceDataClient(cfg),
 	}, nil
 }
@@ -154,6 +159,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:            ctx,
 		config:         cfg,
 		GoroutineTrace: NewGoroutineTraceClient(cfg),
+		ParamStoreData: NewParamStoreDataClient(cfg),
 		TraceData:      NewTraceDataClient(cfg),
 	}, nil
 }
@@ -184,6 +190,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.GoroutineTrace.Use(hooks...)
+	c.ParamStoreData.Use(hooks...)
 	c.TraceData.Use(hooks...)
 }
 
@@ -191,6 +198,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.GoroutineTrace.Intercept(interceptors...)
+	c.ParamStoreData.Intercept(interceptors...)
 	c.TraceData.Intercept(interceptors...)
 }
 
@@ -199,6 +207,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *GoroutineTraceMutation:
 		return c.GoroutineTrace.mutate(ctx, m)
+	case *ParamStoreDataMutation:
+		return c.ParamStoreData.mutate(ctx, m)
 	case *TraceDataMutation:
 		return c.TraceData.mutate(ctx, m)
 	default:
@@ -339,6 +349,139 @@ func (c *GoroutineTraceClient) mutate(ctx context.Context, m *GoroutineTraceMuta
 	}
 }
 
+// ParamStoreDataClient is a client for the ParamStoreData schema.
+type ParamStoreDataClient struct {
+	config
+}
+
+// NewParamStoreDataClient returns a client for the ParamStoreData from the given config.
+func NewParamStoreDataClient(c config) *ParamStoreDataClient {
+	return &ParamStoreDataClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `paramstoredata.Hooks(f(g(h())))`.
+func (c *ParamStoreDataClient) Use(hooks ...Hook) {
+	c.hooks.ParamStoreData = append(c.hooks.ParamStoreData, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `paramstoredata.Intercept(f(g(h())))`.
+func (c *ParamStoreDataClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ParamStoreData = append(c.inters.ParamStoreData, interceptors...)
+}
+
+// Create returns a builder for creating a ParamStoreData entity.
+func (c *ParamStoreDataClient) Create() *ParamStoreDataCreate {
+	mutation := newParamStoreDataMutation(c.config, OpCreate)
+	return &ParamStoreDataCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ParamStoreData entities.
+func (c *ParamStoreDataClient) CreateBulk(builders ...*ParamStoreDataCreate) *ParamStoreDataCreateBulk {
+	return &ParamStoreDataCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ParamStoreDataClient) MapCreateBulk(slice any, setFunc func(*ParamStoreDataCreate, int)) *ParamStoreDataCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ParamStoreDataCreateBulk{err: fmt.Errorf("calling to ParamStoreDataClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ParamStoreDataCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ParamStoreDataCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ParamStoreData.
+func (c *ParamStoreDataClient) Update() *ParamStoreDataUpdate {
+	mutation := newParamStoreDataMutation(c.config, OpUpdate)
+	return &ParamStoreDataUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ParamStoreDataClient) UpdateOne(psd *ParamStoreData) *ParamStoreDataUpdateOne {
+	mutation := newParamStoreDataMutation(c.config, OpUpdateOne, withParamStoreData(psd))
+	return &ParamStoreDataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ParamStoreDataClient) UpdateOneID(id int64) *ParamStoreDataUpdateOne {
+	mutation := newParamStoreDataMutation(c.config, OpUpdateOne, withParamStoreDataID(id))
+	return &ParamStoreDataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ParamStoreData.
+func (c *ParamStoreDataClient) Delete() *ParamStoreDataDelete {
+	mutation := newParamStoreDataMutation(c.config, OpDelete)
+	return &ParamStoreDataDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ParamStoreDataClient) DeleteOne(psd *ParamStoreData) *ParamStoreDataDeleteOne {
+	return c.DeleteOneID(psd.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ParamStoreDataClient) DeleteOneID(id int64) *ParamStoreDataDeleteOne {
+	builder := c.Delete().Where(paramstoredata.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ParamStoreDataDeleteOne{builder}
+}
+
+// Query returns a query builder for ParamStoreData.
+func (c *ParamStoreDataClient) Query() *ParamStoreDataQuery {
+	return &ParamStoreDataQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeParamStoreData},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ParamStoreData entity by its id.
+func (c *ParamStoreDataClient) Get(ctx context.Context, id int64) (*ParamStoreData, error) {
+	return c.Query().Where(paramstoredata.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ParamStoreDataClient) GetX(ctx context.Context, id int64) *ParamStoreData {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ParamStoreDataClient) Hooks() []Hook {
+	return c.hooks.ParamStoreData
+}
+
+// Interceptors returns the client interceptors.
+func (c *ParamStoreDataClient) Interceptors() []Interceptor {
+	return c.inters.ParamStoreData
+}
+
+func (c *ParamStoreDataClient) mutate(ctx context.Context, m *ParamStoreDataMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ParamStoreDataCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ParamStoreDataUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ParamStoreDataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ParamStoreDataDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("gen: unknown ParamStoreData mutation op: %q", m.Op())
+	}
+}
+
 // TraceDataClient is a client for the TraceData schema.
 type TraceDataClient struct {
 	config
@@ -475,9 +618,9 @@ func (c *TraceDataClient) mutate(ctx context.Context, m *TraceDataMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		GoroutineTrace, TraceData []ent.Hook
+		GoroutineTrace, ParamStoreData, TraceData []ent.Hook
 	}
 	inters struct {
-		GoroutineTrace, TraceData []ent.Interceptor
+		GoroutineTrace, ParamStoreData, TraceData []ent.Interceptor
 	}
 )

@@ -21,6 +21,18 @@ func (f GoroutineTraceFunc) Mutate(ctx context.Context, m gen.Mutation) (gen.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *gen.GoroutineTraceMutation", m)
 }
 
+// The ParamStoreDataFunc type is an adapter to allow the use of ordinary
+// function as ParamStoreData mutator.
+type ParamStoreDataFunc func(context.Context, *gen.ParamStoreDataMutation) (gen.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ParamStoreDataFunc) Mutate(ctx context.Context, m gen.Mutation) (gen.Value, error) {
+	if mv, ok := m.(*gen.ParamStoreDataMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *gen.ParamStoreDataMutation", m)
+}
+
 // The TraceDataFunc type is an adapter to allow the use of ordinary
 // function as TraceData mutator.
 type TraceDataFunc func(context.Context, *gen.TraceDataMutation) (gen.Value, error)
