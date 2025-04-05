@@ -24,13 +24,28 @@ var (
 		Columns:    GoroutineTraceColumns,
 		PrimaryKey: []*schema.Column{GoroutineTraceColumns[0]},
 	}
+	// ParamStoreColumns holds the columns for the "ParamStore" table.
+	ParamStoreColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "traceId", Type: field.TypeInt64},
+		{Name: "position", Type: field.TypeInt},
+		{Name: "data", Type: field.TypeString, Default: ""},
+		{Name: "isReceiver", Type: field.TypeBool, Default: false},
+		{Name: "baseId", Type: field.TypeInt64, Nullable: true},
+	}
+	// ParamStoreTable holds the schema information for the "ParamStore" table.
+	ParamStoreTable = &schema.Table{
+		Name:       "ParamStore",
+		Columns:    ParamStoreColumns,
+		PrimaryKey: []*schema.Column{ParamStoreColumns[0]},
+	}
 	// TraceDataColumns holds the columns for the "traceData" table.
 	TraceDataColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "gid", Type: field.TypeUint64},
 		{Name: "indent", Type: field.TypeInt, Default: 0},
-		{Name: "params", Type: field.TypeJSON, Nullable: true},
+		{Name: "paramsCount", Type: field.TypeInt, Default: 0},
 		{Name: "timeCost", Type: field.TypeString, Nullable: true},
 		{Name: "parentId", Type: field.TypeInt64, Nullable: true},
 		{Name: "createdAt", Type: field.TypeString},
@@ -62,6 +77,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		GoroutineTraceTable,
+		ParamStoreTable,
 		TraceDataTable,
 	}
 )
@@ -69,6 +85,9 @@ var (
 func init() {
 	GoroutineTraceTable.Annotation = &entsql.Annotation{
 		Table: "goroutineTrace",
+	}
+	ParamStoreTable.Annotation = &entsql.Annotation{
+		Table: "ParamStore",
 	}
 	TraceDataTable.Annotation = &entsql.Annotation{
 		Table: "traceData",

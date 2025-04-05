@@ -3,13 +3,11 @@
 package gen
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/toheart/functrace"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/tracedata"
 )
 
@@ -24,8 +22,8 @@ type TraceData struct {
 	Gid uint64 `json:"gid,omitempty"`
 	// Indent holds the value of the "indent" field.
 	Indent int `json:"indent,omitempty"`
-	// Params holds the value of the "params" field.
-	Params []functrace.TraceParams `json:"params,omitempty"`
+	// ParamsCount holds the value of the "paramsCount" field.
+	ParamsCount int `json:"paramsCount,omitempty"`
 	// TimeCost holds the value of the "timeCost" field.
 	TimeCost string `json:"timeCost,omitempty"`
 	// ParentId holds the value of the "parentId" field.
@@ -42,9 +40,7 @@ func (*TraceData) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tracedata.FieldParams:
-			values[i] = new([]byte)
-		case tracedata.FieldID, tracedata.FieldGid, tracedata.FieldIndent, tracedata.FieldParentId:
+		case tracedata.FieldID, tracedata.FieldGid, tracedata.FieldIndent, tracedata.FieldParamsCount, tracedata.FieldParentId:
 			values[i] = new(sql.NullInt64)
 		case tracedata.FieldName, tracedata.FieldTimeCost, tracedata.FieldCreatedAt, tracedata.FieldSeq:
 			values[i] = new(sql.NullString)
@@ -87,13 +83,11 @@ func (td *TraceData) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				td.Indent = int(value.Int64)
 			}
-		case tracedata.FieldParams:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field params", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &td.Params); err != nil {
-					return fmt.Errorf("unmarshal field params: %w", err)
-				}
+		case tracedata.FieldParamsCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field paramsCount", values[i])
+			} else if value.Valid {
+				td.ParamsCount = int(value.Int64)
 			}
 		case tracedata.FieldTimeCost:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -164,8 +158,8 @@ func (td *TraceData) String() string {
 	builder.WriteString("indent=")
 	builder.WriteString(fmt.Sprintf("%v", td.Indent))
 	builder.WriteString(", ")
-	builder.WriteString("params=")
-	builder.WriteString(fmt.Sprintf("%v", td.Params))
+	builder.WriteString("paramsCount=")
+	builder.WriteString(fmt.Sprintf("%v", td.ParamsCount))
 	builder.WriteString(", ")
 	builder.WriteString("timeCost=")
 	builder.WriteString(td.TimeCost)

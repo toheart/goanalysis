@@ -4,6 +4,7 @@ package gen
 
 import (
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/goroutinetrace"
+	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/paramstoredata"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/tracedata"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/schema"
 )
@@ -22,6 +23,16 @@ func init() {
 	goroutinetraceDescID := goroutinetraceFields[0].Descriptor()
 	// goroutinetrace.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	goroutinetrace.IDValidator = goroutinetraceDescID.Validators[0].(func(int64) error)
+	paramstoredataFields := schema.ParamStoreData{}.Fields()
+	_ = paramstoredataFields
+	// paramstoredataDescData is the schema descriptor for data field.
+	paramstoredataDescData := paramstoredataFields[3].Descriptor()
+	// paramstoredata.DefaultData holds the default value on creation for the data field.
+	paramstoredata.DefaultData = paramstoredataDescData.Default.(string)
+	// paramstoredataDescIsReceiver is the schema descriptor for isReceiver field.
+	paramstoredataDescIsReceiver := paramstoredataFields[4].Descriptor()
+	// paramstoredata.DefaultIsReceiver holds the default value on creation for the isReceiver field.
+	paramstoredata.DefaultIsReceiver = paramstoredataDescIsReceiver.Default.(bool)
 	tracedataFields := schema.TraceData{}.Fields()
 	_ = tracedataFields
 	// tracedataDescName is the schema descriptor for name field.
@@ -32,6 +43,10 @@ func init() {
 	tracedataDescIndent := tracedataFields[3].Descriptor()
 	// tracedata.DefaultIndent holds the default value on creation for the indent field.
 	tracedata.DefaultIndent = tracedataDescIndent.Default.(int)
+	// tracedataDescParamsCount is the schema descriptor for paramsCount field.
+	tracedataDescParamsCount := tracedataFields[4].Descriptor()
+	// tracedata.DefaultParamsCount holds the default value on creation for the paramsCount field.
+	tracedata.DefaultParamsCount = tracedataDescParamsCount.Default.(int)
 	// tracedataDescID is the schema descriptor for id field.
 	tracedataDescID := tracedataFields[0].Descriptor()
 	// tracedata.IDValidator is a validator for the "id" field. It is called by the builders before save.

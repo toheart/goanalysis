@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// GoroutineTrace is the client for interacting with the GoroutineTrace builders.
 	GoroutineTrace *GoroutineTraceClient
+	// ParamStoreData is the client for interacting with the ParamStoreData builders.
+	ParamStoreData *ParamStoreDataClient
 	// TraceData is the client for interacting with the TraceData builders.
 	TraceData *TraceDataClient
 
@@ -148,6 +150,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.GoroutineTrace = NewGoroutineTraceClient(tx.config)
+	tx.ParamStoreData = NewParamStoreDataClient(tx.config)
 	tx.TraceData = NewTraceDataClient(tx.config)
 }
 

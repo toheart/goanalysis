@@ -9,7 +9,6 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/toheart/functrace"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/tracedata"
 )
 
@@ -46,9 +45,17 @@ func (tdc *TraceDataCreate) SetNillableIndent(i *int) *TraceDataCreate {
 	return tdc
 }
 
-// SetParams sets the "params" field.
-func (tdc *TraceDataCreate) SetParams(fp []functrace.TraceParams) *TraceDataCreate {
-	tdc.mutation.SetParams(fp)
+// SetParamsCount sets the "paramsCount" field.
+func (tdc *TraceDataCreate) SetParamsCount(i int) *TraceDataCreate {
+	tdc.mutation.SetParamsCount(i)
+	return tdc
+}
+
+// SetNillableParamsCount sets the "paramsCount" field if the given value is not nil.
+func (tdc *TraceDataCreate) SetNillableParamsCount(i *int) *TraceDataCreate {
+	if i != nil {
+		tdc.SetParamsCount(*i)
+	}
 	return tdc
 }
 
@@ -145,6 +152,10 @@ func (tdc *TraceDataCreate) defaults() {
 		v := tracedata.DefaultIndent
 		tdc.mutation.SetIndent(v)
 	}
+	if _, ok := tdc.mutation.ParamsCount(); !ok {
+		v := tracedata.DefaultParamsCount
+		tdc.mutation.SetParamsCount(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -162,6 +173,9 @@ func (tdc *TraceDataCreate) check() error {
 	}
 	if _, ok := tdc.mutation.Indent(); !ok {
 		return &ValidationError{Name: "indent", err: errors.New(`gen: missing required field "TraceData.indent"`)}
+	}
+	if _, ok := tdc.mutation.ParamsCount(); !ok {
+		return &ValidationError{Name: "paramsCount", err: errors.New(`gen: missing required field "TraceData.paramsCount"`)}
 	}
 	if _, ok := tdc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "createdAt", err: errors.New(`gen: missing required field "TraceData.createdAt"`)}
@@ -215,9 +229,9 @@ func (tdc *TraceDataCreate) createSpec() (*TraceData, *sqlgraph.CreateSpec) {
 		_spec.SetField(tracedata.FieldIndent, field.TypeInt, value)
 		_node.Indent = value
 	}
-	if value, ok := tdc.mutation.Params(); ok {
-		_spec.SetField(tracedata.FieldParams, field.TypeJSON, value)
-		_node.Params = value
+	if value, ok := tdc.mutation.ParamsCount(); ok {
+		_spec.SetField(tracedata.FieldParamsCount, field.TypeInt, value)
+		_node.ParamsCount = value
 	}
 	if value, ok := tdc.mutation.TimeCost(); ok {
 		_spec.SetField(tracedata.FieldTimeCost, field.TypeString, value)

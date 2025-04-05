@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/pkg/errors"
-	"github.com/toheart/functrace"
 	v1 "github.com/toheart/goanalysis/api/analysis/v1"
 	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/conf"
@@ -73,7 +72,7 @@ func (a *AnalysisBiz) GetInitialFunc(dbpath string, gid uint64) (string, error) 
 	return traceDB.GetInitialFunc(gid)
 }
 
-func (a *AnalysisBiz) GetParamsByID(dbpath string, id int32) ([]functrace.TraceParams, error) {
+func (a *AnalysisBiz) GetParamsByID(dbpath string, id int32) ([]entity.TraceParams, error) {
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err

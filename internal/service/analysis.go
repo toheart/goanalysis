@@ -54,7 +54,7 @@ func (a *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisB
 			Name:       trace.Name,
 			Gid:        trace.GID,
 			Indent:     int32(trace.Indent),
-			ParamCount: int32(len(trace.Params)),
+			ParamCount: int32(trace.ParamCount),
 			TimeCost:   trace.TimeCost,
 			ParentId:   int64(trace.ParentId),
 		}
@@ -124,17 +124,11 @@ func (a *AnalysisService) GetParamsByID(ctx context.Context, in *v1.GetParamsByI
 	reply := &v1.GetParamsByIDReply{}
 	for _, param := range params {
 		reply.Params = append(reply.Params, &v1.TraceParams{
-			Pos:   int32(param.Pos),
-			Param: param.Param,
+			Pos:   int32(param.Position),
+			Param: param.Data,
 		})
 	}
 	return reply, nil
-}
-
-func sanitizeMermaidText(text string) string {
-	// 替换可能导致Mermaid语法问题的字符
-	text = strings.ReplaceAll(text, "\"", "'")
-	return text
 }
 
 func (a *AnalysisService) GetAllFunctionName(ctx context.Context, in *v1.GetAllFunctionNameReq) (*v1.GetAllFunctionNameReply, error) {
@@ -255,7 +249,7 @@ func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetT
 			Name:       trace.Name,
 			Gid:        int32(trace.GID),
 			Indent:     int32(trace.Indent),
-			ParamCount: int32(len(trace.Params)),
+			ParamCount: int32(trace.ParamCount),
 			TimeCost:   trace.TimeCost,
 			ParentId:   int64(trace.ParentId),
 		}
@@ -301,7 +295,7 @@ func (a *AnalysisService) GetChildFunctions(ctx context.Context, in *v1.GetChild
 			CallCount:  int32(function.CallCount),
 			AvgTime:    function.AvgTime,
 			TimeCost:   function.TotalTime,
-			ParamCount: int32(len(function.Params)),
+			ParamCount: int32(function.ParamCount),
 			Depth:      int32(function.Depth),
 		})
 	}
