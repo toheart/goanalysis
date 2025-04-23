@@ -223,7 +223,7 @@ func (d *TraceEntDB) GetParamsByID(id int32) ([]entity.TraceParams, error) {
 				return nil, fmt.Errorf("found parent param failed: %w", err)
 			}
 			// 使用jsonPath 恢复数据
-			data, err := jsonpatch.CreateMergePatch([]byte(parentParam.Data), []byte(param.Data))
+			data, err := jsonpatch.MergePatch([]byte(parentParam.Data), []byte(param.Data))
 			if err != nil {
 				return nil, fmt.Errorf("create merge patch failed: %w", err)
 			}
