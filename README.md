@@ -8,7 +8,7 @@
 <div align="center">
   <h1>FuncTrace Analyzer</h1>
   <h3>Go Function Tracing Analysis & Visualization Expert System</h3>
-  <p><strong>Current Version: v1.0.0</strong></p>
+  <p><strong>Current Version: v1.1.4</strong></p>
 
   ![License](https://img.shields.io/badge/License-MIT-blue.svg)
   ![Version](https://img.shields.io/badge/Version-v1.0.0-brightgreen.svg)
@@ -18,7 +18,7 @@
 
 ## 🌟 Project Overview
 
-**FuncTrace Analyzer** is a professional Go function tracing analysis tool that helps developers deeply understand function call relationships and performance bottlenecks through visualization technologies. The system combines the efficient Kratos framework backend with a dynamic Vue.js frontend, providing a complete solution from data collection to 3D visualization.
+**FuncTrace Analyzer** is a professional Go function tracing analysis tool that helps developers deeply understand function call relationships and performance bottlenecks through visualization technologies. The system uses the Kratos microservices framework for the backend and Vue.js for the frontend, providing a complete solution from data collection to 3D visualization.
 
 ### 🚀 Core Features
 
@@ -33,7 +33,6 @@
 1. **Low-overhead Monitoring** - Under 5% performance overhead
 2. **Zero-Intrusive Integration** - No code modification required
 3. **Millisecond Response** - Fast query for 10M+ call chains
-4. **Production-ready** - Rigorously stress-tested
 
 ## 🛠️ Technology Stack
 
@@ -42,9 +41,24 @@
 | **Backend**       | Kratos (Microservices)     |
 | **Frontend**      | Vue3 + Composition API     |
 | **Visualization** | Mermaid.js + ECharts       |
-| **Storage**       | SQLite + WAL Mode          |
+| **Storage**       | SQLite + WAL Mode + Ent    |
 | **Search**        | fuse.js fuzzy search       |
 | **Deployment**    | Docker + Kubernetes-ready  |
+
+## 📂 Project Structure
+
+```
+├── api                 # API definitions (protobuf)
+├── cmd                 # Main applications
+├── configs             # Configuration files
+├── internal            # Private application code
+│   ├── biz             # Business logic
+│   ├── data            # Data processing and storage (Ent)
+│   ├── server          # Server implementations
+│   └── service         # Service implementations
+├── third_party         # Third party dependencies
+└── README.md           # This file
+```
 
 ## 🧩 Feature Modules
 
@@ -75,17 +89,15 @@
 
 ### 4. Database Operations
 
-- **Description**: SQLite data storage/query
+- **Description**: SQLite data storage/query using Ent
 - **Details**:
-  - `Data` struct encapsulation
+  - Type-safe database operations
   - CRUD operations for trace data
 
 ### 5. CORS Support
 
 - **Description**: Cross-origin resource sharing
 - **Details**: CORS middleware configuration
-
-
 
 ## 🚀 Quick Start
 
@@ -101,10 +113,12 @@
 # Clone repository
 git clone https://github.com/toheart/goanalysis.git
 
-# Start server
-go run cmd/server/server.go
-```
+# start server 
+go run . server
 
+# Instrumentation
+go run . rewrite -d <path-to>
+```
 
 ## 📡 API Reference
 
@@ -127,6 +141,12 @@ We follow [Gitflow workflow](https://www.atlassian.com/git/tutorials/comparing-w
 4. Update documentation
 5. Create PR to `develop` branch
 
+## 🔧 Kratos Features Utilized
+
+- **Service Discovery**: Built-in service registry and discovery
+- **Error Handling**: Structured error handling and recovery
+- **Logging & Tracing**: Comprehensive logging and distributed tracing
+- **Project Structure**: Following Kratos recommended conventions
 
 ## GitHub Actions Pipeline and Docker Images  
 
@@ -155,10 +175,6 @@ The system will automatically fetch the latest release version from the https://
 4. If only the source code is available, it will be compiled automatically
 5. The Release notes will include the frontend version information used
 
-### Using Docker Images
-
-Docker images have been published to the GitHub Container Registry and can be pulled using the following command:
-
 ## 📜 Version History
 
 | Version | Date       | Milestone                   |
@@ -171,11 +187,10 @@ Docker images have been published to the GitHub Container Registry and can be pu
 
 - **Maintainer**: [toheart](https://github.com/toheart)
 - **Issues**: [GitHub Issues](https://github.com/toheart/goanalysis/issues)
-- **WeChat**: [小唐云原生](https://mp.weixin.qq.com/)
-
+- **WeChat**: [小唐的技术日志](https://mp.weixin.qq.com/)
 
 <div align="center">
-	<p><strong>FuncTrace Analyzer</strong> - Powered by Go+Vue Tech Stack</p> 
+	<p><strong>FuncTrace Analyzer</strong> - Powered by Kratos+Vue Tech Stack</p> 
 	<p><i>📌 Last Updated: 2025-03-09 CST</i></p>
 	<hr>
 </div>

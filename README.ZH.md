@@ -1,165 +1,196 @@
-根据对github.com/toheart/goanalysis的分析，结合最新发布的v1.1.0版本功能，以下是优化后的README文档：
+# 🔍 FuncTrace Analyzer
 
-```markdown
-# goanalysis 
-[![GitHub release](https://img.shields.io/github/v/release/toheart/goanalysis)](https://github.com/toheart/goanalysis/releases)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<p align="right">
+  <a href="README.ZH.md">中文版</a> |
+  <a href="README.md">English Version</a>
+</p>
 
-## 项目概述
-Go语言运行时分析工具，通过动态插桩和静态分析相结合的方式，为开发者提供：
-- **运行时函数追踪**：记录函数参数、goroutine轨迹和执行耗时
-- **可视化调用分析**：生成goroutine调用图谱和性能热力图
-- **智能代码插桩**：基于AST自动重写Go源码，无需手动修改
+<div align="center">
+  <h1>FuncTrace 分析器</h1>
+  <h3>Go函数追踪分析与可视化专家系统</h3>
+  <p><strong>当前版本: v1.1.4</strong></p>
 
-![分析界面示例](https://via.placeholder.com/800x400.png?text=Runtime+Analysis+Dashboard)
+  ![许可证](https://img.shields.io/badge/License-MIT-blue.svg)
+  ![版本](https://img.shields.io/badge/Version-v1.0.0-brightgreen.svg)
+  ![状态](https://img.shields.io/badge/Status-开发中-orange.svg)
+  ![语言](https://img.shields.io/badge/Language-Golang%20|%20Vue-yellow.svg)
+</div>
 
-## 核心功能
-### 🛠 动态分析能力
-- **全链路追踪**：自动在函数入口插入跟踪代码，记录`函数名、参数值、goroutine ID、时间戳`
-- **智能过滤**：通过`IGNORENAMES=log,context`环境变量排除特定包
-- **性能剖析**：统计函数平均耗时、最大调用深度等关键指标
+## 🌟 项目概述
 
-### 📊 可视化分析
+**FuncTrace 分析器**是一款专业的Go函数追踪分析工具，通过可视化技术帮助开发者深入理解函数调用关系和性能瓶颈。系统使用Kratos微服务框架作为后端，Vue.js作为前端，提供从数据采集到3D可视化的完整解决方案。
+
+### 🚀 核心功能
+
+- **智能函数追踪** - 实时捕获goroutine执行路径
+- **多维度分析** - 时间维度、调用深度、资源消耗分析
+- **交互式可视化** - 动态可缩放Mermaid流程图 + 参数热力图
+- **智能诊断** - 基于历史数据的性能瓶颈预测
+- **跨平台支持** - 轻量级SQLite存储解决方案
+
+### 🎯 设计目标
+
+1. **低开销监控** - 性能开销低于5%
+2. **零侵入集成** - 无需修改代码
+3. **毫秒级响应** - 快速查询1000万+调用链
+
+## 🛠️ 技术栈
+
+| 领域              | 技术                       |
+|-------------------|----------------------------|
+| **后端**          | Kratos (微服务)            |
+| **前端**          | Vue3 + Composition API     |
+| **可视化**        | Mermaid.js + ECharts       |
+| **存储**          | SQLite + WAL模式 + Ent     |
+| **搜索**          | fuse.js模糊搜索            |
+| **部署**          | Docker + Kubernetes就绪    |
+
+## 📂 项目结构
+
+```
+├── api                 # API定义（protobuf）
+├── cmd                 # 主应用程序
+├── configs             # 配置文件
+├── internal            # 私有应用代码
+│   ├── biz             # 业务逻辑
+│   ├── data            # 数据处理和存储（Ent）
+│   ├── server          # 服务器实现
+│   └── service         # 服务实现
+├── third_party         # 第三方依赖
+└── README.md           # 本文件
+```
+
+## 🧩 功能模块
+
+### 1. 智能追踪查看器
+
+- **描述**: 搜索并显示与特定函数相关的goroutines
+- **组件**: `TraceViewer.vue`
+- **详情**:
+  - 动态过滤与下拉菜单
+  - GID检索API集成
+  - 使用`fuse.js`模糊搜索
+
+### 2. 3D调用图可视化
+
+- **描述**: 特定GID的详细追踪分析
+- **组件**: `TraceDetails.vue`
+- **详情**:
+  - 参数检查功能
+  - 交互式时间线导航
+
+### 3. 参数热力图分析
+
+- **描述**: 可视化函数调用关系
+- **组件**: `MermaidViewer.vue`
+- **详情**:
+  - Mermaid.js渲染
+  - 缩放/拖拽支持
+
+### 4. 数据库操作
+
+- **描述**: 使用Ent进行SQLite数据存储/查询
+- **详情**:
+  - 类型安全的数据库操作
+  - 追踪数据的CRUD操作
+
+### 5. CORS支持
+
+- **描述**: 跨域资源共享
+- **详情**: CORS中间件配置
+
+## 🚀 快速开始
+
+### 先决条件
+
+- Go 1.19+
+- Node.js 16+
+- SQLite3 3.36+
+
+### 后端设置
+
 ```bash
-goanalysis server  # 启动Web分析界面(默认8000端口)
-```
-- Goroutine列表展示初始函数和调用深度
-- 交互式调用图谱生成（支持SVG/PNG导出）
-- 热点函数排行榜（按调用次数/总耗时排序）
+# 克隆仓库
+git clone https://github.com/toheart/goanalysis.git
 
-### ⚙ 静态分析
-```bash
-goanalysis rewrite -d ./your_project  # 自动代码重写
-```
-- 抽象语法树(AST)解析与修改
-- SQLite3数据库存储跟踪数据(`trace_*.db`)
+# 启动服务器
+go run . server
 
-## 快速开始
-### 安装方式
-```bash
-# 二进制安装
-wget https://github.com/toheart/goanalysis/releases/download/v1.1.0/goanalysis-linux-amd64
-
-# 源码编译
-go install github.com/toheart/goanalysis@v1.1.0
+# 插桩操作
+go run . rewrite -d <path-to>
 ```
 
-### 基本使用
-1. 准备测试项目：
-```bash
-git clone github.com/toheart/goanalysis.git
-```
+## 📡 API参考
 
-2. 执行代码重写：
-```bash
-goanalysis rewrite -d ./testrepo --exclude=vendor  # 排除vendor目录
-```
+| 端点                       | 方法   | 描述                     |
+| :------------------------- | :----- | :----------------------- |
+| `/api/gids`                | GET    | 获取所有GID              |
+| `/api/functions`           | GET    | 列出所有函数             |
+| `/api/gids/function`       | POST   | 按函数查找GID            |
+| `/api/traces/{gid}`        | GET    | 按GID获取追踪            |
+| `/api/params/{id}`         | GET    | 按ID获取参数             |
+| `/api/traces/{gid}/mermaid`| GET    | 获取Mermaid图表数据      |
 
-3. 运行插桩程序：
-```bash
-cd testrepo && go run main.go
-```
+## 🤝 贡献
 
-4. 启动分析服务：
-```bash
-goanalysis server --port 8080  # 自定义端口
-```
+我们遵循[Gitflow工作流](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow):
 
-## 架构设计
-```mermaid
-graph LR
-  A[源代码] --> B{AST解析}
-  B --> C[代码重写]
-  C --> D[插桩程序]
-  D --> E[运行时追踪]
-  E --> F[(SQLite DB)]
-  F --> G[Web可视化]
-```
+1. 创建功能分支: `git checkout -b feature/your-feature`
+2. 提交原子更改(遵循约定式提交)
+3. 编写单元测试(≥80%覆盖率)
+4. 更新文档
+5. 创建PR至`develop`分支
 
-### 核心模块
-| 模块          | 技术实现                 | 功能描述                     |
-|---------------|--------------------------|------------------------------|
-| AST引擎       | go/ast                   | 语法树分析与代码插桩         | 
-| 数据采集      | context+defer            | 上下文参数捕获               |
-| 可视化服务    | Gin+WebSocket            | 实时数据刷新                 |
-| 存储引擎      | sqlc+SQLite3             | 高效时序数据存储             |
+## 🔧 Kratos特性应用
 
-## 开发指南
-### 贡献流程
-1. 创建特性分支：
-```bash
-git checkout -b feat/new-feature
-```
+- **服务发现**: 内置服务注册与发现
+- **错误处理**: 结构化错误处理与恢复
+- **日志与追踪**: 全面的日志和分布式追踪
+- **项目结构**: 遵循Kratos推荐的项目结构规范
 
-2. 开发调试建议：
-```bash
-DEBUG=1 go run cmd/main.go  # 开启详细日志
-```
+## GitHub Actions流水线和Docker镜像
 
-3. 提交规范：
-```
-类型(范围): 简要描述 
+本项目配置了GitHub Actions流水线，用于自动构建和发布Docker镜像和软件包。
 
-详细说明（可选）
+### 自动构建流程
 
-关联ISSUE #123
-```
+当代码推送到`main`分支或创建新标签(格式为`v*`，如`v1.0.0`)时，构建流程自动触发:
 
-### 测试规范
-```bash
-make test-coverage  # 生成覆盖率报告(要求≥85%)
-```
-- 核心模块必须包含基准测试
-- HTTP接口测试使用httptest包
+1. 检出代码
+2. 设置Go环境
+3. 获取版本信息
+4. 同步前端代码(从https://github.com/toheart/goanalysis-web的最新版本)
+5. 构建应用
+6. 打包Linux和Windows版本
+7. 构建并推送Docker镜像(仅当推送到分支或标签时)
+8. 创建GitHub发布(仅当创建标签时)
 
-## 维护建议
-1. **依赖管理**：
-```bash
-npx npm-check-updates -u  # 前端依赖更新
-go mod tidy -v            # Go依赖整理
-```
+### 前端版本同步
 
-2. **性能优化**：
-- 监控`pprof`端点：`http://localhost:8080/debug/pprof`
-- 使用`-memprofile`生成内存分析报告
+系统将自动从https://github.com/toheart/goanalysis-web仓库获取最新发布版本进行构建:
 
-## 常见问题
-<details>
-<summary>如何过滤第三方库的跟踪？</summary>
+1. 通过GitHub API获取最新发布版本信息
+2. 下载相应的发布包或源代码
+3. 如果发布包包含已编译的dist目录，则直接使用
+4. 如果只有源代码可用，则自动编译
+5. 发布说明将包含所使用的前端版本信息
 
-通过环境变量设置忽略规则：
-```bash
-export IGNORENAMES=log,context,external_pkg && go run main.go
-```
+## 📜 版本历史
 
-</details>
+| 版本    | 日期       | 里程碑                     |
+| :------ | :--------- | :------------------------ |
+| v1.0.0  | 2025-03-09 | 正式发布                  |
+| v0.9.0  | 2025-02-25 | 分布式追踪支持            |
+| v0.8.0  | 2025-02-18 | 参数热力图分析            |
 
-<details>
-<summary>插桩后的性能损耗如何？</summary>
+## 📞 联系方式
 
-基准测试显示平均增加15-20%的执行时间，建议在测试环境使用。可通过采样率参数调整：
-```bash
-goanalysis rewrite -d ./project --sample-rate=0.5  # 50%采样
-```
-</details>
+- **维护者**: [toheart](https://github.com/toheart)
+- **问题**: [GitHub Issues](https://github.com/toheart/goanalysis/issues)
+- **微信**: [小唐的技术日志](https://mp.weixin.qq.com/)
 
-<details>
-<summary>如何集成到现有项目？</summary>
-
-1. 创建分析专用分支
-2. 执行`goanalysis rewrite`
-3. 生成测试数据后回滚分支
-4. 根据分析结果优化代码
-</details>
-
-## 许可协议
-[MIT License](LICENSE) © 2025 toheart
-```
-
-该文档整合了两个版本的核心功能：
-1. 基础插桩能力与数据存储设计
-2. 可视化界面与增强分析功能
-建议配合示例项目（如nsqd消息队列）进行动态演示，具体参考项目文档中的`/examples`目录。
-
-: 基于网页1的代码重写和数据库存储功能
-: 参考网页2的可视化界面和运行时分析实现
+<div align="center">
+	<p><strong>FuncTrace 分析器</strong> - 由Kratos+Vue技术栈驱动</p> 
+	<p><i>📌 最后更新: 2025-03-09 CST</i></p>
+	<hr>
+</div>
