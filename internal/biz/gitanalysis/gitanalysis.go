@@ -113,32 +113,17 @@ func (g *GitAnalysis) RepoCallGraph(project *gitapi.Project, rootDir string) err
 	defer dbStore.Close()
 
 	// 创建程序分析实例，使用默认的 RTA 算法
-	programAnalysis := callgraph.NewProgramAnalysis(
+	pa := callgraph.NewProgramAnalysis(
 		rootDir,
 		g.logger,
 		dbStore,
 		callgraph.WithAlgo(callgraph.CallGraphTypeRta),
 		callgraph.WithIgnorePaths("vendor,third_party"),
 	)
-	stopChan := make(chan struct{})
-	go func() {
-		defer func() {
-			stopChan <- struct{}{}
-		}()
-		if err := programAnalysis.SetTree(statusChan); err != nil {
-			statusChan <- []byte(err.Error())
-			g.logger.Error(err.Error())
-			return
-		}
-	}()
-	go func() {
-		if err := programAnalysis.SaveData(context.Background(), statusChan); err != nil {
-			statusChan <- []byte(err.Error())
-			g.logger.Error(err.Error())
-			return
-		}
-	}()
-	stopChan <- struct{}{}
+	err = pa.Execute(context.Background(), statusChan)
+	if err != nil {
+		return fmt.Errorf("call graph analysis failed: %w", err)
+	}
 	g.logger.Info("call graph analysis done")
 	return nil
 }

@@ -120,7 +120,7 @@ func (p *ProgramAnalysis) Execute(ctx context.Context, statusChan chan []byte) e
 	}
 
 	// 启动数据消费者（并发执行）
-	errChan := make(chan error, 1)
+	errChan := make(chan error)
 	go func() {
 		errChan <- p.consumeData(ctx, statusChan)
 	}()
@@ -537,7 +537,6 @@ func (p *ProgramAnalysis) produceData(statusChan chan []byte) error {
 		if !p.filter.ShouldProcessEdge(edge) {
 			return nil
 		}
-
 		p.log.Infof("caller: %s, callee: %s", caller.String(), callee.String())
 
 		// 处理caller节点

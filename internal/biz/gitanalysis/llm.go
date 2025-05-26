@@ -44,7 +44,8 @@ func (a *LLMAnalyzer) AnalyzeFile(ctx context.Context, fileContent string) (dos.
 		其他要求：
 		* 对有效函数进行分析，如果改动存在不合理或者代码不够清晰的情况，给出建议;
 		* 如果不存在有效函数，则返回空列表;
-		* 快速返回结果；
+		* 快速返回结果,不要继续输出空字符串;
+		* 输出函数名要求: 如果为结构体方法，按照golang语言规范输出; 如果为普通函数，需要输出函数名;
 		`),
 		llms.TextParts(llms.ChatMessageTypeHuman, fileContent),
 	}

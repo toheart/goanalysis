@@ -48,7 +48,7 @@ func (f *Filter) ShouldProcessEdge(edge *callgraph.Edge) bool {
 	callee := edge.Callee
 
 	// 排除标准库
-	if f.IsStandardLibrary(caller) || f.IsStandardLibrary(callee) {
+	if f.IsStandardLibrary(caller) && f.IsStandardLibrary(callee) {
 		return false
 	}
 
