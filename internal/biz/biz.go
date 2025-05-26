@@ -5,9 +5,13 @@ import (
 	"github.com/toheart/goanalysis/internal/biz/analysis"
 	"github.com/toheart/goanalysis/internal/biz/chanMgr"
 	"github.com/toheart/goanalysis/internal/biz/filemanager"
-	"github.com/toheart/goanalysis/internal/biz/gitlab"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 )
 
 // ProviderSet is biz providers.
-var ProviderSet = wire.NewSet(analysis.NewAnalysisBiz, staticanalysis.NewStaticAnalysisBiz, gitlab.NewGitLabBiz, chanMgr.NewChannelManager, filemanager.NewFileBiz)
+var ProviderSet = wire.NewSet(
+	analysis.NewAnalysisBiz,
+	staticanalysis.NewStaticAnalysisBiz,
+	chanMgr.NewChannelManager,
+	filemanager.NewFileBiz,
+)

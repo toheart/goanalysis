@@ -12,6 +12,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/toheart/goanalysis/api/staticanalysis/v1"
+	"github.com/toheart/goanalysis/internal/biz/callgraph/dos"
 	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/biz/repo"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
@@ -227,7 +228,7 @@ func (s *StaticAnalysisService) GetHotFunctions(ctx context.Context, req *v1.Get
 	}
 
 	// 创建一个函数键到函数节点的映射
-	funcNodeMap := make(map[string]*entity.FuncNode)
+	funcNodeMap := make(map[string]*dos.FuncNode)
 	for _, node := range nodes {
 		funcNodeMap[node.Key] = node
 	}
@@ -549,7 +550,7 @@ func (s *StaticAnalysisService) analyzeDbReal(dbPath string) (*staticAnalysisRes
 	}
 
 	// 创建一个函数键到函数节点的映射
-	funcNodeMap := make(map[string]*entity.FuncNode)
+	funcNodeMap := make(map[string]*dos.FuncNode)
 	for _, node := range nodes {
 		funcNodeMap[node.Key] = node
 	}
@@ -937,7 +938,7 @@ func (s *StaticAnalysisService) GetFunctionUpstream(ctx context.Context, req *v1
 
 // findAllUpstreamCalls 递归查找所有上游调用
 func (s *StaticAnalysisService) findAllUpstreamCalls(
-	currentNode *entity.FuncNode,
+	currentNode *dos.FuncNode,
 	funcNodeDB repo.StaticDBStore,
 	calleeToCallers map[string][]string,
 	funcCallCounts map[string]int,
@@ -1086,7 +1087,7 @@ func (s *StaticAnalysisService) GetFunctionDownstream(ctx context.Context, req *
 
 // findAllDownstreamCalls 递归查找所有下游调用
 func (s *StaticAnalysisService) findAllDownstreamCalls(
-	currentNode *entity.FuncNode,
+	currentNode *dos.FuncNode,
 	funcNodeDB repo.StaticDBStore,
 	callerToCallees map[string][]string,
 	funcCallCounts map[string]int,

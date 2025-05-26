@@ -1,0 +1,65 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 项目结构与导航指南
+
+本项目为 Go 语言开发的函数追踪分析与可视化系统，采用 Kratos 微服务架构，前端为 Vue3，后端为 Go。以下为主要目录和文件说明：
+
+## 目录结构
+
+- [api/](mdc:api)  
+  存放所有 API 定义（protobuf），如静态分析、文件管理、分析等子模块。
+- [cmd/](mdc:cmd)  
+  主应用程序入口，包含各类命令行工具（如gitanalysis、callgraph、rewrite、server等）。
+- [configs/](mdc:configs)  
+  配置文件目录。
+- [internal/](mdc:internal)  
+  私有应用代码，包含：
+    - [biz/](mdc:internal/biz)  业务逻辑（如gitanalysis、staticanalysis、callgraph等）
+    - [data/](mdc:internal/data)  数据处理与存储（Ent/SQLite）
+    - [server/](mdc:internal/server)  服务器实现（HTTP/GRPC等）
+    - [service/](mdc:internal/service)  服务实现
+    - [conf/](mdc:internal/conf)  配置相关（proto及生成文件）
+    - [pkg/](mdc:internal/pkg)  通用工具包（如logger）
+- [third_party/](mdc:third_party)  
+  第三方依赖和集成内容。
+- [docs/](mdc:docs)  
+  项目文档及相关图片。
+
+## 主要文件
+
+- [main.go](mdc:main.go)  
+  Go后端主入口。
+- [go.mod](mdc:go.mod) / [go.sum](mdc:go.sum)  
+  Go依赖管理文件。
+- [openapi.yaml](mdc:openapi.yaml)  
+  OpenAPI 规范定义。
+- [Dockerfile](mdc:Dockerfile)  
+  Docker 容器化配置。
+- [Makefile](mdc:Makefile)  
+  构建与自动化脚本。
+- [README.md](mdc:README.md) / [README.ZH.md](mdc:README.ZH.md)  
+  项目中英文说明文档。
+- [LICENSE](mdc:LICENSE)  
+  许可证。
+
+## 入口说明
+
+- 主要后端服务通过 [cmd/server.go](mdc:cmd/server.go) 启动。
+- 插桩与分析等命令行工具见 [cmd/](mdc:cmd)。
+
+## 其他说明
+
+- 配置相关 proto 文件及生成代码位于 [internal/conf/](mdc:internal/conf)。
+- 数据存储与ORM相关代码位于 [internal/data/](mdc:internal/data)。
+- 业务逻辑分散在 [internal/biz/](mdc:internal/biz) 各子目录。
+- 详细的Git分析功能说明见 [docs/git_analysis.md](mdc:docs/git_analysis.md)。
+- 日志, 错误 采用英文。
+- 注释采用中文书写。
+
+---
+
+如需引用文件，请使用 `[文件名](mdc:文件名)` 格式，路径相对于项目根目录。
+

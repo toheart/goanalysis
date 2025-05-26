@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/callgraph/dos"
 	"github.com/toheart/goanalysis/internal/biz/repo"
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/callgraph/cha"
@@ -34,44 +34,54 @@ import (
 
 // ProgramAnalysis 定义程序分析的主要结构
 type ProgramAnalysis struct {
+	// 配置相关
 	algo        string   // 使用的分析算法
 	Dir         string   // 项目目录
 	ignorePaths []string // 需要忽略的路径
 	onlyMethod  string   // 只分析特定方法
-	log         *log.Helper
+	cachePath   string   // 缓存文件路径
+	isCache     bool     // 是否使用缓存
+	outputPath  string   // 输出文件路径
 
-	cachePath  string // 缓存文件路径
-	isCache    bool   // 是否使用缓存
-	outputPath string // 输出文件路径
+	// 依赖注入
+	log  *log.Helper
+	data repo.StaticDBStore // 数据存储
 
-	tree map[string]*entity.FuncNode // 语法树
+	// 分析结果
+	callGraph  *callgraph.Graph // 调用图
+	moduleName string           // 模块名
 
-	callGraph  *callgraph.Graph   // 调用图
-	data       repo.StaticDBStore // 数据存储
-	moduleName string             // 模块名
+	// 组件
+	nodeManager *NodeManager
+	edgeManager *EdgeManager
+	filter      *Filter
+	reporter    *StatusReporter
+	tracker     *ProgressTracker
 
-	edgeChan      chan *entity.FuncEdge // 边通道
-	nodeChan      chan *entity.FuncNode // 节点通道
-	totalNode     int                   // 总节点数
-	currNodeCount int                   // 当前节点数
-	isVisited     map[string]bool       // 是否访问过
+	// 状态跟踪
+	isVisited map[string]bool // 是否访问过
 }
 
 // NewProgramAnalysis 创建新的程序分析实例
 func NewProgramAnalysis(dir string, log *log.Helper, data repo.StaticDBStore, opts ...ProgramOption) *ProgramAnalysis {
+	log.Infof("NewProgramAnalysis, dir: %s", dir)
+
 	p := &ProgramAnalysis{
-		Dir:       dir,
-		algo:      CallGraphTypeVta,
-		data:      data,
-		tree:      make(map[string]*entity.FuncNode),
-		nodeChan:  make(chan *entity.FuncNode, 100),
-		edgeChan:  make(chan *entity.FuncEdge, 100),
-		isVisited: make(map[string]bool),
-		log:       log,
+		Dir:         dir,
+		algo:        CallGraphTypeVta,
+		data:        data,
+		isVisited:   make(map[string]bool),
+		log:         log,
+		nodeManager: NewNodeManager(),
+		edgeManager: NewEdgeManager(),
+		tracker:     &ProgressTracker{},
 	}
+
+	// 应用选项
 	for _, opt := range opts {
 		opt(p)
 	}
+
 	return p
 }
 
@@ -89,19 +99,50 @@ func (p *ProgramAnalysis) GetMainPackage(pkgs []*ssa.Package) ([]*ssa.Package, e
 	return mains, nil
 }
 
-func (p *ProgramAnalysis) NodeIsExist(key string) bool {
-	if _, ok := p.tree[key]; ok {
-		return true
-	}
-	return false
+// NodeExists 检查节点是否存在
+func (p *ProgramAnalysis) NodeExists(key string) bool {
+	return p.nodeManager.NodeExists(key)
 }
 
 // GetNode 获取节点
-func (p *ProgramAnalysis) GetNode(key string) *entity.FuncNode {
-	if !p.NodeIsExist(key) {
-		return nil
+func (p *ProgramAnalysis) GetNode(key string) *dos.FuncNode {
+	return p.nodeManager.GetNode(key)
+}
+
+// Execute 执行完整的调用图分析流程
+// 这是对外提供的主要接口，内聚了所有内部操作
+func (p *ProgramAnalysis) Execute(ctx context.Context, statusChan chan []byte) error {
+	p.log.Info("execute call graph analysis")
+
+	// 初始化数据库表
+	if err := p.data.InitTable(); err != nil {
+		return fmt.Errorf("failed to init database table: %w", err)
 	}
-	return p.tree[key]
+
+	// 启动数据消费者（并发执行）
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- p.consumeData(ctx, statusChan)
+	}()
+
+	// 生产数据到channels
+	if err := p.produceData(statusChan); err != nil {
+		p.log.Errorf("failed to produce data: %v", err)
+		return fmt.Errorf("failed to produce data: %w", err)
+	}
+
+	// 关闭channels，通知消费者数据生产完毕
+	p.nodeManager.Close()
+	p.edgeManager.Close()
+
+	// 等待数据消费完成
+	if err := <-errChan; err != nil {
+		p.log.Errorf("failed to consume data: %v", err)
+		return fmt.Errorf("failed to consume data: %w", err)
+	}
+
+	p.log.Info("call graph analysis completed successfully")
+	return nil
 }
 
 // GetModuleName 从go.mod文件中获取模块名
@@ -183,7 +224,7 @@ func (p *ProgramAnalysis) loadPackages() ([]*packages.Package, error) {
 		},
 	}
 
-	initial, err := packages.Load(cfg, p.Dir+"/...")
+	initial, err := packages.Load(cfg, "./...")
 	if err != nil {
 		return nil, err
 	}
@@ -247,150 +288,108 @@ func (p *ProgramAnalysis) getMainFunctions(prog *ssa.Program) ([]*ssa.Function, 
 	return roots, nil
 }
 
-// SetTree
-//
-//	@Description: 生成项目整体的语法树
-//	@receiver p
-//	@return error
-func (p *ProgramAnalysis) SetTree(statusChan chan []byte) error {
+// setTree 构建调用图树结构（内部方法）
+func (p *ProgramAnalysis) setTree(statusChan chan []byte) error {
 	p.log.Info("set tree")
 	if err := p.Analysis(); err != nil {
 		return err
 	}
 
+	// 初始化组件
+	p.reporter = NewStatusReporter(statusChan)
+	p.filter = NewFilter(&FilterConfig{
+		IgnorePaths: p.ignorePaths,
+		ModuleName:  p.moduleName,
+	})
+
 	// 发送分析开始状态
-	if statusChan != nil {
-		statusMsg := fmt.Sprintf("Starting to build call graph, using algorithm: %s", p.algo)
-		statusChan <- []byte(statusMsg)
-	}
-
-	inIgnores := func(node *callgraph.Node) bool {
-		pkgPath := node.Func.String()
-
-		for _, ignorePath := range p.ignorePaths {
-			if strings.HasPrefix(pkgPath, ignorePath) {
-				return true
-			}
-		}
-		return false
-	}
+	p.reporter.ReportStatus(fmt.Sprintf("Starting to build call graph, using algorithm: %s", p.algo))
 
 	// 统计信息
 	nodeCount := 0
 	edgeCount := 0
-	p.totalNode = len(p.callGraph.Nodes)
+	p.tracker.TotalNodes = len(p.callGraph.Nodes)
+
 	err := callgraph.GraphVisitEdges(p.callGraph, func(edge *callgraph.Edge) error {
-		if isSynthetic(edge) {
-			return nil
-		}
 		caller := edge.Caller
 		callee := edge.Callee
+
 		if !p.isVisited[caller.String()] {
 			p.isVisited[caller.String()] = true
-			p.currNodeCount++
+			p.tracker.ProcessedNodes++
 		}
-		// 排除标准库
-		if inStd(caller) || inStd(callee) {
+
+		// 使用过滤器检查是否应该处理这条边
+		if !p.filter.ShouldProcessEdge(edge) {
 			return nil
 		}
+
 		p.log.Infof("caller: %s, callee: %s", caller.String(), callee.String())
-		// 排除忽略的包
-		if inIgnores(caller) || inIgnores(callee) {
-			return nil
-		}
-		if !p.isInternal(caller) && !p.isInternal(callee) {
-			return nil
-		}
-		// caller是否存在
-		var pNode, qNode *entity.FuncNode
-		// 如果不存在, 则创建
-		if !p.NodeIsExist(caller.String()) {
-			pNode = &entity.FuncNode{
-				Key:  caller.String(),
-				Pkg:  caller.Func.Pkg.Pkg.Path(),
-				Name: caller.Func.RelString(caller.Func.Pkg.Pkg),
-			}
-			p.tree[pNode.Key] = pNode
-			p.nodeChan <- pNode
+
+		// 处理caller节点
+		callerKey := caller.String()
+		callerPkg := caller.Func.Pkg.Pkg.Path()
+		callerName := caller.Func.RelString(caller.Func.Pkg.Pkg)
+
+		if !p.nodeManager.NodeExists(callerKey) {
 			nodeCount++
-
 			// 每处理10个节点发送一次状态更新
-			if statusChan != nil && nodeCount%10 == 0 {
-				statusMsg := fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount)
-				statusChan <- []byte(statusMsg)
-
+			if nodeCount%NodeStatusUpdateInterval == 0 {
+				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
-		} else {
-			pNode = p.GetNode(caller.String())
 		}
-		// 如果不存在, 则创建
-		if !p.NodeIsExist(callee.String()) {
-			qNode = &entity.FuncNode{
-				Key:  callee.String(),
-				Pkg:  callee.Func.Pkg.Pkg.Path(),
-				Name: callee.Func.RelString(callee.Func.Pkg.Pkg),
-			}
-			p.tree[qNode.Key] = qNode
-			p.nodeChan <- qNode
+		callerNode := p.nodeManager.GetOrCreateNode(callerKey, callerPkg, callerName)
+
+		// 处理callee节点
+		calleeKey := callee.String()
+		calleePkg := callee.Func.Pkg.Pkg.Path()
+		calleeName := callee.Func.RelString(callee.Func.Pkg.Pkg)
+
+		if !p.nodeManager.NodeExists(calleeKey) {
 			nodeCount++
-
 			// 每处理10个节点发送一次状态更新
-			if statusChan != nil && nodeCount%10 == 0 {
-				statusMsg := fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount)
-				statusChan <- []byte(statusMsg)
+			if nodeCount%NodeStatusUpdateInterval == 0 {
+				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
-		} else {
-			qNode = p.GetNode(callee.String())
 		}
-		pNode.Children = append(pNode.Children, qNode.Key)
-		qNode.Parent = append(qNode.Parent, pNode.Key)
-		p.edgeChan <- &entity.FuncEdge{
-			CallerKey: pNode.Key,
-			CalleeKey: qNode.Key,
-		}
+		calleeNode := p.nodeManager.GetOrCreateNode(calleeKey, calleePkg, calleeName)
+
+		// 建立边关系 - 使用EdgeManager封装逻辑
+		p.edgeManager.BuildRelationship(callerNode, calleeNode)
 		edgeCount++
 
 		// 每处理20条边发送一次状态更新
-		if statusChan != nil && edgeCount%20 == 0 {
-			statusMsg := fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount)
-			statusChan <- []byte(statusMsg)
+		if edgeCount%EdgeStatusUpdateInterval == 0 {
+			p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 		}
 
-		p.log.Infof("set edge caller: %s, --> callee: %s", pNode.Key, qNode.Key)
+		p.log.Infof("set edge caller: %s, --> callee: %s", callerNode.Key, calleeNode.Key)
 
 		return nil
 	})
+
 	if err != nil {
-		if statusChan != nil {
-			statusChan <- []byte(fmt.Sprintf("Call graph build error: %v", err))
-		}
+		p.reporter.ReportStatus(fmt.Sprintf("Call graph build error: %v", err))
 		return err
 	}
-	// 关闭通道
-	close(p.nodeChan)
-	close(p.edgeChan)
+
+	// 关闭管理器
+	p.nodeManager.Close()
+	p.edgeManager.Close()
 
 	// 发送完成状态
-	if statusChan != nil {
-		statusMsg := fmt.Sprintf("Call graph build completed, processed %d nodes, %d edges", nodeCount, edgeCount)
-		statusChan <- []byte(statusMsg)
-	}
+	p.reporter.ReportStatus(fmt.Sprintf("Call graph build completed, processed %d nodes, %d edges", nodeCount, edgeCount))
 
 	p.log.Infof("set tree success")
-
-	return err
-}
-
-func (p *ProgramAnalysis) isInternal(node *callgraph.Node) bool {
-	return strings.Contains(node.Func.String(), p.moduleName)
+	return nil
 }
 
 func (p *ProgramAnalysis) GetProgress() float64 {
-	return float64(p.currNodeCount) / float64(p.totalNode)
+	return float64(p.tracker.ProcessedNodes) / float64(p.tracker.TotalNodes)
 }
 
-// SaveData 异步保存数据到数据库
-func (p *ProgramAnalysis) SaveData(ctx context.Context, statusChan chan []byte) error {
+// saveData 异步保存数据到数据库（内部方法）
+func (p *ProgramAnalysis) saveData(ctx context.Context, statusChan chan []byte) error {
 	wg := sync.WaitGroup{}
 	if err := p.data.InitTable(); err != nil {
 		return err
@@ -403,7 +402,7 @@ func (p *ProgramAnalysis) SaveData(ctx context.Context, statusChan chan []byte) 
 	go func() {
 		defer wg.Done()
 		nodeCount := 0
-		for node := range p.nodeChan {
+		for node := range p.nodeManager.GetNodeChan() {
 			p.log.Infof("save node: %s", node.Key)
 			if err := p.data.SaveFuncNode(node); err != nil {
 				p.log.Error("save node failed: %v", err, "node", node)
@@ -422,7 +421,7 @@ func (p *ProgramAnalysis) SaveData(ctx context.Context, statusChan chan []byte) 
 	go func() {
 		defer wg.Done()
 		edgeCount := 0
-		for edge := range p.edgeChan {
+		for edge := range p.edgeManager.GetEdgeChan() {
 			p.log.Infof("save edge: %s --> %s", edge.CallerKey, edge.CalleeKey)
 			if err := p.data.SaveFuncEdge(edge); err != nil {
 				p.log.Error("save edge failed: %v", err, "edge", edge)
@@ -446,20 +445,17 @@ func (p *ProgramAnalysis) SaveData(ctx context.Context, statusChan chan []byte) 
 	return nil
 }
 
-func isSynthetic(edge *callgraph.Edge) bool {
-	return edge.Caller.Func.Pkg == nil || edge.Callee.Func.Pkg == nil || edge.Callee.Func.Synthetic != ""
+// SaveData 异步保存数据到数据库
+func (p *ProgramAnalysis) SaveData(ctx context.Context, statusChan chan []byte) error {
+	return p.saveData(ctx, statusChan)
 }
 
-func inStd(node *callgraph.Node) bool {
-	return isStdPkgPath(node.Func.Pkg.Pkg.Path())
+// SetTree 构建调用图树结构（向后兼容，建议使用Execute方法）
+func (p *ProgramAnalysis) SetTree(statusChan chan []byte) error {
+	return p.setTree(statusChan)
 }
 
-func isStdPkgPath(path string) bool {
-	if strings.Contains(path, ".") {
-		return false
-	}
-	return true
-}
+// Configuration option functions
 
 func WithAlgo(algo string) ProgramOption {
 	return func(p *ProgramAnalysis) {
@@ -470,9 +466,9 @@ func WithAlgo(algo string) ProgramOption {
 func WithIgnorePaths(ignorePath string) ProgramOption {
 	var ignorePaths []string
 	for _, item := range strings.Split(ignorePath, ",") {
-		p := strings.TrimSpace(item)
-		if p != "" {
-			ignorePaths = append(ignorePaths, p)
+		path := strings.TrimSpace(item)
+		if path != "" {
+			ignorePaths = append(ignorePaths, path)
 		}
 	}
 	return func(p *ProgramAnalysis) {
@@ -502,4 +498,155 @@ func WithCacheFlag(flag bool) ProgramOption {
 	return func(p *ProgramAnalysis) {
 		p.isCache = flag
 	}
+}
+
+// produceData 生产调用图数据到channels（内部方法）
+func (p *ProgramAnalysis) produceData(statusChan chan []byte) error {
+	p.log.Info("produce call graph data")
+
+	// 执行分析
+	if err := p.Analysis(); err != nil {
+		return err
+	}
+
+	// 初始化组件
+	p.reporter = NewStatusReporter(statusChan)
+	p.filter = NewFilter(&FilterConfig{
+		IgnorePaths: p.ignorePaths,
+		ModuleName:  p.moduleName,
+	})
+
+	// 发送分析开始状态
+	p.reporter.ReportStatus(fmt.Sprintf("Starting to build call graph, using algorithm: %s", p.algo))
+
+	// 统计信息
+	nodeCount := 0
+	edgeCount := 0
+	p.tracker.TotalNodes = len(p.callGraph.Nodes)
+
+	err := callgraph.GraphVisitEdges(p.callGraph, func(edge *callgraph.Edge) error {
+		caller := edge.Caller
+		callee := edge.Callee
+
+		if !p.isVisited[caller.String()] {
+			p.isVisited[caller.String()] = true
+			p.tracker.ProcessedNodes++
+		}
+
+		// 使用过滤器检查是否应该处理这条边
+		if !p.filter.ShouldProcessEdge(edge) {
+			return nil
+		}
+
+		p.log.Infof("caller: %s, callee: %s", caller.String(), callee.String())
+
+		// 处理caller节点
+		callerKey := caller.String()
+		callerPkg := caller.Func.Pkg.Pkg.Path()
+		callerName := caller.Func.RelString(caller.Func.Pkg.Pkg)
+
+		if !p.nodeManager.NodeExists(callerKey) {
+			nodeCount++
+			// 每处理10个节点发送一次状态更新
+			if nodeCount%NodeStatusUpdateInterval == 0 {
+				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
+			}
+		}
+		callerNode := p.nodeManager.GetOrCreateNode(callerKey, callerPkg, callerName)
+
+		// 处理callee节点
+		calleeKey := callee.String()
+		calleePkg := callee.Func.Pkg.Pkg.Path()
+		calleeName := callee.Func.RelString(callee.Func.Pkg.Pkg)
+
+		if !p.nodeManager.NodeExists(calleeKey) {
+			nodeCount++
+			// 每处理10个节点发送一次状态更新
+			if nodeCount%NodeStatusUpdateInterval == 0 {
+				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
+			}
+		}
+		calleeNode := p.nodeManager.GetOrCreateNode(calleeKey, calleePkg, calleeName)
+
+		// 建立边关系 - 使用EdgeManager封装逻辑
+		p.edgeManager.BuildRelationship(callerNode, calleeNode)
+		edgeCount++
+
+		// 每处理20条边发送一次状态更新
+		if edgeCount%EdgeStatusUpdateInterval == 0 {
+			p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
+		}
+
+		p.log.Infof("set edge caller: %s, --> callee: %s", callerNode.Key, calleeNode.Key)
+
+		return nil
+	})
+
+	if err != nil {
+		p.reporter.ReportStatus(fmt.Sprintf("Call graph build error: %v", err))
+		return err
+	}
+
+	// 发送完成状态
+	p.reporter.ReportStatus(fmt.Sprintf("Call graph data production completed, processed %d nodes, %d edges", nodeCount, edgeCount))
+
+	p.log.Infof("produce data success")
+	return nil
+}
+
+// consumeData 消费channels中的数据并保存到数据库（内部方法）
+func (p *ProgramAnalysis) consumeData(ctx context.Context, statusChan chan []byte) error {
+	p.log.Info("consume call graph data")
+
+	wg := sync.WaitGroup{}
+	if statusChan != nil {
+		statusChan <- []byte("Starting to save data to database...")
+	}
+
+	// 启动goroutine处理节点保存
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		nodeCount := 0
+		for node := range p.nodeManager.GetNodeChan() {
+			p.log.Infof("save node: %s", node.Key)
+			if err := p.data.SaveFuncNode(node); err != nil {
+				p.log.Error("save node failed: %v", err, "node", node)
+			}
+			nodeCount++
+
+			// 每保存10个节点发送一次状态更新
+			if statusChan != nil && nodeCount%10 == 0 {
+				statusChan <- []byte(fmt.Sprintf("Saved %d nodes", nodeCount))
+			}
+		}
+	}()
+
+	// 启动goroutine处理边保存
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		edgeCount := 0
+		for edge := range p.edgeManager.GetEdgeChan() {
+			p.log.Infof("save edge: %s --> %s", edge.CallerKey, edge.CalleeKey)
+			if err := p.data.SaveFuncEdge(edge); err != nil {
+				p.log.Error("save edge failed: %v", err, "edge", edge)
+			}
+			edgeCount++
+
+			// 每保存20条边发送一次状态更新
+			if statusChan != nil && edgeCount%20 == 0 {
+				statusChan <- []byte(fmt.Sprintf("Saved %d edges", edgeCount))
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	if statusChan != nil {
+		statusChan <- []byte("Data saving completed")
+	}
+
+	p.log.Infof("consume data success")
+	return nil
 }

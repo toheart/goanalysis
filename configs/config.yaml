@@ -13,12 +13,21 @@ logger:
   max_size: 100                    # 单个日志文件最大大小(MB)
   max_age: 7                      # 日志文件保留天数
   max_backups: 10                 # 保留的旧日志文件最大数量
-  compress: true                  # 压缩旧日志文件
+  compress: true           
+         # 压缩旧日志文件
+
+
+
 
 biz:
-  gitlab_token: ""
-  gitlab_url: ""
-  gitlab_clone_dir: "./data/repos"
+  gitlab:
+    token: "${GITLAB_TOKEN}"                # GitLab访问令牌，用于API认证
+    url: "${GITLAB_API_URL}"  # GitLab API URL
+    clone_dir: ./data
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    api_base: "${OPENAI_API_BASE}"
+    model: "${OPENAI_MODEL}"
   staticStorePath: ./data/static
   runtimeStorePath: ./data/runtime
   file_storage_path: ./data/files

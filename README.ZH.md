@@ -18,7 +18,7 @@
 
 ## 🌟 项目概述
 
-**FuncTrace 分析器**是一款专业的Go函数追踪分析工具，通过可视化技术帮助开发者深入理解函数调用关系和性能瓶颈。系统使用Kratos微服务框架作为后端，Vue.js作为前端，提供从数据采集到3D可视化的完整解决方案。
+**goanalysis**是一款专业的Go函数追踪分析工具，通过可视化技术帮助开发者深入理解函数调用关系和性能瓶颈。系统使用Kratos微服务框架作为后端，Vue.js作为前端，提供从数据采集到3D可视化的完整解决方案。
 
 ### 🚀 核心功能
 
@@ -188,6 +188,22 @@ go run . rewrite -d <path-to>
 - **维护者**: [toheart](https://github.com/toheart)
 - **问题**: [GitHub Issues](https://github.com/toheart/goanalysis/issues)
 - **微信**: [小唐的技术日志](https://mp.weixin.qq.com/)
+
+## Git改动分析
+
+新增的Git改动分析功能可以分析GitLab上的Merge Request变更，识别出被修改的Go函数。详细说明请参考[Git分析功能文档](docs/git_analysis.md)。
+
+主要特性：
+- 自动拉取GitLab仓库和MR变更
+- 使用AST解析识别变更的函数
+- 支持JSON和表格格式输出结果
+- 基于配置文件的灵活配置
+
+使用示例：
+```bash
+# 配置文件中设置GitLab Token和URL
+goanalysis gitanalysis --project=123 --mr=45 --output=./analysis-result.json
+```
 
 <div align="center">
 	<p><strong>FuncTrace 分析器</strong> - 由Kratos+Vue技术栈驱动</p> 

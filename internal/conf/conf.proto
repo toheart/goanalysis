@@ -37,14 +37,26 @@ message Logger {
   bool compress = 7;       // 是否压缩旧日志文件
 }
 
+
 message Biz {
   string file_storage_path = 1; // 文件存储路径
-  string gitlab_token = 2;     // GitLab访问令牌
-  string gitlab_url = 3;       // GitLab服务器URL
-  string gitlab_clone_dir = 4; // GitLab仓库克隆目录
+  GitLab gitlab = 2;           // GitLab配置
+  OpenAI openai = 3;          // OpenAI配置
 }
 
 
 message Data{
   string dbpath = 1;
+}
+
+message OpenAI {
+  string api_key = 1;
+  string api_base = 2;
+  string model = 3;
+}
+
+message GitLab {
+  string token = 1;
+  string url = 2;
+  string clone_dir = 3;
 }

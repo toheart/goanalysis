@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect"
-	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/callgraph/dos"
 	"github.com/toheart/goanalysis/internal/biz/repo"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcnode"
@@ -41,7 +41,7 @@ func (s *StaticEntDBImpl) InitTable() error {
 }
 
 // SaveFuncNode 保存函数节点
-func (s *StaticEntDBImpl) SaveFuncNode(node *entity.FuncNode) error {
+func (s *StaticEntDBImpl) SaveFuncNode(node *dos.FuncNode) error {
 	ctx := context.Background()
 
 	// 检查节点是否已存在
@@ -79,7 +79,7 @@ func (s *StaticEntDBImpl) SaveFuncNode(node *entity.FuncNode) error {
 }
 
 // SaveFuncEdge 保存函数调用关系
-func (s *StaticEntDBImpl) SaveFuncEdge(edge *entity.FuncEdge) error {
+func (s *StaticEntDBImpl) SaveFuncEdge(edge *dos.FuncEdge) error {
 	ctx := context.Background()
 
 	_, err := s.client.FuncEdge.Create().
@@ -95,7 +95,7 @@ func (s *StaticEntDBImpl) SaveFuncEdge(edge *entity.FuncEdge) error {
 }
 
 // GetFuncNodeByKey 根据Key获取函数节点
-func (s *StaticEntDBImpl) GetFuncNodeByKey(key string) (*entity.FuncNode, error) {
+func (s *StaticEntDBImpl) GetFuncNodeByKey(key string) (*dos.FuncNode, error) {
 	ctx := context.Background()
 
 	// 查询函数节点
@@ -111,7 +111,7 @@ func (s *StaticEntDBImpl) GetFuncNodeByKey(key string) (*entity.FuncNode, error)
 	}
 
 	// 转换为业务实体
-	node := &entity.FuncNode{
+	node := &dos.FuncNode{
 		Key:      funcEnt.Key,
 		Pkg:      funcEnt.Pkg,
 		Name:     funcEnt.Name,
@@ -139,7 +139,7 @@ func (s *StaticEntDBImpl) GetFuncNodeByKey(key string) (*entity.FuncNode, error)
 }
 
 // GetCallerEdges 获取调用该函数的所有节点
-func (s *StaticEntDBImpl) GetCallerEdges(calleeKey string) ([]*entity.FuncNode, error) {
+func (s *StaticEntDBImpl) GetCallerEdges(calleeKey string) ([]*dos.FuncNode, error) {
 	ctx := context.Background()
 
 	// 查询调用该函数的节点
@@ -152,9 +152,9 @@ func (s *StaticEntDBImpl) GetCallerEdges(calleeKey string) ([]*entity.FuncNode, 
 	}
 
 	// 转换为业务实体
-	var nodes []*entity.FuncNode
+	var nodes []*dos.FuncNode
 	for _, caller := range callers {
-		node := &entity.FuncNode{
+		node := &dos.FuncNode{
 			Key:  caller.Key,
 			Pkg:  caller.Pkg,
 			Name: caller.Name,
@@ -166,7 +166,7 @@ func (s *StaticEntDBImpl) GetCallerEdges(calleeKey string) ([]*entity.FuncNode, 
 }
 
 // GetCalleeEdges 获取该函数调用的所有节点
-func (s *StaticEntDBImpl) GetCalleeEdges(callerKey string) ([]*entity.FuncNode, error) {
+func (s *StaticEntDBImpl) GetCalleeEdges(callerKey string) ([]*dos.FuncNode, error) {
 	ctx := context.Background()
 
 	// 查询调用该函数的节点
@@ -179,9 +179,9 @@ func (s *StaticEntDBImpl) GetCalleeEdges(callerKey string) ([]*entity.FuncNode, 
 	}
 
 	// 转换为业务实体
-	var nodes []*entity.FuncNode
+	var nodes []*dos.FuncNode
 	for _, caller := range callers {
-		node := &entity.FuncNode{
+		node := &dos.FuncNode{
 			Key:  caller.Key,
 			Pkg:  caller.Pkg,
 			Name: caller.Name,
@@ -192,7 +192,7 @@ func (s *StaticEntDBImpl) GetCalleeEdges(callerKey string) ([]*entity.FuncNode, 
 }
 
 // GetAllFuncNodes 获取所有函数节点
-func (s *StaticEntDBImpl) GetAllFuncNodes() ([]*entity.FuncNode, error) {
+func (s *StaticEntDBImpl) GetAllFuncNodes() ([]*dos.FuncNode, error) {
 	ctx := context.Background()
 
 	// 查询所有函数节点
@@ -204,9 +204,9 @@ func (s *StaticEntDBImpl) GetAllFuncNodes() ([]*entity.FuncNode, error) {
 	}
 
 	// 转换为业务实体
-	var nodes []*entity.FuncNode
+	var nodes []*dos.FuncNode
 	for _, funcEnt := range funcEnts {
-		node := &entity.FuncNode{
+		node := &dos.FuncNode{
 			Key:  funcEnt.Key,
 			Pkg:  funcEnt.Pkg,
 			Name: funcEnt.Name,
@@ -218,7 +218,7 @@ func (s *StaticEntDBImpl) GetAllFuncNodes() ([]*entity.FuncNode, error) {
 }
 
 // GetAllFuncEdges 获取所有函数调用边
-func (s *StaticEntDBImpl) GetAllFuncEdges() ([]*entity.FuncEdge, error) {
+func (s *StaticEntDBImpl) GetAllFuncEdges() ([]*dos.FuncEdge, error) {
 	ctx := context.Background()
 
 	// 查询所有函数调用边
@@ -230,9 +230,9 @@ func (s *StaticEntDBImpl) GetAllFuncEdges() ([]*entity.FuncEdge, error) {
 	}
 
 	// 转换为业务实体
-	var edges []*entity.FuncEdge
+	var edges []*dos.FuncEdge
 	for _, funcEdge := range funcEdges {
-		edge := &entity.FuncEdge{
+		edge := &dos.FuncEdge{
 			CallerKey: funcEdge.CallerKey,
 			CalleeKey: funcEdge.CalleeKey,
 		}
