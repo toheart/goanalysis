@@ -33,6 +33,9 @@ func RegisterAllCommands() {
 	// 注册Git命令
 	Registry.Register(commands.NewGitCommand())
 
+	// 注册同步命令
+	Registry.Register(commands.NewSyncCommand())
+
 }
 
 // Execute 执行根命令
