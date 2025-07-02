@@ -113,13 +113,7 @@ service Analysis {
     };
   }
   
-  // GetUnfinishedFunctions 获取未完成的函数列表
-  rpc GetUnfinishedFunctions(GetUnfinishedFunctionsReq) returns (GetUnfinishedFunctionsReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/unfinished-functions"
-      body: "*"
-    };
-  }
+
 
   
   // 获取运行时树状图数据
@@ -241,6 +235,7 @@ message TraceData {
   int32 paramCount = 6;
   string timeCost = 7;
   int64 parentId = 8; // 父函数ID
+  string seq = 9; // 序列号
 }
   repeated TraceData traceData = 1;
 }
@@ -315,6 +310,7 @@ message GetTracesByParentFuncReply {
     int32 paramCount = 6;
     string timeCost = 7;
     int64 parentId = 8; // 父函数ID
+    string seq = 9; // 序列号
   }
   repeated TraceData traceData = 1;
 }
@@ -333,6 +329,7 @@ message FunctionNode {
   string timeCost = 6;
   int32  paramCount= 7;
   int32 depth = 8;
+  string seq = 9; // 序列号
 }
 
 message GetParentFunctionsReply {
@@ -433,26 +430,7 @@ message InstrumentProjectReply {
   string message = 2; // 消息
 }
 
-// GetUnfinishedFunctions 请求
-message GetUnfinishedFunctionsReq {
-  string dbpath = 1; // 数据库路径
-  int64 threshold = 2; // 阻塞时间阈值（毫秒）
-  int32 page = 3; // 当前页码
-  int32 limit = 4; // 每页数量
-}
 
-// GetUnfinishedFunctions 响应
-message GetUnfinishedFunctionsReply {
-  message UnfinishedFunction {
-    string name = 1; // 函数名称
-    uint64 gid = 2; // goroutine ID
-    string runningTime = 3; // 运行时间
-    bool isBlocking = 4; // 是否阻塞
-    int64 functionId = 5; // 函数ID
-  }
-  repeated UnfinishedFunction functions = 1; // 未完成函数列表
-  int32 total = 2; // 总数
-}
 
 // 获取树状图请求
 message GetTreeGraphReq {

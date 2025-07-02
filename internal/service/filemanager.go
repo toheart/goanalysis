@@ -10,8 +10,8 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/toheart/goanalysis/api/filemanager/v1"
-	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/biz/filemanager"
+	"github.com/toheart/goanalysis/internal/biz/filemanager/dos"
 	"github.com/toheart/goanalysis/internal/server/iface"
 	"google.golang.org/grpc"
 )
@@ -60,7 +60,7 @@ func (s *FileManagerService) GetFileInfo(ctx context.Context, req *v1.GetFileInf
 // ListFiles 获取文件列表
 func (s *FileManagerService) ListFiles(ctx context.Context, req *v1.ListFilesRequest) (*v1.ListFilesReply, error) {
 	// 转换文件类型
-	fileType := entity.NewFileType(req.FileType)
+	fileType := dos.NewFileType(req.FileType)
 
 	// 获取文件列表
 	fileInfos, err := s.fileBiz.ListFiles(fileType, int(req.Limit), int(req.Offset))
@@ -116,12 +116,12 @@ func (s *FileManagerService) DownloadFile(ctx context.Context, req *v1.DownloadF
 }
 
 // convertToProtoFileInfo 将实体文件信息转换为proto文件信息
-func convertToProtoFileInfo(fileInfo *entity.FileInfo) *v1.FileInfo {
+func convertToProtoFileInfo(fileInfo *dos.FileInfo) *v1.FileInfo {
 	var fileType v1.FileType
 	switch fileInfo.FileType {
-	case entity.FileTypeRuntime:
+	case dos.FileTypeRuntime:
 		fileType = v1.FileType_FILE_TYPE_RUNTIME
-	case entity.FileTypeStatic:
+	case dos.FileTypeStatic:
 		fileType = v1.FileType_FILE_TYPE_STATIC
 	default:
 		fileType = v1.FileType_FILE_TYPE_UNSPECIFIED

@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -156,28 +155,6 @@ func (s *StaticAnalysisService) AnalyzeDbFile(ctx context.Context, req *v1.Analy
 		return nil, err
 	}
 
-	// 转换为API响应格式
-	var packageDeps []*v1.PackageDependency
-	if result.PackageDependencies != nil {
-		for _, dep := range result.PackageDependencies {
-			packageDeps = append(packageDeps, &v1.PackageDependency{
-				Source: dep.Source,
-				Target: dep.Target,
-				Count:  int32(dep.Count),
-			})
-		}
-	}
-
-	var hotFuncs []*v1.HotFunction
-	if result.HotFunctions != nil {
-		for _, fn := range result.HotFunctions {
-			hotFuncs = append(hotFuncs, &v1.HotFunction{
-				Name:      fn.Name,
-				CallCount: int32(fn.CallCount),
-			})
-		}
-	}
-
 	s.log.Infof("Database analysis completed, found %d functions, %d calls, %d packages",
 		result.TotalFunctions, result.TotalCalls, result.TotalPackages)
 
@@ -185,8 +162,8 @@ func (s *StaticAnalysisService) AnalyzeDbFile(ctx context.Context, req *v1.Analy
 		TotalFunctions:      int32(result.TotalFunctions),
 		TotalCalls:          int32(result.TotalCalls),
 		TotalPackages:       int32(result.TotalPackages),
-		PackageDependencies: packageDeps,
-		HotFunctions:        hotFuncs,
+		PackageDependencies: nil, // 移除包依赖关系分析
+		HotFunctions:        nil, // 移除热点函数分析
 	}, nil
 }
 
@@ -330,9 +307,9 @@ func (s *StaticAnalysisService) GetFunctionAnalysis(ctx context.Context, req *v1
 // GetFunctionCallGraph 获取函数调用关系图
 func (s *StaticAnalysisService) GetFunctionCallGraph(ctx context.Context, req *v1.GetFunctionCallGraphReq) (*v1.GetFunctionCallGraphReply, error) {
 	// 验证函数名称
-	if req.FunctionName == "" {
-		s.log.Error("Function name cannot be empty")
-		return nil, fmt.Errorf("Function name cannot be empty")
+	if req.FunctionKey == "" {
+		s.log.Error("Function key cannot be empty")
+		return nil, fmt.Errorf("Function key cannot be empty")
 	}
 
 	// 设置默认值
@@ -349,8 +326,8 @@ func (s *StaticAnalysisService) GetFunctionCallGraph(ctx context.Context, req *v
 		return nil, fmt.Errorf("Invalid direction: %s, should be 'caller', 'callee' or 'both'", direction)
 	}
 
-	s.log.Infof("Getting call graph for function %s, depth: %d, direction: %s", req.FunctionName, depth, direction)
-	nodes, edges, err := s.uc.GetFunctionCallGraph(req.FunctionName, depth, direction)
+	s.log.Infof("Getting call graph for function %s, depth: %d, direction: %s", req.FunctionKey, depth, direction)
+	nodes, edges, err := s.uc.GetFunctionCallGraph(req.FunctionKey, depth, direction)
 	if err != nil {
 		s.log.Errorf("Failed to get function call graph: %v", err)
 		return nil, err
@@ -359,7 +336,7 @@ func (s *StaticAnalysisService) GetFunctionCallGraph(ctx context.Context, req *v
 	var protoNodes []*v1.GetFunctionCallGraphReply_GraphNode
 	for _, node := range nodes {
 		protoNodes = append(protoNodes, &v1.GetFunctionCallGraphReply_GraphNode{
-			Id:        node.ID,
+			Key:       node.ID,
 			Name:      node.Name,
 			Package:   node.Package,
 			CallCount: int32(node.CallCount),
@@ -392,20 +369,11 @@ type staticDbFile struct {
 	CreateTime time.Time `json:"createTime"`
 }
 
-// 分析结果结构
+// 分析结果结构（简化版：仅包含基本统计信息）
 type staticAnalysisResult struct {
-	TotalFunctions      int `json:"totalFunctions"`
-	TotalCalls          int `json:"totalCalls"`
-	TotalPackages       int `json:"totalPackages"`
-	PackageDependencies []struct {
-		Source string `json:"source"`
-		Target string `json:"target"`
-		Count  int    `json:"count"`
-	} `json:"packageDependencies"`
-	HotFunctions []struct {
-		Name      string `json:"name"`
-		CallCount int    `json:"callCount"`
-	} `json:"hotFunctions"`
+	TotalFunctions int `json:"totalFunctions"`
+	TotalCalls     int `json:"totalCalls"`
+	TotalPackages  int `json:"totalPackages"`
 }
 
 // 获取数据库文件列表
@@ -420,28 +388,27 @@ func (s *StaticAnalysisService) getDbFiles() ([]staticDbFile, error) {
 
 	s.log.Infof("Getting database files from directory %s", dbPath)
 
-	files, err := os.ReadDir(dbPath)
-	if err != nil {
-		s.log.Errorf("Failed to read database directory: %v", err)
-		return nil, fmt.Errorf("Failed to read database directory: %v", err)
-	}
-
 	var dbFiles []staticDbFile
-	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".db" {
-			info, err := file.Info()
-			if err != nil {
-				s.log.Warnf("Failed to get file info: %s, error: %v", file.Name(), err)
-				continue
-			}
+	err := filepath.Walk(dbPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			s.log.Warnf("Failed to access path %s: %v", path, err)
+			return nil
+		}
 
+		if !info.IsDir() && filepath.Ext(path) == ".db" {
 			dbFiles = append(dbFiles, staticDbFile{
-				Path:       filepath.Join(dbPath, file.Name()),
-				Name:       file.Name(),
+				Path:       path,
+				Name:       info.Name(),
 				Size:       info.Size(),
 				CreateTime: info.ModTime(),
 			})
 		}
+		return nil
+	})
+
+	if err != nil {
+		s.log.Errorf("Failed to walk database directory: %v", err)
+		return nil, fmt.Errorf("Failed to walk database directory: %v", err)
 	}
 
 	// 按创建时间降序排序，最新的文件排在前面
@@ -453,7 +420,7 @@ func (s *StaticAnalysisService) getDbFiles() ([]staticDbFile, error) {
 	return dbFiles, nil
 }
 
-// 从数据库中读取实际的调用图数据
+// 从数据库中读取实际的调用图数据（优化后：仅统计基本信息，移除包依赖和热点函数分析）
 func (s *StaticAnalysisService) analyzeDbReal(dbPath string) (*staticAnalysisResult, error) {
 	// 验证文件是否存在
 	if _, err := os.Stat(dbPath); err != nil {
@@ -469,127 +436,32 @@ func (s *StaticAnalysisService) analyzeDbReal(dbPath string) (*staticAnalysisRes
 		return nil, fmt.Errorf("Failed to get database connection: %v", err)
 	}
 
-	// 获取所有函数节点
+	// 获取所有函数节点（只为统计数量和包数量）
 	nodes, err := funcNodeDB.GetAllFuncNodes()
 	if err != nil {
 		s.log.Errorf("Failed to get function nodes: %v", err)
 		return nil, fmt.Errorf("Failed to get function nodes: %v", err)
 	}
 
-	// 获取所有函数调用边
+	// 获取所有函数调用边（只为统计数量）
 	edges, err := funcNodeDB.GetAllFuncEdges()
 	if err != nil {
 		s.log.Errorf("Failed to get function edges: %v", err)
 		return nil, fmt.Errorf("Failed to get function edges: %v", err)
 	}
 
-	// 统计包依赖关系
-	packageDeps := make(map[string]map[string]int)
-	for _, edge := range edges {
-		// 获取调用方和被调用方的节点
-		caller, err := funcNodeDB.GetFuncNodeByKey(edge.CallerKey)
-		if err != nil || caller == nil {
-			continue
-		}
-
-		callee, err := funcNodeDB.GetFuncNodeByKey(edge.CalleeKey)
-		if err != nil || callee == nil {
-			continue
-		}
-
-		// 如果调用方和被调用方的包不同，则记录包依赖关系
-		if caller.Pkg != callee.Pkg {
-			if _, ok := packageDeps[caller.Pkg]; !ok {
-				packageDeps[caller.Pkg] = make(map[string]int)
-			}
-			packageDeps[caller.Pkg][callee.Pkg]++
-		}
-	}
-
-	// 统计热点函数（被调用次数最多的函数）
-	funcCallCounts := make(map[string]int)
-	for _, edge := range edges {
-		funcCallCounts[edge.CalleeKey]++
-	}
-
-	// 转换包依赖关系为结果格式
-	var packageDependencies []struct {
-		Source string `json:"source"`
-		Target string `json:"target"`
-		Count  int    `json:"count"`
-	}
-
-	for source, targets := range packageDeps {
-		for target, count := range targets {
-			packageDependencies = append(packageDependencies, struct {
-				Source string `json:"source"`
-				Target string `json:"target"`
-				Count  int    `json:"count"`
-			}{
-				Source: source,
-				Target: target,
-				Count:  count,
-			})
-		}
-	}
-
-	// 按依赖关系数量排序
-	sort.Slice(packageDependencies, func(i, j int) bool {
-		return packageDependencies[i].Count > packageDependencies[j].Count
-	})
-
-	// 限制返回的包依赖关系数量
-	if len(packageDependencies) > 20 {
-		packageDependencies = packageDependencies[:20]
-	}
-
-	// 转换热点函数为结果格式
-	var hotFunctions []struct {
-		Name      string `json:"name"`
-		CallCount int    `json:"callCount"`
-	}
-
-	// 创建一个函数键到函数节点的映射
-	funcNodeMap := make(map[string]*dos.FuncNode)
-	for _, node := range nodes {
-		funcNodeMap[node.Key] = node
-	}
-
-	// 将函数调用次数转换为热点函数列表
-	for key, count := range funcCallCounts {
-		if node, ok := funcNodeMap[key]; ok {
-			hotFunctions = append(hotFunctions, struct {
-				Name      string `json:"name"`
-				CallCount int    `json:"callCount"`
-			}{
-				Name:      fmt.Sprintf("%s.%s", node.Pkg, node.Name),
-				CallCount: count,
-			})
-		}
-	}
-
-	// 按调用次数排序
-	sort.Slice(hotFunctions, func(i, j int) bool {
-		return hotFunctions[i].CallCount > hotFunctions[j].CallCount
-	})
-
-	// 限制返回的热点函数数量
-	if len(hotFunctions) > 20 {
-		hotFunctions = hotFunctions[:20]
-	}
-
-	// 统计包的数量
+	// 统计包的数量（优化：使用map去重）
 	packages := make(map[string]bool)
 	for _, node := range nodes {
-		packages[node.Pkg] = true
+		if node.Pkg != "" {
+			packages[node.Pkg] = true
+		}
 	}
 
 	result := &staticAnalysisResult{
-		TotalFunctions:      len(nodes),
-		TotalCalls:          len(edges),
-		TotalPackages:       len(packages),
-		PackageDependencies: packageDependencies,
-		HotFunctions:        hotFunctions,
+		TotalFunctions: len(nodes),
+		TotalCalls:     len(edges),
+		TotalPackages:  len(packages),
 	}
 
 	s.log.Infof("Database analysis completed, found %d functions, %d calls, %d packages",
@@ -782,54 +654,25 @@ func (s *StaticAnalysisService) SearchFunctions(ctx context.Context, req *v1.Sea
 		return nil, fmt.Errorf("Failed to get database connection: %v", err)
 	}
 
-	// 获取所有函数节点
-	nodes, err := funcNodeDB.GetAllFuncNodes()
-	if err != nil {
-		s.log.Errorf("Failed to get function nodes: %v", err)
-		return nil, fmt.Errorf("Failed to get function nodes: %v", err)
-	}
-	s.log.Infof("Total function nodes: %d", len(nodes))
-
-	// 获取所有函数调用边
-	edges, err := funcNodeDB.GetAllFuncEdges()
-	if err != nil {
-		s.log.Errorf("Failed to get function edges: %v", err)
-		return nil, fmt.Errorf("Failed to get function edges: %v", err)
-	}
-	s.log.Infof("Total function edges: %d", len(edges))
-
-	// 统计函数被调用次数
-	funcCallCounts := make(map[string]int)
-	for _, edge := range edges {
-		funcCallCounts[edge.CalleeKey]++
-	}
-
-	// 模糊搜索函数
-	query := strings.ToLower(req.Query)
-	var matchedFunctions []*v1.FunctionInfo
-
-	for _, node := range nodes {
-		// 检查函数名或包名是否包含查询字符串
-		if strings.Contains(strings.ToLower(node.Name), query) ||
-			strings.Contains(strings.ToLower(node.Pkg), query) {
-			matchedFunctions = append(matchedFunctions, &v1.FunctionInfo{
-				Key:       node.Key,
-				Name:      node.Name,
-				Package:   node.Pkg,
-				CallCount: int32(funcCallCounts[node.Key]),
-			})
-		}
-	}
-
-	// 按调用次数排序
-	sort.Slice(matchedFunctions, func(i, j int) bool {
-		return matchedFunctions[i].CallCount > matchedFunctions[j].CallCount
-	})
-
-	// 限制返回的结果数量
+	// 设置查询限制
 	maxResults := 50
-	if len(matchedFunctions) > maxResults {
-		matchedFunctions = matchedFunctions[:maxResults]
+
+	// 使用数据库模糊查询
+	nodes, err := funcNodeDB.SearchFuncNodes(req.Query, maxResults)
+	if err != nil {
+		s.log.Errorf("Failed to search function nodes: %v", err)
+		return nil, fmt.Errorf("Failed to search function nodes: %v", err)
+	}
+
+	// 转换为API响应格式
+	var matchedFunctions []*v1.FunctionInfo
+	for _, node := range nodes {
+		matchedFunctions = append(matchedFunctions, &v1.FunctionInfo{
+			Key:       node.Key,
+			Name:      node.Name,
+			Package:   node.Pkg,
+			CallCount: 0, // 不计算调用次数，提高性能
+		})
 	}
 
 	s.log.Infof("Found %d matching functions for query: %s", len(matchedFunctions), req.Query)
@@ -837,12 +680,11 @@ func (s *StaticAnalysisService) SearchFunctions(ctx context.Context, req *v1.Sea
 	// 打印前几个匹配结果的详细信息
 	if len(matchedFunctions) > 0 {
 		for i := 0; i < min(5, len(matchedFunctions)); i++ {
-			s.log.Infof("Match %d: Key=%s, Name=%s, Package=%s, CallCount=%d",
+			s.log.Infof("Match %d: Key=%s, Name=%s, Package=%s",
 				i+1,
 				matchedFunctions[i].Key,
 				matchedFunctions[i].Name,
-				matchedFunctions[i].Package,
-				matchedFunctions[i].CallCount)
+				matchedFunctions[i].Package)
 		}
 	}
 
@@ -912,7 +754,7 @@ func (s *StaticAnalysisService) GetFunctionUpstream(ctx context.Context, req *v1
 
 	// 添加目标节点
 	graphNodes = append(graphNodes, &v1.GraphNode{
-		Id:        targetNode.Key,
+		Key:       targetNode.Key,
 		Name:      targetNode.Name,
 		Package:   targetNode.Pkg,
 		CallCount: int32(funcCallCounts[targetNode.Key]),
@@ -969,7 +811,7 @@ func (s *StaticAnalysisService) findAllUpstreamCalls(
 
 		// 添加节点
 		*graphNodes = append(*graphNodes, &v1.GraphNode{
-			Id:        callerNode.Key,
+			Key:       callerNode.Key,
 			Name:      callerNode.Name,
 			Package:   callerNode.Pkg,
 			CallCount: int32(funcCallCounts[callerNode.Key]),
@@ -1000,7 +842,7 @@ func (s *StaticAnalysisService) findTopLevelCallers(nodes []*v1.GraphNode, edges
 	// 找出没有被调用的节点（最顶层调用函数）
 	var topLevelNodes []*v1.GraphNode
 	for _, node := range nodes {
-		if !hasCallers[node.Id] && node.Id != "" {
+		if !hasCallers[node.Key] && node.Key != "" {
 			topLevelNodes = append(topLevelNodes, node)
 		}
 	}
@@ -1061,7 +903,7 @@ func (s *StaticAnalysisService) GetFunctionDownstream(ctx context.Context, req *
 
 	// 添加目标节点
 	graphNodes = append(graphNodes, &v1.GraphNode{
-		Id:        targetNode.Key,
+		Key:       targetNode.Key,
 		Name:      targetNode.Name,
 		Package:   targetNode.Pkg,
 		CallCount: int32(funcCallCounts[targetNode.Key]),
@@ -1118,7 +960,7 @@ func (s *StaticAnalysisService) findAllDownstreamCalls(
 
 		// 添加节点
 		*graphNodes = append(*graphNodes, &v1.GraphNode{
-			Id:        calleeNode.Key,
+			Key:       calleeNode.Key,
 			Name:      calleeNode.Name,
 			Package:   calleeNode.Pkg,
 			CallCount: int32(funcCallCounts[calleeNode.Key]),
@@ -1149,7 +991,7 @@ func (s *StaticAnalysisService) findLeafNodes(nodes []*v1.GraphNode, edges []*v1
 	// 找出没有调用其他节点的节点（叶子节点）
 	var leafNodes []*v1.GraphNode
 	for _, node := range nodes {
-		if !hasCallees[node.Id] {
+		if !hasCallees[node.Key] {
 			leafNodes = append(leafNodes, node)
 		}
 	}
@@ -1211,7 +1053,7 @@ func (s *StaticAnalysisService) GetFunctionFullChain(ctx context.Context, req *v
 
 	// 添加目标节点
 	graphNodes = append(graphNodes, &v1.GraphNode{
-		Id:        targetNode.Key,
+		Key:       targetNode.Key,
 		Name:      targetNode.Name,
 		Package:   targetNode.Pkg,
 		CallCount: int32(funcCallCounts[targetNode.Key]),
@@ -1243,8 +1085,8 @@ func (s *StaticAnalysisService) mergeNodes(nodes []*v1.GraphNode) []*v1.GraphNod
 	nodeMap := make(map[string]*v1.GraphNode)
 
 	for _, node := range nodes {
-		if _, exists := nodeMap[node.Id]; !exists {
-			nodeMap[node.Id] = node
+		if _, exists := nodeMap[node.Key]; !exists {
+			nodeMap[node.Key] = node
 		}
 	}
 
@@ -1258,10 +1100,10 @@ func (s *StaticAnalysisService) mergeNodes(nodes []*v1.GraphNode) []*v1.GraphNod
 
 // GetTreeGraph 获取静态分析树状图数据
 func (s *StaticAnalysisService) GetTreeGraph(ctx context.Context, req *v1.GetTreeGraphReq) (*v1.GetTreeGraphReply, error) {
-	s.log.Infof("get tree graph, function: %s, dbpath: %s", req.FunctionName, req.DbPath)
+	s.log.Infof("get tree graph, function: %s, dbpath: %s", req.FunctionKey, req.DbPath)
 
 	// 调用业务逻辑获取树状图数据
-	treeGraph, err := s.uc.GetTreeGraph(req.FunctionName, req.DbPath)
+	treeGraph, err := s.uc.GetTreeGraph(req.FunctionKey, req.DbPath)
 	if err != nil {
 		s.log.Errorf("get tree graph failed: %v", err)
 		return nil, err
@@ -1297,3 +1139,22 @@ func (s *StaticAnalysisService) convertTreeNodeToProto(node *entity.TreeNode) *v
 
 	return protoNode
 }
+
+// findFunctionByKey 通过函数Key查找函数节点
+func (s *StaticAnalysisService) findFunctionByKey(funcNodeDB repo.StaticDBStore, functionKey string) (*dos.FuncNode, error) {
+	// 直接通过Key查找函数节点
+	node, err := funcNodeDB.GetFuncNodeByKey(functionKey)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get function node by key: %s", err)
+	}
+
+	if node == nil {
+		return nil, fmt.Errorf("Function not found with key: %s", functionKey)
+	}
+
+	return node, nil
+}
+
+// GetFunctionMindMap 已删除 - 已替换为树形表格功能
+
+// 思维导图相关辅助方法已删除 - 已替换为树形表格功能

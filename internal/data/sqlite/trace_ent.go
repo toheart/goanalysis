@@ -404,6 +404,7 @@ func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]*entity.Function, erro
 		f := entity.NewFunction(int64(item.ID), item.Name, 0, item.TimeCost, "0ms")
 		f.ParamCount = item.ParamsCount
 		f.Depth = item.Indent + 1
+		f.Seq = item.Seq // 添加seq字段
 		result = append(result, f)
 	}
 
@@ -949,57 +950,6 @@ func (d *TraceEntDB) IsGoroutineFinished(gid uint64) (bool, error) {
 
 	// 检查is_finished字段
 	return goroutine.IsFinished == 1, nil
-}
-
-// GetAllUnfinishedFunctions 获取所有未完成的函数
-func (d *TraceEntDB) GetAllUnfinishedFunctions(threshold int64) ([]entity.AllUnfinishedFunction, error) {
-	ctx := context.Background()
-
-	// 获取最后一条trace
-	trace, err := d.GetLastFunction()
-	if err != nil {
-		return nil, fmt.Errorf("get last function failed: %w", err)
-	}
-	lastTraceTime, err := time.Parse(time.RFC3339Nano, trace.CreatedAt)
-	if err != nil {
-		return nil, fmt.Errorf("parse last trace time failed: %w", err)
-	}
-
-	// 查询未完成的跟踪数据
-	var unfinishedFunctions []entity.AllUnfinishedFunction
-	traces, err := d.client.TraceData.Query().
-		Where(tracedata.TimeCostIsNil()).
-		Order(gen.Desc(tracedata.FieldCreatedAt)).
-		All(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("find unfinished functions failed: %w", err)
-	}
-
-	// 过滤超过阈值的函数
-	for _, trace := range traces {
-		// 解析创建时间
-		createTime, err := time.Parse(time.RFC3339Nano, trace.CreatedAt)
-		if err != nil {
-			continue
-		}
-
-		// 计算已经过去的毫秒数
-		elapsedMS := lastTraceTime.Sub(createTime).Milliseconds()
-
-		// 只保留超过阈值的函数
-		if elapsedMS > threshold {
-			unfinishedFunction := entity.AllUnfinishedFunction{
-				Name:        trace.Name,
-				GID:         trace.Gid,
-				RunningTime: lastTraceTime.Sub(createTime).String(),
-				IsBlocking:  true,
-				FunctionID:  int64(trace.ID),
-			}
-			unfinishedFunctions = append(unfinishedFunctions, unfinishedFunction)
-		}
-	}
-
-	return unfinishedFunctions, nil
 }
 
 func (d *TraceEntDB) SearchFunctions(ctx context.Context, dbPath string, query string, limit int32) ([]*entity.Function, int32, error) {

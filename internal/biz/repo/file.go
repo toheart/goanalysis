@@ -1,10 +1,10 @@
 package repo
 
-import "github.com/toheart/goanalysis/internal/biz/entity"
+import "github.com/toheart/goanalysis/internal/biz/filemanager/dos"
 
 type FileRepo interface {
 	DeleteFileInfo(id int64) error
-	GetFileInfoByID(id int64) (*entity.FileInfo, error)
-	ListFileInfos(fileType entity.FileType, limit int, offset int) ([]*entity.FileInfo, error)
-	SaveFileInfo(info *entity.FileInfo) error
+	GetFileInfoByID(id int64) (*dos.FileInfo, error)
+	ListFileInfos(fileType dos.FileType, limit int, offset int) ([]*dos.FileInfo, error)
+	SaveFileInfo(info *dos.FileInfo) error
 }

@@ -42,6 +42,20 @@ func (fnu *FuncNodeUpdate) SetNillableKey(s *string) *FuncNodeUpdate {
 	return fnu
 }
 
+// SetFullName sets the "full_name" field.
+func (fnu *FuncNodeUpdate) SetFullName(s string) *FuncNodeUpdate {
+	fnu.mutation.SetFullName(s)
+	return fnu
+}
+
+// SetNillableFullName sets the "full_name" field if the given value is not nil.
+func (fnu *FuncNodeUpdate) SetNillableFullName(s *string) *FuncNodeUpdate {
+	if s != nil {
+		fnu.SetFullName(*s)
+	}
+	return fnu
+}
+
 // SetPkg sets the "pkg" field.
 func (fnu *FuncNodeUpdate) SetPkg(s string) *FuncNodeUpdate {
 	fnu.mutation.SetPkg(s)
@@ -137,6 +151,11 @@ func (fnu *FuncNodeUpdate) check() error {
 			return &ValidationError{Name: "key", err: fmt.Errorf(`gen: validator failed for field "FuncNode.key": %w`, err)}
 		}
 	}
+	if v, ok := fnu.mutation.FullName(); ok {
+		if err := funcnode.FullNameValidator(v); err != nil {
+			return &ValidationError{Name: "full_name", err: fmt.Errorf(`gen: validator failed for field "FuncNode.full_name": %w`, err)}
+		}
+	}
 	if v, ok := fnu.mutation.Pkg(); ok {
 		if err := funcnode.PkgValidator(v); err != nil {
 			return &ValidationError{Name: "pkg", err: fmt.Errorf(`gen: validator failed for field "FuncNode.pkg": %w`, err)}
@@ -164,6 +183,9 @@ func (fnu *FuncNodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := fnu.mutation.Key(); ok {
 		_spec.SetField(funcnode.FieldKey, field.TypeString, value)
+	}
+	if value, ok := fnu.mutation.FullName(); ok {
+		_spec.SetField(funcnode.FieldFullName, field.TypeString, value)
 	}
 	if value, ok := fnu.mutation.Pkg(); ok {
 		_spec.SetField(funcnode.FieldPkg, field.TypeString, value)
@@ -207,6 +229,20 @@ func (fnuo *FuncNodeUpdateOne) SetKey(s string) *FuncNodeUpdateOne {
 func (fnuo *FuncNodeUpdateOne) SetNillableKey(s *string) *FuncNodeUpdateOne {
 	if s != nil {
 		fnuo.SetKey(*s)
+	}
+	return fnuo
+}
+
+// SetFullName sets the "full_name" field.
+func (fnuo *FuncNodeUpdateOne) SetFullName(s string) *FuncNodeUpdateOne {
+	fnuo.mutation.SetFullName(s)
+	return fnuo
+}
+
+// SetNillableFullName sets the "full_name" field if the given value is not nil.
+func (fnuo *FuncNodeUpdateOne) SetNillableFullName(s *string) *FuncNodeUpdateOne {
+	if s != nil {
+		fnuo.SetFullName(*s)
 	}
 	return fnuo
 }
@@ -319,6 +355,11 @@ func (fnuo *FuncNodeUpdateOne) check() error {
 			return &ValidationError{Name: "key", err: fmt.Errorf(`gen: validator failed for field "FuncNode.key": %w`, err)}
 		}
 	}
+	if v, ok := fnuo.mutation.FullName(); ok {
+		if err := funcnode.FullNameValidator(v); err != nil {
+			return &ValidationError{Name: "full_name", err: fmt.Errorf(`gen: validator failed for field "FuncNode.full_name": %w`, err)}
+		}
+	}
 	if v, ok := fnuo.mutation.Pkg(); ok {
 		if err := funcnode.PkgValidator(v); err != nil {
 			return &ValidationError{Name: "pkg", err: fmt.Errorf(`gen: validator failed for field "FuncNode.pkg": %w`, err)}
@@ -363,6 +404,9 @@ func (fnuo *FuncNodeUpdateOne) sqlSave(ctx context.Context) (_node *FuncNode, er
 	}
 	if value, ok := fnuo.mutation.Key(); ok {
 		_spec.SetField(funcnode.FieldKey, field.TypeString, value)
+	}
+	if value, ok := fnuo.mutation.FullName(); ok {
+		_spec.SetField(funcnode.FieldFullName, field.TypeString, value)
 	}
 	if value, ok := fnuo.mutation.Pkg(); ok {
 		_spec.SetField(funcnode.FieldPkg, field.TypeString, value)

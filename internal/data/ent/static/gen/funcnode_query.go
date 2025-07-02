@@ -491,8 +491,8 @@ type FuncNodeSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (fns *FuncNodeSelect) Aggregate(agg ...AggregateFunc) *FuncNodeSelect {
-	fns.fns = append(fns.fns, agg...)
+func (fns *FuncNodeSelect) Aggregate(fnss ...AggregateFunc) *FuncNodeSelect {
+	fns.fns = append(fns.fns, fnss...)
 	return fns
 }
 

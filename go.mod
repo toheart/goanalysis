@@ -9,6 +9,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20250307161706-982270e9576b
 	github.com/go-kratos/kratos/v2 v2.8.4
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/wire v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
@@ -43,7 +44,6 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
-	github.com/go-resty/resty/v2 v2.16.5 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -64,6 +64,7 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/rakyll/statik v0.1.7 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect

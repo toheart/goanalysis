@@ -46,4 +46,8 @@ bin/
 *.log.*
 *git_repos/
 data
+statik/
+web/
 
+*.db
+openapi.yaml

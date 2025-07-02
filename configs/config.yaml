@@ -17,8 +17,6 @@ logger:
          # 压缩旧日志文件
 
 
-
-
 biz:
   gitlab:
     token: "${GITLAB_TOKEN}"                # GitLab访问令牌，用于API认证

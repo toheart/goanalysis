@@ -59,6 +59,11 @@ func Key(v string) predicate.FuncNode {
 	return predicate.FuncNode(sql.FieldEQ(FieldKey, v))
 }
 
+// FullName applies equality check predicate on the "full_name" field. It's identical to FullNameEQ.
+func FullName(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldFullName, v))
+}
+
 // Pkg applies equality check predicate on the "pkg" field. It's identical to PkgEQ.
 func Pkg(v string) predicate.FuncNode {
 	return predicate.FuncNode(sql.FieldEQ(FieldPkg, v))
@@ -142,6 +147,71 @@ func KeyEqualFold(v string) predicate.FuncNode {
 // KeyContainsFold applies the ContainsFold predicate on the "key" field.
 func KeyContainsFold(v string) predicate.FuncNode {
 	return predicate.FuncNode(sql.FieldContainsFold(FieldKey, v))
+}
+
+// FullNameEQ applies the EQ predicate on the "full_name" field.
+func FullNameEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldFullName, v))
+}
+
+// FullNameNEQ applies the NEQ predicate on the "full_name" field.
+func FullNameNEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNEQ(FieldFullName, v))
+}
+
+// FullNameIn applies the In predicate on the "full_name" field.
+func FullNameIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIn(FieldFullName, vs...))
+}
+
+// FullNameNotIn applies the NotIn predicate on the "full_name" field.
+func FullNameNotIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotIn(FieldFullName, vs...))
+}
+
+// FullNameGT applies the GT predicate on the "full_name" field.
+func FullNameGT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGT(FieldFullName, v))
+}
+
+// FullNameGTE applies the GTE predicate on the "full_name" field.
+func FullNameGTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGTE(FieldFullName, v))
+}
+
+// FullNameLT applies the LT predicate on the "full_name" field.
+func FullNameLT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLT(FieldFullName, v))
+}
+
+// FullNameLTE applies the LTE predicate on the "full_name" field.
+func FullNameLTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLTE(FieldFullName, v))
+}
+
+// FullNameContains applies the Contains predicate on the "full_name" field.
+func FullNameContains(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContains(FieldFullName, v))
+}
+
+// FullNameHasPrefix applies the HasPrefix predicate on the "full_name" field.
+func FullNameHasPrefix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasPrefix(FieldFullName, v))
+}
+
+// FullNameHasSuffix applies the HasSuffix predicate on the "full_name" field.
+func FullNameHasSuffix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasSuffix(FieldFullName, v))
+}
+
+// FullNameEqualFold applies the EqualFold predicate on the "full_name" field.
+func FullNameEqualFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEqualFold(FieldFullName, v))
+}
+
+// FullNameContainsFold applies the ContainsFold predicate on the "full_name" field.
+func FullNameContainsFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContainsFold(FieldFullName, v))
 }
 
 // PkgEQ applies the EQ predicate on the "pkg" field.

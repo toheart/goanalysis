@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/filemanager/dos"
 	"github.com/toheart/goanalysis/internal/biz/repo"
 	"github.com/toheart/goanalysis/internal/conf"
 )
@@ -31,7 +32,7 @@ func (f *FileBiz) GetUploadDir(runtime bool) string {
 }
 
 // UploadFile 上传文件
-func (f *FileBiz) SaveFileInfo(fileInfo *entity.FileInfo) (*entity.FileInfo, error) {
+func (f *FileBiz) SaveFileInfo(fileInfo *dos.FileInfo) (*dos.FileInfo, error) {
 	if err := f.repo.SaveFileInfo(fileInfo); err != nil {
 		// 删除已上传的文件
 		os.Remove(fileInfo.FilePath)
@@ -42,7 +43,7 @@ func (f *FileBiz) SaveFileInfo(fileInfo *entity.FileInfo) (*entity.FileInfo, err
 }
 
 // GetFileInfo 获取文件信息
-func (f *FileBiz) GetFileInfo(id int64) (*entity.FileInfo, error) {
+func (f *FileBiz) GetFileInfo(id int64) (*dos.FileInfo, error) {
 	fileInfo, err := f.repo.GetFileInfoByID(id)
 	if err != nil {
 		return nil, fmt.Errorf("get file info failed: %w", err)
@@ -56,7 +57,7 @@ func (f *FileBiz) GetFileInfo(id int64) (*entity.FileInfo, error) {
 }
 
 // ListFiles 获取文件列表
-func (f *FileBiz) ListFiles(fileType entity.FileType, limit int, offset int) ([]*entity.FileInfo, error) {
+func (f *FileBiz) ListFiles(fileType dos.FileType, limit int, offset int) ([]*dos.FileInfo, error) {
 	fileInfos, err := f.repo.ListFileInfos(fileType, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list file infos failed: %w", err)

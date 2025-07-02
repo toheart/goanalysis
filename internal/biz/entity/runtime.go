@@ -58,12 +58,3 @@ type FunctionGraphEdge struct {
 	Label    string // 边标签
 	EdgeType string // 边类型: "caller_to_root", "root_to_callee"
 }
-
-// UnfinishedFunction 未完成的函数
-type AllUnfinishedFunction struct {
-	Name        string `json:"name"`        // 函数名称
-	GID         uint64 `json:"gid"`         // goroutine ID
-	RunningTime string `json:"runningTime"` // 运行时间
-	IsBlocking  bool   `json:"isBlocking"`  // 是否阻塞
-	FunctionID  int64  `json:"functionId"`  // 函数ID
-}

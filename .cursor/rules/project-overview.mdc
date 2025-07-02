@@ -3,63 +3,66 @@ description:
 globs: 
 alwaysApply: false
 ---
-# 项目结构与导航指南
+# GoAnalysis 项目结构与导航指南
 
-本项目为 Go 语言开发的函数追踪分析与可视化系统，采用 Kratos 微服务架构，前端为 Vue3，后端为 Go。以下为主要目录和文件说明：
+本项目为 Go 语言开发的代码分析系统，包含静态分析、调用图分析、Git分析等功能。项目采用微服务架构，包含Go后端和Vue.js前端两部分。
 
-## 目录结构
+## 项目组成
 
-- [api/](mdc:api)  
-  存放所有 API 定义（protobuf），如静态分析、文件管理、分析等子模块。
-- [cmd/](mdc:cmd)  
-  主应用程序入口，包含各类命令行工具（如gitanalysis、callgraph、rewrite、server等）。
-- [configs/](mdc:configs)  
-  配置文件目录。
-- [internal/](mdc:internal)  
-  私有应用代码，包含：
-    - [biz/](mdc:internal/biz)  业务逻辑（如gitanalysis、staticanalysis、callgraph等）
-    - [data/](mdc:internal/data)  数据处理与存储（Ent/SQLite）
-    - [server/](mdc:internal/server)  服务器实现（HTTP/GRPC等）
-    - [service/](mdc:internal/service)  服务实现
-    - [conf/](mdc:internal/conf)  配置相关（proto及生成文件）
-    - [pkg/](mdc:internal/pkg)  通用工具包（如logger）
-- [third_party/](mdc:third_party)  
-  第三方依赖和集成内容。
-- [docs/](mdc:docs)  
-  项目文档及相关图片。
+### 后端服务 (goanalysis/)
+Go语言开发的微服务后端，提供分析引擎和API服务
 
-## 主要文件
+### 前端界面 (goanalysis-web/)  
+Vue3开发的Web界面，提供用户交互和数据可视化
 
-- [main.go](mdc:main.go)  
-  Go后端主入口。
-- [go.mod](mdc:go.mod) / [go.sum](mdc:go.sum)  
-  Go依赖管理文件。
-- [openapi.yaml](mdc:openapi.yaml)  
-  OpenAPI 规范定义。
-- [Dockerfile](mdc:Dockerfile)  
-  Docker 容器化配置。
-- [Makefile](mdc:Makefile)  
-  构建与自动化脚本。
-- [README.md](mdc:README.md) / [README.ZH.md](mdc:README.ZH.md)  
-  项目中英文说明文档。
-- [LICENSE](mdc:LICENSE)  
-  许可证。
+## 主要目录结构
 
-## 入口说明
+### 后端目录 (goanalysis/)
 
-- 主要后端服务通过 [cmd/server.go](mdc:cmd/server.go) 启动。
-- 插桩与分析等命令行工具见 [cmd/](mdc:cmd)。
+- [api/](mdc:goanalysis/api)  
+  gRPC/HTTP API定义（protobuf），包含analysis、filemanager、staticanalysis等服务定义
+- [cmd/](mdc:goanalysis/cmd)  
+  命令行工具入口，包含server、callgraph、git分析、rewrite等命令
+- [internal/](mdc:goanalysis/internal)  
+  核心业务代码：
+  - [biz/](mdc:goanalysis/internal/biz) - 业务逻辑层（analysis、callgraph、gitanalysis等）
+  - [service/](mdc:goanalysis/internal/service) - 服务实现层  
+  - [server/](mdc:goanalysis/internal/server) - 服务器配置（HTTP/gRPC）
+  - [pkg/](mdc:goanalysis/internal/pkg) - 内部工具包
+- [configs/](mdc:goanalysis/configs) - 配置文件
+- [third_party/](mdc:goanalysis/third_party) - 第三方protobuf定义
 
-## 其他说明
+### 前端目录 (goanalysis-web/)
 
-- 配置相关 proto 文件及生成代码位于 [internal/conf/](mdc:internal/conf)。
-- 数据存储与ORM相关代码位于 [internal/data/](mdc:internal/data)。
-- 业务逻辑分散在 [internal/biz/](mdc:internal/biz) 各子目录。
-- 详细的Git分析功能说明见 [docs/git_analysis.md](mdc:docs/git_analysis.md)。
-- 日志, 错误 采用英文。
-- 注释采用中文书写。
+- [src/components/](mdc:goanalysis/goanalysis-web/src/components) - Vue组件
+  - [callgraph/](mdc:goanalysis/goanalysis-web/src/components/callgraph) - 调用图分析组件
+  - [runtime/](mdc:goanalysis/goanalysis-web/src/components/runtime) - 运行时分析组件
+- [src/config/](mdc:goanalysis/goanalysis-web/src/config) - 前端配置
+- [src/router/](mdc:goanalysis/goanalysis-web/src/router) - 路由配置
+
+## 关键入口文件
+
+- [main.go](mdc:goanalysis/main.go) - Go后端主入口
+- [cmd/commands/server.go](mdc:goanalysis/cmd/commands/server.go) - 服务器启动命令
+- [goanalysis-web/src/main.js](mdc:goanalysis/goanalysis-web/src/main.js) - Vue前端入口
+- [go.mod](mdc:goanalysis/go.mod) - Go模块依赖
+- [goanalysis-web/package.json](mdc:goanalysis/goanalysis-web/package.json) - 前端依赖
+
+## 开发配置
+
+- [Dockerfile](mdc:goanalysis/Dockerfile) - Docker构建配置
+- [Makefile](mdc:goanalysis/Makefile) - 构建脚本
+- [configs/config.yaml](mdc:goanalysis/configs/config.yaml) - 应用配置
+- [openapi.yaml](mdc:goanalysis/openapi.yaml) - API文档
+
+## 开发规范
+
+- 后端日志和错误信息使用英文
+- 代码注释使用中文
+- API使用protobuf定义，支持gRPC和HTTP
+- 前端使用Vue3 + Composition API
 
 ---
 
-如需引用文件，请使用 `[文件名](mdc:文件名)` 格式，路径相对于项目根目录。
+引用文件请使用 `[文件名](mdc:goanalysis/文件路径)` 格式，路径相对于workspace根目录。
 

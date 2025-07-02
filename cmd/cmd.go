@@ -24,6 +24,9 @@ func RegisterAllCommands() {
 	// 注册服务器命令
 	Registry.Register(commands.NewServerCommand())
 
+	// 注册配置文件生成命令
+	Registry.Register(commands.NewConfigCommand())
+
 	// 注册调用图命令
 	Registry.Register(commands.NewCallGraphCommand())
 

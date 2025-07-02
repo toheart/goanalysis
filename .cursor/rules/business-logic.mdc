@@ -1,0 +1,195 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 业务逻辑指南
+
+## 核心业务模块
+
+GoAnalysis的核心业务逻辑集中在 [internal/biz/](mdc:internal/biz) 目录，实现了代码分析的各种功能。
+
+## 调用图分析 ([internal/biz/callgraph/](mdc:internal/biz/callgraph/))
+
+### 核心组件
+
+#### 程序分析器 ([program.go](mdc:internal/biz/callgraph/program.go))
+- **功能**: Go程序AST解析和调用图构建入口
+- **职责**: 
+  - 解析Go源代码
+  - 构建程序结构
+  - 初始化调用图分析
+
+#### 节点管理器 ([node_manager.go](mdc:internal/biz/callgraph/node_manager.go))
+- **功能**: 管理调用图中的节点（函数、方法等）
+- **职责**:
+  - 节点创建和索引
+  - 节点属性管理
+  - 节点查询和遍历
+
+#### 边管理器 ([edge_manager.go](mdc:internal/biz/callgraph/edge_manager.go))
+- **功能**: 管理调用关系（函数调用边）
+- **职责**:
+  - 调用关系识别
+  - 边权重计算
+  - 调用链路分析
+
+#### 过滤器 ([filter.go](mdc:internal/biz/callgraph/filter.go))
+- **功能**: 调用图过滤和裁剪
+- **职责**:
+  - 按条件过滤节点和边
+  - 调用深度控制
+  - 无关代码移除
+
+#### 数据对象 ([dos/node.go](mdc:internal/biz/callgraph/dos/node.go))
+- **功能**: 调用图数据结构定义
+- **内容**: 节点和边的数据模型
+
+### 使用指南 ([USAGE.md](mdc:internal/biz/callgraph/USAGE.md))
+详细的调用图分析使用说明和示例
+
+## Git分析 ([internal/biz/gitanalysis/](mdc:internal/biz/gitanalysis/))
+
+### 核心功能
+
+#### Git分析引擎 ([gitanalysis.go](mdc:internal/biz/gitanalysis/gitanalysis.go))
+- **功能**: Git仓库代码变更分析
+- **职责**:
+  - Git历史解析
+  - 代码差异分析
+  - 变更影响评估
+
+#### MR分析器 ([mr_analyzer.go](mdc:internal/biz/gitanalysis/mr_analyzer.go))
+- **功能**: Merge Request代码审查分析
+- **职责**:
+  - MR变更检测
+  - 代码质量评估
+  - 风险点识别
+
+#### LLM集成 ([llm.go](mdc:internal/biz/gitanalysis/llm.go))
+- **功能**: AI大模型代码分析
+- **职责**:
+  - 智能代码审查
+  - 代码建议生成
+  - 问题自动识别
+
+#### 数据对象 ([dos/](mdc:internal/biz/gitanalysis/dos/))
+- [llm.go](mdc:internal/biz/gitanalysis/dos/llm.go) - LLM相关数据结构
+- [result.go](mdc:internal/biz/gitanalysis/dos/result.go) - 分析结果数据结构
+
+#### 测试 ([gitanalysis_test.go](mdc:internal/biz/gitanalysis/gitanalysis_test.go))
+完整的单元测试覆盖
+
+## 静态分析 ([internal/biz/staticanalysis/](mdc:internal/biz/staticanalysis/))
+
+### 静态分析引擎 ([staticanalysis.go](mdc:internal/biz/staticanalysis/staticanalysis.go))
+- **功能**: Go代码静态分析
+- **职责**:
+  - 代码规范检查
+  - 潜在问题检测
+  - 性能问题识别
+  - 安全漏洞扫描
+
+## 文件管理 ([internal/biz/filemanager/](mdc:internal/biz/filemanager/))
+
+### 文件业务逻辑 ([file_biz.go](mdc:internal/biz/filemanager/file_biz.go))
+- **功能**: 文件系统操作和管理
+- **职责**:
+  - 源代码文件读取
+  - 文件结构分析
+  - 批量文件处理
+
+## 代码重写 ([internal/biz/rewrite/](mdc:internal/biz/rewrite/))
+
+### 重写引擎 ([rewrite.go](mdc:internal/biz/rewrite/rewrite.go))
+- **功能**: 自动化代码重构和重写
+- **职责**:
+  - AST级别代码修改
+  - 代码格式化
+  - 重构规则应用
+
+## 分析引擎 ([internal/biz/analysis/](mdc:internal/biz/analysis/))
+
+### 核心分析器 ([analysis.go](mdc:internal/biz/analysis/analysis.go))
+- **功能**: 统一分析接口和流程控制
+- **职责**:
+  - 分析任务调度
+  - 结果聚合
+  - 分析流程编排
+
+## 实体定义 ([internal/biz/entity/](mdc:internal/biz/entity/))
+
+### 数据实体
+
+#### 分析实体 ([analysis.go](mdc:internal/biz/entity/analysis.go))
+- **内容**: 分析任务、结果、配置等数据结构
+- **用途**: 分析流程数据建模
+
+#### 调用图实体 ([callgraph.go](mdc:internal/biz/entity/callgraph.go))
+- **内容**: 调用图节点、边、路径等数据结构
+- **用途**: 调用关系数据建模
+
+#### 文件实体 ([file.go](mdc:internal/biz/entity/file.go))
+- **内容**: 文件信息、目录结构等数据结构
+- **用途**: 文件系统数据建模
+
+#### Git实体 ([gitlab.go](mdc:internal/biz/entity/gitlab.go))
+- **内容**: GitLab集成相关数据结构
+- **用途**: Git平台集成数据建模
+
+#### 运行时实体 ([runtime.go](mdc:internal/biz/entity/runtime.go))
+- **内容**: 运行时分析数据结构
+- **用途**: 动态分析数据建模
+
+#### 树图实体 ([tree_graph.go](mdc:internal/biz/entity/tree_graph.go))
+- **内容**: 树形结构和图形可视化数据结构
+- **用途**: 可视化数据建模
+
+#### 通用定义 ([define.go](mdc:internal/biz/entity/define.go))
+- **内容**: 通用常量、类型定义
+- **用途**: 系统级数据类型
+
+## 仓储接口 ([internal/biz/repo/](mdc:internal/biz/repo/))
+
+### 调用图仓储 ([callgraph.go](mdc:internal/biz/repo/callgraph.go))
+- **功能**: 调用图数据持久化接口
+- **职责**: 调用图数据的存储和查询
+
+### 文件仓储 ([file.go](mdc:internal/biz/repo/file.go))
+- **功能**: 文件数据持久化接口
+- **职责**: 文件元数据的存储和查询
+
+## 通道管理 ([internal/biz/chanMgr/](mdc:internal/biz/chanMgr/))
+
+### 通道管理器 ([channel.go](mdc:internal/biz/chanMgr/channel.go))
+- **功能**: Go channel管理和消息传递
+- **职责**:
+  - 异步任务通信
+  - 事件发布订阅
+  - 数据流控制
+
+## 业务设计原则
+
+### 1. 清洁架构
+- **实体优先**: 核心业务实体定义清晰
+- **依赖倒置**: 业务逻辑不依赖外层实现
+- **接口抽象**: 通过接口实现松耦合
+
+### 2. 领域驱动
+- **业务聚合**: 相关业务逻辑聚合在同一模块
+- **领域模型**: 业务概念直接映射到代码结构
+- **业务语言**: 使用领域专业术语
+
+### 3. 可测试性
+- **单元测试**: 每个模块提供完整测试
+- **接口测试**: 通过接口进行业务逻辑测试
+- **集成测试**: 模块间协作测试
+
+### 4. 可扩展性
+- **插件架构**: 支持功能模块动态扩展
+- **配置驱动**: 通过配置调整业务行为
+- **组合优于继承**: 通过组合实现功能复用
+
+---
+
+理解业务逻辑层是系统开发的关键，它承载了系统的核心价值。

@@ -64,7 +64,7 @@ func RewriteDir(dir string) {
 
 func NewRewrite(fullPath string) (*Rewrite, error) {
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, fullPath, nil, 0)
+	f, err := parser.ParseFile(fset, fullPath, nil, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}

@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -57,6 +55,7 @@ func (a *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisB
 			ParamCount: int32(trace.ParamCount),
 			TimeCost:   trace.TimeCost,
 			ParentId:   int64(trace.ParentId),
+			Seq:        trace.Seq, // 添加seq字段
 		}
 
 		reply.TraceData = append(reply.TraceData, traceData)
@@ -297,6 +296,7 @@ func (a *AnalysisService) GetChildFunctions(ctx context.Context, in *v1.GetChild
 			TimeCost:   function.TotalTime,
 			ParamCount: int32(function.ParamCount),
 			Depth:      int32(function.Depth),
+			Seq:        function.Seq, // 添加seq字段
 		})
 	}
 	return reply, nil
@@ -394,77 +394,6 @@ func (a *AnalysisService) InstrumentProject(ctx context.Context, in *v1.Instrume
 		Success: true,
 		Message: "项目插桩成功",
 	}, nil
-}
-
-// GetUnfinishedFunctions 获取未完成的函数列表
-func (a *AnalysisService) GetUnfinishedFunctions(ctx context.Context, in *v1.GetUnfinishedFunctionsReq) (*v1.GetUnfinishedFunctionsReply, error) {
-	a.log.WithContext(ctx).Infof("GetUnfinishedFunctions request received: threshold=%d, dbpath=%s, page=%d, limit=%d",
-		in.Threshold, in.Dbpath, in.Page, in.Limit)
-
-	// 参数验证
-	if in.Dbpath == "" {
-		a.log.WithContext(ctx).Errorf("GetUnfinishedFunctions failed: dbpath is empty")
-		return nil, errors.New("dbpath is required")
-	}
-
-	// 获取未完成函数列表
-	functions, err := a.uc.GetUnfinishedFunctions(in.Dbpath, in.Threshold)
-	if err != nil {
-		a.log.WithContext(ctx).Errorf("Failed to get unfinished functions: %v", err)
-		return nil, fmt.Errorf("failed to get unfinished functions: %w", err)
-	}
-
-	// 计算分页
-	totalCount := len(functions)
-	page := int(in.Page)
-	limit := int(in.Limit)
-
-	// 默认值处理
-	if page <= 0 {
-		page = 1
-	}
-	if limit <= 0 {
-		limit = 10 // 默认每页10条
-	}
-
-	// 计算起始和结束索引
-	startIndex := (page - 1) * limit
-	endIndex := startIndex + limit
-
-	// 边界检查
-	if startIndex >= totalCount {
-		startIndex = 0
-		endIndex = 0
-	} else if endIndex > totalCount {
-		endIndex = totalCount
-	}
-
-	// 获取当前页的数据
-	var pagedFunctions []entity.AllUnfinishedFunction
-	if startIndex < endIndex {
-		pagedFunctions = functions[startIndex:endIndex]
-	} else {
-		pagedFunctions = []entity.AllUnfinishedFunction{}
-	}
-
-	// 构建响应
-	reply := &v1.GetUnfinishedFunctionsReply{
-		Total: int32(totalCount),
-	}
-
-	for _, function := range pagedFunctions {
-		reply.Functions = append(reply.Functions, &v1.GetUnfinishedFunctionsReply_UnfinishedFunction{
-			Name:        function.Name,
-			Gid:         function.GID,
-			RunningTime: function.RunningTime,
-			IsBlocking:  function.IsBlocking,
-			FunctionId:  int64(function.FunctionID),
-		})
-	}
-
-	a.log.WithContext(ctx).Infof("Found %d unfinished functions, returning page %d with %d items",
-		totalCount, page, len(pagedFunctions))
-	return reply, nil
 }
 
 // GetTreeGraph 获取树状图

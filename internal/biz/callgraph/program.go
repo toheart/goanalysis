@@ -314,8 +314,9 @@ func (p *ProgramAnalysis) setTree(statusChan chan []byte) error {
 		caller := edge.Caller
 		callee := edge.Callee
 
-		if !p.isVisited[caller.String()] {
-			p.isVisited[caller.String()] = true
+		callerKey := fmt.Sprintf("n%d", caller.ID)
+		if !p.isVisited[callerKey] {
+			p.isVisited[callerKey] = true
 			p.tracker.ProcessedNodes++
 		}
 
@@ -327,10 +328,9 @@ func (p *ProgramAnalysis) setTree(statusChan chan []byte) error {
 		p.log.Infof("caller: %s, callee: %s", caller.String(), callee.String())
 
 		// 处理caller节点
-		callerKey := caller.String()
+		callerFullName := caller.String()
 		callerPkg := caller.Func.Pkg.Pkg.Path()
 		callerName := caller.Func.RelString(caller.Func.Pkg.Pkg)
-
 		if !p.nodeManager.NodeExists(callerKey) {
 			nodeCount++
 			// 每处理10个节点发送一次状态更新
@@ -338,13 +338,14 @@ func (p *ProgramAnalysis) setTree(statusChan chan []byte) error {
 				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
 		}
-		callerNode := p.nodeManager.GetOrCreateNode(callerKey, callerPkg, callerName)
+		callerNode := p.nodeManager.GetOrCreateNode(caller.ID, callerFullName, callerPkg, callerName)
 
 		// 处理callee节点
-		calleeKey := callee.String()
+		calleeFullName := callee.String()
 		calleePkg := callee.Func.Pkg.Pkg.Path()
 		calleeName := callee.Func.RelString(callee.Func.Pkg.Pkg)
 
+		calleeKey := fmt.Sprintf("n%d", callee.ID)
 		if !p.nodeManager.NodeExists(calleeKey) {
 			nodeCount++
 			// 每处理10个节点发送一次状态更新
@@ -352,7 +353,7 @@ func (p *ProgramAnalysis) setTree(statusChan chan []byte) error {
 				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
 		}
-		calleeNode := p.nodeManager.GetOrCreateNode(calleeKey, calleePkg, calleeName)
+		calleeNode := p.nodeManager.GetOrCreateNode(callee.ID, calleeFullName, calleePkg, calleeName)
 
 		// 建立边关系 - 使用EdgeManager封装逻辑
 		p.edgeManager.BuildRelationship(callerNode, calleeNode)
@@ -528,8 +529,9 @@ func (p *ProgramAnalysis) produceData(statusChan chan []byte) error {
 		caller := edge.Caller
 		callee := edge.Callee
 
-		if !p.isVisited[caller.String()] {
-			p.isVisited[caller.String()] = true
+		callerKey := fmt.Sprintf("n%d", caller.ID)
+		if !p.isVisited[callerKey] {
+			p.isVisited[callerKey] = true
 			p.tracker.ProcessedNodes++
 		}
 
@@ -540,10 +542,9 @@ func (p *ProgramAnalysis) produceData(statusChan chan []byte) error {
 		p.log.Infof("caller: %s, callee: %s", caller.String(), callee.String())
 
 		// 处理caller节点
-		callerKey := caller.String()
+		callerFullName := caller.String()
 		callerPkg := caller.Func.Pkg.Pkg.Path()
 		callerName := caller.Func.RelString(caller.Func.Pkg.Pkg)
-
 		if !p.nodeManager.NodeExists(callerKey) {
 			nodeCount++
 			// 每处理10个节点发送一次状态更新
@@ -551,13 +552,14 @@ func (p *ProgramAnalysis) produceData(statusChan chan []byte) error {
 				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
 		}
-		callerNode := p.nodeManager.GetOrCreateNode(callerKey, callerPkg, callerName)
+		callerNode := p.nodeManager.GetOrCreateNode(caller.ID, callerFullName, callerPkg, callerName)
 
 		// 处理callee节点
-		calleeKey := callee.String()
+		calleeFullName := callee.String()
 		calleePkg := callee.Func.Pkg.Pkg.Path()
 		calleeName := callee.Func.RelString(callee.Func.Pkg.Pkg)
 
+		calleeKey := fmt.Sprintf("n%d", callee.ID)
 		if !p.nodeManager.NodeExists(calleeKey) {
 			nodeCount++
 			// 每处理10个节点发送一次状态更新
@@ -565,7 +567,7 @@ func (p *ProgramAnalysis) produceData(statusChan chan []byte) error {
 				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
 		}
-		calleeNode := p.nodeManager.GetOrCreateNode(calleeKey, calleePkg, calleeName)
+		calleeNode := p.nodeManager.GetOrCreateNode(callee.ID, calleeFullName, calleePkg, calleeName)
 
 		// 建立边关系 - 使用EdgeManager封装逻辑
 		p.edgeManager.BuildRelationship(callerNode, calleeNode)
