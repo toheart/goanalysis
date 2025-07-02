@@ -74,7 +74,7 @@ jobs:
 
       - name: generate static assets
         run: |
-          statik -src=web
+          statik -src=web -f 
 
       - name: build application
         run: |
