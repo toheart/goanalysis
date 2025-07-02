@@ -171,8 +171,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/goanalysis-linux-${{ needs.build.outputs.version }}.tar.gz
-            release/goanalysis-windows-${{ needs.build.outputs.version }}.tar.gz
+            release/goanalysis-linux-${{ env.VERSION }}
+            release/goanalysis-windows-${{ env.VERSION }}.exe
           body: |
             ## Release Notes
             
