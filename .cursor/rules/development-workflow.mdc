@@ -1,0 +1,224 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 开发工作流指南
+
+## 环境配置
+
+### 后端开发环境
+- **Go版本**: Go 1.19+ (查看 [go.mod](mdc:goanalysis/go.mod))
+- **依赖管理**: Go Modules
+- **protobuf**: 需要安装protoc编译器
+- **Wire**: 依赖注入工具
+
+### 前端开发环境  
+- **Node.js**: 16+ (查看 [goanalysis-web/package.json](mdc:goanalysis/goanalysis-web/package.json))
+- **包管理器**: npm
+- **构建工具**: Vue CLI
+
+## 构建与启动
+
+### 后端构建
+```bash
+# 安装依赖
+go mod download
+
+# 生成Wire依赖注入代码
+go generate ./cmd/commands
+
+# 构建应用
+go build -o goanalysis main.go
+
+# 启动服务器
+./goanalysis server
+```
+
+### 前端构建
+```bash
+cd goanalysis-web
+
+# 安装依赖
+npm install
+
+# 开发模式启动
+npm run serve
+
+# 生产构建
+npm run build
+```
+
+### 使用Makefile ([Makefile](mdc:goanalysis/Makefile))
+项目提供Makefile简化构建流程：
+```bash
+# 查看可用命令
+make help
+
+# 构建后端
+make build
+
+# 运行测试
+make test
+
+# 生成API代码
+make api
+
+# Docker构建
+make docker-build
+```
+
+## 开发流程
+
+### 1. 新增API服务
+
+#### 步骤：
+1. **定义protobuf** - 在 [api/](mdc:goanalysis/api) 对应目录创建.proto文件
+2. **生成代码** - 运行protoc生成Go代码
+3. **实现业务逻辑** - 在 [internal/biz/](mdc:goanalysis/internal/biz) 创建业务逻辑
+4. **实现服务** - 在 [internal/service/](mdc:goanalysis/internal/service) 实现gRPC接口
+5. **注册服务** - 在 [internal/server/](mdc:goanalysis/internal/server) 注册服务
+6. **更新Wire** - 在 [cmd/commands/wire.go](mdc:goanalysis/cmd/commands/wire.go) 添加依赖注入
+7. **前端集成** - 更新前端API调用
+
+### 2. 新增命令行工具
+
+#### 步骤：
+1. **创建命令文件** - 在 [cmd/commands/](mdc:goanalysis/cmd/commands) 创建新命令
+2. **注册命令** - 在 [cmd/commands/root.go](mdc:goanalysis/cmd/commands/root.go) 注册
+3. **实现业务逻辑** - 复用 [internal/biz/](mdc:goanalysis/internal/biz) 中的逻辑
+
+### 3. 前端组件开发
+
+#### 步骤：
+1. **创建组件** - 在 [goanalysis-web/src/components/](mdc:goanalysis/goanalysis-web/src/components) 相应目录
+2. **编写Composables** - 在对应的composables目录封装逻辑
+3. **配置路由** - 在 [goanalysis-web/src/router/index.js](mdc:goanalysis/goanalysis-web/src/router/index.js) 添加路由
+4. **API集成** - 使用统一的API配置
+
+## 代码规范
+
+### Go代码规范
+- **包命名**: 小写，简洁，描述性强
+- **函数命名**: 驼峰命名，公开函数首字母大写
+- **错误处理**: 显式错误处理，不忽略错误
+- **注释**: 中文注释，解释业务逻辑
+- **日志**: 英文日志消息
+
+### Vue代码规范
+- **组件命名**: PascalCase，描述性强
+- **文件命名**: kebab-case或PascalCase
+- **API命名**: camelCase
+- **样式**: scoped CSS，使用CSS变量
+
+## 测试策略
+
+### 后端测试
+```bash
+# 运行所有测试
+go test ./...
+
+# 运行特定包测试
+go test ./internal/biz/gitanalysis
+
+# 查看测试覆盖率
+go test -cover ./...
+```
+
+### 前端测试
+```bash
+cd goanalysis-web
+
+# 运行单元测试
+npm run test:unit
+
+# 运行E2E测试
+npm run test:e2e
+```
+
+## Docker部署
+
+### 构建镜像
+使用项目根目录的 [Dockerfile](mdc:goanalysis/Dockerfile)：
+```bash
+# 构建镜像
+docker build -t goanalysis .
+
+# 运行容器
+docker run -p 8080:8080 goanalysis
+```
+
+### 配置管理
+- 运行时配置通过 [configs/config.yaml](mdc:goanalysis/configs/config.yaml)
+- 环境变量覆盖配置项
+- 容器化部署时挂载配置文件
+
+## 调试技巧
+
+### 后端调试
+1. **日志级别** - 通过配置文件调整日志级别
+2. **pprof** - 性能分析和内存调试
+3. **单元测试** - 针对性测试特定功能
+
+### 前端调试  
+1. **Vue DevTools** - 使用浏览器扩展调试
+2. **Network Tab** - 查看API请求响应
+3. **Console** - 查看错误和调试信息
+
+## 性能优化
+
+### 后端优化
+- **并发处理** - 合理使用goroutine
+- **内存管理** - 避免内存泄漏
+- **数据库优化** - 优化查询性能
+- **缓存策略** - 合理使用缓存
+
+### 前端优化
+- **代码分割** - 按路由分割代码
+- **懒加载** - 组件和图片懒加载
+- **缓存策略** - API响应缓存
+- **打包优化** - 压缩和树摇
+
+## Git工作流
+
+### 分支策略
+- **main** - 主分支，稳定版本
+- **develop** - 开发分支，集成新功能
+- **feature/** - 功能分支，新功能开发
+- **hotfix/** - 热修复分支，紧急修复
+
+### 提交规范
+```
+type(scope): description
+
+类型：
+- feat: 新功能
+- fix: 修复
+- docs: 文档
+- style: 格式
+- refactor: 重构
+- test: 测试
+- chore: 构建
+
+示例：
+feat(callgraph): add function filter capability
+fix(api): resolve memory leak in analysis service
+```
+
+## 监控和日志
+
+### 日志配置
+日志配置在 [internal/pkg/logger/](mdc:goanalysis/internal/pkg/logger)：
+- 结构化日志输出
+- 分级别日志记录
+- 日志轮转和归档
+
+### 性能监控
+- 内置pprof端点
+- 自定义metrics收集
+- 请求追踪和延迟统计
+
+---
+
+遵循以上工作流程能确保代码质量和团队协作效率。
+

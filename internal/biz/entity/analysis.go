@@ -65,6 +65,7 @@ type Function struct {
 	AvgTime    string // 平均耗时
 	ParamCount int    // 参数数量
 	Depth      int    // 深度
+	Seq        string // 序列号
 }
 
 func NewFunction(id int64, name string, callCount int, totalTime string, avgTime string) *Function {
@@ -88,17 +89,6 @@ func (f *Function) SetPackage() {
 		packageName = packageNames[0]
 	}
 	f.Package = packageName
-}
-
-// UnfinishedFunction 未完成的函数
-type UnfinishedFunction struct {
-	ID         int64  // ID
-	Name       string // 函数名称
-	GID        uint64 // Goroutine ID
-	StartTime  string // 开始时间
-	ElapsedMS  int64  // 已经过去的毫秒数
-	StackTrace string // 堆栈跟踪
-	IsBlocking bool   // 是否阻塞
 }
 
 // HotPathInfo 热点路径信息

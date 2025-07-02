@@ -19,20 +19,24 @@ func init() {
 	funcnodeDescKey := funcnodeFields[0].Descriptor()
 	// funcnode.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	funcnode.KeyValidator = funcnodeDescKey.Validators[0].(func(string) error)
+	// funcnodeDescFullName is the schema descriptor for full_name field.
+	funcnodeDescFullName := funcnodeFields[1].Descriptor()
+	// funcnode.FullNameValidator is a validator for the "full_name" field. It is called by the builders before save.
+	funcnode.FullNameValidator = funcnodeDescFullName.Validators[0].(func(string) error)
 	// funcnodeDescPkg is the schema descriptor for pkg field.
-	funcnodeDescPkg := funcnodeFields[1].Descriptor()
+	funcnodeDescPkg := funcnodeFields[2].Descriptor()
 	// funcnode.PkgValidator is a validator for the "pkg" field. It is called by the builders before save.
 	funcnode.PkgValidator = funcnodeDescPkg.Validators[0].(func(string) error)
 	// funcnodeDescName is the schema descriptor for name field.
-	funcnodeDescName := funcnodeFields[2].Descriptor()
+	funcnodeDescName := funcnodeFields[3].Descriptor()
 	// funcnode.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	funcnode.NameValidator = funcnodeDescName.Validators[0].(func(string) error)
 	// funcnodeDescCreatedAt is the schema descriptor for CreatedAt field.
-	funcnodeDescCreatedAt := funcnodeFields[3].Descriptor()
+	funcnodeDescCreatedAt := funcnodeFields[4].Descriptor()
 	// funcnode.DefaultCreatedAt holds the default value on creation for the CreatedAt field.
 	funcnode.DefaultCreatedAt = funcnodeDescCreatedAt.Default.(func() time.Time)
 	// funcnodeDescUpdatedAt is the schema descriptor for UpdatedAt field.
-	funcnodeDescUpdatedAt := funcnodeFields[4].Descriptor()
+	funcnodeDescUpdatedAt := funcnodeFields[5].Descriptor()
 	// funcnode.DefaultUpdatedAt holds the default value on creation for the UpdatedAt field.
 	funcnode.DefaultUpdatedAt = funcnodeDescUpdatedAt.Default.(func() time.Time)
 }

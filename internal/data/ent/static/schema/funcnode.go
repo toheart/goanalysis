@@ -18,7 +18,11 @@ func (FuncNode) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("key").
 			Unique().
-			NotEmpty(),
+			NotEmpty().
+			Comment("短格式唯一标识，如 n6796"),
+		field.String("full_name").
+			NotEmpty().
+			Comment("完整的函数路径，如 crypto/hmac.New$1"),
 		field.String("pkg").
 			NotEmpty(),
 		field.String("name").
@@ -41,5 +45,6 @@ func (FuncNode) Indexes() []ent.Index {
 		index.Fields("pkg"),
 		index.Fields("key").
 			Unique(),
+		index.Fields("full_name"),
 	}
 }

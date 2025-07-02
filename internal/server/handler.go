@@ -6,16 +6,14 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/filemanager/dos"
 )
 
-func (h *HttpServer) BaseHandler(mux *runtime.ServeMux, frontendDir string, fileServer http.Handler) http.HandlerFunc {
+func (h *HttpServer) BaseHandler(mux *runtime.ServeMux, fileServer http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 检查是否是API路径
 		if isAPIPath(r.URL.Path) {
@@ -29,25 +27,8 @@ func (h *HttpServer) BaseHandler(mux *runtime.ServeMux, frontendDir string, file
 			return
 		}
 
-		// 构建静态资源的完整路径
-		path := filepath.Join(frontendDir, r.URL.Path)
-
-		// 检查请求的文件是否存在
-		if fileExists(path) && !strings.HasSuffix(path, "/") {
-			// 如果文件存在，直接提供该文件
-			fileServer.ServeHTTP(w, r)
-			return
-		}
-
-		// 如果是目录或文件不存在，返回index.html（SPA应用通常需要这样处理）
-		indexPath := filepath.Join(frontendDir, "index.html")
-		if fileExists(indexPath) {
-			http.ServeFile(w, r, indexPath)
-			return
-		}
-
-		// 如果index.html也不存在，返回404
-		http.NotFound(w, r)
+		// 尝试从嵌入的文件系统获取文件
+		fileServer.ServeHTTP(w, r)
 	}
 }
 
@@ -151,10 +132,10 @@ func (h *HttpServer) HandleChunkUpload(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 确定文件类型
-		fileTypeEnum := entity.FileTypeRuntime
+		fileTypeEnum := dos.FileTypeRuntime
 
 		// 创建文件信息
-		fileInfo := &entity.FileInfo{
+		fileInfo := &dos.FileInfo{
 			FileName:    fileName,
 			FilePath:    filePath,
 			FileType:    fileTypeEnum,

@@ -2,14 +2,20 @@ GOHOSTOS:=$(shell go env GOHOSTOS)
 GOPATH:=$(shell go env GOPATH)
 VERSION?=$(shell git describe --tags --always || echo "dev")
 
-ifeq ($(GOHOSTOS), windows)
-	Git_Bash="$(subst \,/,$(subst cmd\git.exe,bin\bash.exe,$(shell where git)))"
-	INTERNAL_PROTO_FILES=$(shell $(Git_Bash) -c "find internal -name *.proto")
-	API_PROTO_FILES=$(shell $(Git_Bash) -c "find api -name *.proto")
-else
-	INTERNAL_PROTO_FILES=$(shell find internal -name *.proto)
-	API_PROTO_FILES=$(shell find api -name *.proto)
-endif
+# 定义查找proto文件的函数
+define find_proto_files
+$(if $(filter windows,$(GOHOSTOS)),\
+    $(if $(filter MINGW64,$(MSYSTEM)),\
+        $(shell find $(1) -name *.proto),\
+        $(shell $(subst \,/,$(subst cmd\git.exe,bin\bash.exe,$(shell where git))) -c "find $(1) -name *.proto")\
+    ),\
+    $(shell find $(1) -name *.proto)\
+)
+endef
+
+# 使用函数简化proto文件查找
+INTERNAL_PROTO_FILES := $(call find_proto_files,internal)
+API_PROTO_FILES := $(call find_proto_files,api)
 
 .PHONY: init
 # init env
@@ -74,6 +80,7 @@ sync-frontend:
 		rm -rf dist_temp ;\
 		unzip -q dist.zip -d dist_temp &&  cp -r dist_temp/* web/;\
 		rm -rf dist_temp dist.zip; \
+
 	fi;
 	@echo "Frontend code sync completed."
 
@@ -82,14 +89,14 @@ sync-frontend:
 package-linux: sync-frontend
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis ./
 	mkdir -p release
-	tar -czvf release/goanalysis-linux-$(VERSION).tar.gz ./goanalysis ./configs ./web
+	mv ./goanalysis ./release/goanalysis-linux-$(VERSION)
 
 .PHONY: package-windows
 # 打包Windows版本
 package-windows: sync-frontend
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X main.Version=$(VERSION)" -o goanalysis.exe ./
 	mkdir -p release
-	tar -czvf release/goanalysis-windows-$(VERSION).tar.gz ./goanalysis.exe ./configs ./web
+	mv ./goanalysis.exe ./release/goanalysis-windows-$(VERSION).exe
 
 .PHONY: docker
 # 构建Docker镜像

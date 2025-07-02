@@ -1,0 +1,85 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 后端架构指南
+
+## 架构概览
+
+GoAnalysis后端采用清洁架构设计，分层明确，职责分离。主要分为以下层次：
+
+## 核心架构层次
+
+### API层 ([api/](mdc:api))
+- **analysis** - [api/analysis/v1/](mdc:api/analysis/v1/) 核心分析服务API
+- **filemanager** - [api/filemanager/v1/](mdc:api/filemanager/v1/) 文件管理API  
+- **staticanalysis** - [api/staticanalysis/v1/](mdc:api/staticanalysis/v1/) 静态分析API
+
+每个API包含：
+- `.proto` - protobuf定义文件
+- `.pb.go` - 生成的Go结构体
+- `_grpc.pb.go` - gRPC服务接口
+- `.pb.gw.go` - HTTP网关代码
+
+### 业务逻辑层 ([internal/biz/](mdc:internal/biz))
+
+#### 核心业务模块
+
+- **analysis** - [internal/biz/analysis/](mdc:internal/biz/analysis/) 分析引擎核心逻辑
+- **callgraph** - [internal/biz/callgraph/](mdc:internal/biz/callgraph/) 调用图构建和分析
+  - [program.go](mdc:internal/biz/callgraph/program.go) - 程序分析入口
+  - [node_manager.go](mdc:internal/biz/callgraph/node_manager.go) - 节点管理
+  - [edge_manager.go](mdc:internal/biz/callgraph/edge_manager.go) - 边关系管理
+  - [filter.go](mdc:internal/biz/callgraph/filter.go) - 过滤逻辑
+- **gitanalysis** - [internal/biz/gitanalysis/](mdc:internal/biz/gitanalysis/) Git代码变更分析
+  - [gitanalysis.go](mdc:internal/biz/gitanalysis/gitanalysis.go) - Git分析核心
+  - [mr_analyzer.go](mdc:internal/biz/gitanalysis/mr_analyzer.go) - MR分析器
+  - [llm.go](mdc:internal/biz/gitanalysis/llm.go) - LLM集成
+- **staticanalysis** - [internal/biz/staticanalysis/](mdc:internal/biz/staticanalysis/) 静态代码分析
+- **filemanager** - [internal/biz/filemanager/](mdc:internal/biz/filemanager/) 文件管理
+- **rewrite** - [internal/biz/rewrite/](mdc:internal/biz/rewrite/) 代码重写
+
+#### 实体定义 ([internal/biz/entity/](mdc:internal/biz/entity))
+- [analysis.go](mdc:internal/biz/entity/analysis.go) - 分析相关实体
+- [callgraph.go](mdc:internal/biz/entity/callgraph.go) - 调用图实体  
+- [file.go](mdc:internal/biz/entity/file.go) - 文件实体
+- [gitlab.go](mdc:internal/biz/entity/gitlab.go) - GitLab集成实体
+
+### 服务层 ([internal/service/](mdc:internal/service))
+- [analysis.go](mdc:internal/service/analysis.go) - 分析服务实现
+- [staticanalysis.go](mdc:internal/service/staticanalysis.go) - 静态分析服务
+- [filemanager.go](mdc:internal/service/filemanager.go) - 文件管理服务
+
+### 服务器层 ([internal/server/](mdc:internal/server))
+- [http.go](mdc:internal/server/http.go) - HTTP服务器配置
+- [grpc.go](mdc:internal/server/grpc.go) - gRPC服务器配置  
+- [handler.go](mdc:internal/server/handler.go) - 处理器注册
+
+### 命令行工具 ([cmd/](mdc:cmd))
+- [commands/server.go](mdc:cmd/commands/server.go) - 服务器启动命令
+- [commands/callgraph.go](mdc:cmd/commands/callgraph.go) - 调用图分析命令
+- [commands/git.go](mdc:cmd/commands/git.go) - Git分析命令
+- [commands/rewrite.go](mdc:cmd/commands/rewrite.go) - 代码重写命令
+
+## 依赖注入
+
+项目使用wire进行依赖注入：
+- [cmd/commands/wire.go](mdc:cmd/commands/wire.go) - Wire配置
+- [cmd/commands/wire_gen.go](mdc:cmd/commands/wire_gen.go) - 生成的依赖注入代码
+
+## 配置管理
+
+- [internal/conf/](mdc:internal/conf/) - 配置相关protobuf定义
+- [configs/config.yaml](mdc:configs/config.yaml) - 应用配置文件
+
+## 工具包
+
+- [internal/pkg/logger/](mdc:internal/pkg/logger/) - 统一日志包
+
+## 关键设计原则
+
+1. **分层架构** - API -> Service -> Biz -> Entity，职责清晰
+2. **依赖倒置** - 高层模块不依赖低层模块，都依赖抽象
+3. **protobuf优先** - 所有API使用protobuf定义，支持gRPC和HTTP
+4. **命令行友好** - 提供丰富的CLI工具用于分析和操作

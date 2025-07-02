@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"entgo.io/ent/dialect"
-	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/toheart/goanalysis/internal/biz/filemanager/dos"
 	"github.com/toheart/goanalysis/internal/biz/repo"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data/ent/file/gen"
@@ -53,7 +53,7 @@ func (f *FileEntDB) initTables(ctx context.Context) error {
 }
 
 // SaveFileInfo 保存文件信息
-func (f *FileEntDB) SaveFileInfo(info *entity.FileInfo) error {
+func (f *FileEntDB) SaveFileInfo(info *dos.FileInfo) error {
 	ctx := context.Background()
 
 	// 使用 Ent 创建文件信息
@@ -77,7 +77,7 @@ func (f *FileEntDB) SaveFileInfo(info *entity.FileInfo) error {
 }
 
 // GetFileInfoByID 根据ID获取文件信息
-func (f *FileEntDB) GetFileInfoByID(id int64) (*entity.FileInfo, error) {
+func (f *FileEntDB) GetFileInfoByID(id int64) (*dos.FileInfo, error) {
 	ctx := context.Background()
 
 	// 查询文件信息
@@ -90,11 +90,11 @@ func (f *FileEntDB) GetFileInfoByID(id int64) (*entity.FileInfo, error) {
 	}
 
 	// 转换为业务实体
-	info := &entity.FileInfo{
+	info := &dos.FileInfo{
 		ID:          fileEnt.ID,
 		FileName:    fileEnt.FileName,
 		FilePath:    fileEnt.FilePath,
-		FileType:    entity.FileType(fileEnt.FileType),
+		FileType:    dos.FileType(fileEnt.FileType),
 		FileSize:    fileEnt.FileSize,
 		ContentType: fileEnt.ContentType,
 		UploadTime:  fileEnt.UploadTime,
@@ -105,7 +105,7 @@ func (f *FileEntDB) GetFileInfoByID(id int64) (*entity.FileInfo, error) {
 }
 
 // ListFileInfos 获取文件信息列表
-func (f *FileEntDB) ListFileInfos(fileType entity.FileType, limit int, offset int) ([]*entity.FileInfo, error) {
+func (f *FileEntDB) ListFileInfos(fileType dos.FileType, limit int, offset int) ([]*dos.FileInfo, error) {
 	ctx := context.Background()
 
 	// 如果 limit 为 0，设置一个默认值
@@ -131,13 +131,13 @@ func (f *FileEntDB) ListFileInfos(fileType entity.FileType, limit int, offset in
 	}
 
 	// 转换为业务实体
-	var fileInfos []*entity.FileInfo
+	var fileInfos []*dos.FileInfo
 	for _, fileEnt := range fileEnts {
-		info := &entity.FileInfo{
+		info := &dos.FileInfo{
 			ID:          int64(fileEnt.ID),
 			FileName:    fileEnt.FileName,
 			FilePath:    fileEnt.FilePath,
-			FileType:    entity.FileType(fileEnt.FileType),
+			FileType:    dos.FileType(fileEnt.FileType),
 			FileSize:    fileEnt.FileSize,
 			ContentType: fileEnt.ContentType,
 			UploadTime:  fileEnt.UploadTime,
@@ -148,7 +148,7 @@ func (f *FileEntDB) ListFileInfos(fileType entity.FileType, limit int, offset in
 
 	// 如果没有找到记录，返回空切片而不是 nil
 	if len(fileInfos) == 0 {
-		return []*entity.FileInfo{}, nil
+		return []*dos.FileInfo{}, nil
 	}
 
 	return fileInfos, nil

@@ -524,6 +524,7 @@ type FuncNodeMutation struct {
 	typ           string
 	id            *int
 	key           *string
+	full_name     *string
 	pkg           *string
 	name          *string
 	_CreatedAt    *time.Time
@@ -666,6 +667,42 @@ func (m *FuncNodeMutation) OldKey(ctx context.Context) (v string, err error) {
 // ResetKey resets all changes to the "key" field.
 func (m *FuncNodeMutation) ResetKey() {
 	m.key = nil
+}
+
+// SetFullName sets the "full_name" field.
+func (m *FuncNodeMutation) SetFullName(s string) {
+	m.full_name = &s
+}
+
+// FullName returns the value of the "full_name" field in the mutation.
+func (m *FuncNodeMutation) FullName() (r string, exists bool) {
+	v := m.full_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFullName returns the old "full_name" field's value of the FuncNode entity.
+// If the FuncNode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncNodeMutation) OldFullName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFullName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFullName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFullName: %w", err)
+	}
+	return oldValue.FullName, nil
+}
+
+// ResetFullName resets all changes to the "full_name" field.
+func (m *FuncNodeMutation) ResetFullName() {
+	m.full_name = nil
 }
 
 // SetPkg sets the "pkg" field.
@@ -846,9 +883,12 @@ func (m *FuncNodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FuncNodeMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.key != nil {
 		fields = append(fields, funcnode.FieldKey)
+	}
+	if m.full_name != nil {
+		fields = append(fields, funcnode.FieldFullName)
 	}
 	if m.pkg != nil {
 		fields = append(fields, funcnode.FieldPkg)
@@ -872,6 +912,8 @@ func (m *FuncNodeMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case funcnode.FieldKey:
 		return m.Key()
+	case funcnode.FieldFullName:
+		return m.FullName()
 	case funcnode.FieldPkg:
 		return m.Pkg()
 	case funcnode.FieldName:
@@ -891,6 +933,8 @@ func (m *FuncNodeMutation) OldField(ctx context.Context, name string) (ent.Value
 	switch name {
 	case funcnode.FieldKey:
 		return m.OldKey(ctx)
+	case funcnode.FieldFullName:
+		return m.OldFullName(ctx)
 	case funcnode.FieldPkg:
 		return m.OldPkg(ctx)
 	case funcnode.FieldName:
@@ -914,6 +958,13 @@ func (m *FuncNodeMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetKey(v)
+		return nil
+	case funcnode.FieldFullName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFullName(v)
 		return nil
 	case funcnode.FieldPkg:
 		v, ok := value.(string)
@@ -994,6 +1045,9 @@ func (m *FuncNodeMutation) ResetField(name string) error {
 	switch name {
 	case funcnode.FieldKey:
 		m.ResetKey()
+		return nil
+	case funcnode.FieldFullName:
+		m.ResetFullName()
 		return nil
 	case funcnode.FieldPkg:
 		m.ResetPkg()

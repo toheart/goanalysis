@@ -1,6 +1,8 @@
 package callgraph
 
 import (
+	"fmt"
+
 	"github.com/toheart/goanalysis/internal/biz/callgraph/dos"
 )
 
@@ -35,27 +37,33 @@ func (nm *NodeManager) GetNode(key string) *dos.FuncNode {
 }
 
 // CreateNode 创建节点
-func (nm *NodeManager) CreateNode(key, pkg, name string) *dos.FuncNode {
+func (nm *NodeManager) CreateNode(nodeID int, fullName, pkg, name string) *dos.FuncNode {
+	// 生成短格式Key
+	key := fmt.Sprintf("n%d", nodeID)
+
 	return &dos.FuncNode{
-		Key:  key,
-		Pkg:  pkg,
-		Name: name,
+		Key:      key,
+		FullName: fullName,
+		Pkg:      pkg,
+		Name:     name,
 	}
 }
 
 // AddNode 添加节点
-func (nm *NodeManager) AddNode(node *dos.FuncNode) {	
+func (nm *NodeManager) AddNode(node *dos.FuncNode) {
 	nm.tree[node.Key] = node
 	nm.nodeChan <- node
 }
 
 // GetOrCreateNode 获取或创建节点
-func (nm *NodeManager) GetOrCreateNode(key, pkg, name string) *dos.FuncNode {
+func (nm *NodeManager) GetOrCreateNode(nodeID int, fullName, pkg, name string) *dos.FuncNode {
+	key := fmt.Sprintf("n%d", nodeID)
+
 	if nm.NodeExists(key) {
 		return nm.GetNode(key)
 	}
 
-	node := nm.CreateNode(key, pkg, name)
+	node := nm.CreateNode(nodeID, fullName, pkg, name)
 	nm.AddNode(node)
 	return node
 }

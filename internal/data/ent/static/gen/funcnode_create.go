@@ -26,6 +26,12 @@ func (fnc *FuncNodeCreate) SetKey(s string) *FuncNodeCreate {
 	return fnc
 }
 
+// SetFullName sets the "full_name" field.
+func (fnc *FuncNodeCreate) SetFullName(s string) *FuncNodeCreate {
+	fnc.mutation.SetFullName(s)
+	return fnc
+}
+
 // SetPkg sets the "pkg" field.
 func (fnc *FuncNodeCreate) SetPkg(s string) *FuncNodeCreate {
 	fnc.mutation.SetPkg(s)
@@ -121,6 +127,14 @@ func (fnc *FuncNodeCreate) check() error {
 			return &ValidationError{Name: "key", err: fmt.Errorf(`gen: validator failed for field "FuncNode.key": %w`, err)}
 		}
 	}
+	if _, ok := fnc.mutation.FullName(); !ok {
+		return &ValidationError{Name: "full_name", err: errors.New(`gen: missing required field "FuncNode.full_name"`)}
+	}
+	if v, ok := fnc.mutation.FullName(); ok {
+		if err := funcnode.FullNameValidator(v); err != nil {
+			return &ValidationError{Name: "full_name", err: fmt.Errorf(`gen: validator failed for field "FuncNode.full_name": %w`, err)}
+		}
+	}
 	if _, ok := fnc.mutation.Pkg(); !ok {
 		return &ValidationError{Name: "pkg", err: errors.New(`gen: missing required field "FuncNode.pkg"`)}
 	}
@@ -172,6 +186,10 @@ func (fnc *FuncNodeCreate) createSpec() (*FuncNode, *sqlgraph.CreateSpec) {
 	if value, ok := fnc.mutation.Key(); ok {
 		_spec.SetField(funcnode.FieldKey, field.TypeString, value)
 		_node.Key = value
+	}
+	if value, ok := fnc.mutation.FullName(); ok {
+		_spec.SetField(funcnode.FieldFullName, field.TypeString, value)
+		_node.FullName = value
 	}
 	if value, ok := fnc.mutation.Pkg(); ok {
 		_spec.SetField(funcnode.FieldPkg, field.TypeString, value)

@@ -70,6 +70,14 @@ jobs:
           echo "version=$FRONTEND_VERSION" >> $GITHUB_OUTPUT
           echo "Using frontend version: $FRONTEND_VERSION"
 
+      - name: install statik
+        run: |
+          go install github.com/rakyll/statik
+
+      - name: generate static assets
+        run: |
+          statik -src=web
+
       - name: build application
         run: |
           make build VERSION=$VERSION

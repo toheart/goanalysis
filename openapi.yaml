@@ -459,25 +459,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetTreeGraphByGIDReply'
-    /api/runtime/unfinished-functions:
-        post:
-            tags:
-                - Analysis
-            description: GetUnfinishedFunctions 获取未完成的函数列表
-            operationId: Analysis_GetUnfinishedFunctions
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetUnfinishedFunctionsReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetUnfinishedFunctionsReply'
     /api/runtime/verify/path:
         post:
             tags:
@@ -631,7 +612,7 @@ paths:
             description: 获取函数调用关系图
             operationId: StaticAnalysis_GetFunctionCallGraph
             parameters:
-                - name: functionName
+                - name: functionKey
                   in: query
                   schema:
                     type: string
@@ -651,14 +632,14 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/staticanalysis.v1.GetFunctionCallGraphReply'
-    /api/static/function/{functionName}/graph:
+    /api/static/function/{functionKey}/graph:
         get:
             tags:
                 - StaticAnalysis
             description: 获取函数调用关系图
             operationId: StaticAnalysis_GetFunctionCallGraph
             parameters:
-                - name: functionName
+                - name: functionKey
                   in: path
                   required: true
                   schema:
@@ -839,6 +820,8 @@ components:
                     type: string
                 parentId:
                     type: string
+                seq:
+                    type: string
         analysis.v1.AnalysisByGIDRequest:
             type: object
             properties:
@@ -913,6 +896,8 @@ components:
                 depth:
                     type: integer
                     format: int32
+                seq:
+                    type: string
         analysis.v1.GetAllFunctionNameReply:
             type: object
             properties:
@@ -1192,6 +1177,8 @@ components:
                     type: string
                 parentId:
                     type: string
+                seq:
+                    type: string
         analysis.v1.GetTracesByParentFuncReq:
             type: object
             properties:
@@ -1237,44 +1224,6 @@ components:
                     type: integer
                     format: int32
             description: 获取树状图请求
-        analysis.v1.GetUnfinishedFunctionsReply:
-            type: object
-            properties:
-                functions:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.GetUnfinishedFunctionsReply_UnfinishedFunction'
-                total:
-                    type: integer
-                    format: int32
-            description: GetUnfinishedFunctions 响应
-        analysis.v1.GetUnfinishedFunctionsReply_UnfinishedFunction:
-            type: object
-            properties:
-                name:
-                    type: string
-                gid:
-                    type: string
-                runningTime:
-                    type: string
-                isBlocking:
-                    type: boolean
-                functionId:
-                    type: string
-        analysis.v1.GetUnfinishedFunctionsReq:
-            type: object
-            properties:
-                dbpath:
-                    type: string
-                threshold:
-                    type: string
-                page:
-                    type: integer
-                    format: int32
-                limit:
-                    type: integer
-                    format: int32
-            description: GetUnfinishedFunctions 请求
         analysis.v1.InstrumentProjectReply:
             type: object
             properties:
@@ -1607,7 +1556,7 @@ components:
         staticanalysis.v1.GetFunctionCallGraphReply_GraphNode:
             type: object
             properties:
-                id:
+                key:
                     type: string
                 name:
                     type: string
@@ -1627,6 +1576,11 @@ components:
                     type: string
                 functionKey:
                     type: string
+                functionPackage:
+                    type: string
+                depth:
+                    type: integer
+                    format: int32
             description: 获取函数下游调用关系请求
         staticanalysis.v1.GetFunctionDownstreamResponse:
             type: object
@@ -1667,6 +1621,11 @@ components:
                     type: string
                 functionKey:
                     type: string
+                functionPackage:
+                    type: string
+                depth:
+                    type: integer
+                    format: int32
             description: 获取函数上游调用关系请求
         staticanalysis.v1.GetFunctionUpstreamResponse:
             type: object
@@ -1763,7 +1722,7 @@ components:
             properties:
                 dbPath:
                     type: string
-                functionName:
+                functionKey:
                     type: string
             description: 获取树状图请求
         staticanalysis.v1.GitLabRepository:
@@ -1805,7 +1764,7 @@ components:
         staticanalysis.v1.GraphNode:
             type: object
             properties:
-                id:
+                key:
                     type: string
                 name:
                     type: string

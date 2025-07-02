@@ -15,6 +15,8 @@ const (
 	FieldID = "id"
 	// FieldKey holds the string denoting the key field in the database.
 	FieldKey = "key"
+	// FieldFullName holds the string denoting the full_name field in the database.
+	FieldFullName = "full_name"
 	// FieldPkg holds the string denoting the pkg field in the database.
 	FieldPkg = "pkg"
 	// FieldName holds the string denoting the name field in the database.
@@ -31,6 +33,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldKey,
+	FieldFullName,
 	FieldPkg,
 	FieldName,
 	FieldCreatedAt,
@@ -50,6 +53,8 @@ func ValidColumn(column string) bool {
 var (
 	// KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	KeyValidator func(string) error
+	// FullNameValidator is a validator for the "full_name" field. It is called by the builders before save.
+	FullNameValidator func(string) error
 	// PkgValidator is a validator for the "pkg" field. It is called by the builders before save.
 	PkgValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
@@ -71,6 +76,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByKey orders the results by the key field.
 func ByKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldKey, opts...).ToFunc()
+}
+
+// ByFullName orders the results by the full_name field.
+func ByFullName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFullName, opts...).ToFunc()
 }
 
 // ByPkg orders the results by the pkg field.

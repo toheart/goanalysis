@@ -9,6 +9,7 @@ import (
 	"github.com/toheart/goanalysis/internal/biz/callgraph/dos"
 	"github.com/toheart/goanalysis/internal/biz/repo"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcedge"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcnode"
 )
 
@@ -58,6 +59,7 @@ func (s *StaticEntDBImpl) SaveFuncNode(node *dos.FuncNode) error {
 		_, err = s.client.FuncNode.
 			Update().
 			Where(funcnode.Key(node.Key)).
+			SetFullName(node.FullName).
 			SetPkg(node.Pkg).
 			SetName(node.Name).
 			Save(ctx)
@@ -66,6 +68,7 @@ func (s *StaticEntDBImpl) SaveFuncNode(node *dos.FuncNode) error {
 		_, err = s.client.FuncNode.
 			Create().
 			SetKey(node.Key).
+			SetFullName(node.FullName).
 			SetPkg(node.Pkg).
 			SetName(node.Name).
 			Save(ctx)
@@ -113,26 +116,21 @@ func (s *StaticEntDBImpl) GetFuncNodeByKey(key string) (*dos.FuncNode, error) {
 	// 转换为业务实体
 	node := &dos.FuncNode{
 		Key:      funcEnt.Key,
+		FullName: funcEnt.FullName,
 		Pkg:      funcEnt.Pkg,
 		Name:     funcEnt.Name,
-		Parent:   []string{},
-		Children: []string{},
 	}
 
 	// 获取父节点
 	parents, err := s.GetCallerEdges(key)
 	if err == nil {
-		for _, p := range parents {
-			node.Parent = append(node.Parent, p.Key)
-		}
+		node.Parents = parents
 	}
 
 	// 获取子节点
 	children, err := s.GetCalleeEdges(key)
 	if err == nil {
-		for _, c := range children {
-			node.Children = append(node.Children, c.Key)
-		}
+		node.Childrens = children
 	}
 
 	return node, nil
@@ -143,9 +141,9 @@ func (s *StaticEntDBImpl) GetCallerEdges(calleeKey string) ([]*dos.FuncNode, err
 	ctx := context.Background()
 
 	// 查询调用该函数的节点
-	callers, err := s.client.FuncNode.
+	callers, err := s.client.FuncEdge.
 		Query().
-		Where(funcnode.Key(calleeKey)).
+		Where(funcedge.CalleeKey(calleeKey)).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get caller edges failed: %w", err)
@@ -154,10 +152,18 @@ func (s *StaticEntDBImpl) GetCallerEdges(calleeKey string) ([]*dos.FuncNode, err
 	// 转换为业务实体
 	var nodes []*dos.FuncNode
 	for _, caller := range callers {
+		funcNode, err := s.client.FuncNode.
+			Query().
+			Where(funcnode.Key(caller.CallerKey)).
+			Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get caller node failed: %w", err)
+		}
 		node := &dos.FuncNode{
-			Key:  caller.Key,
-			Pkg:  caller.Pkg,
-			Name: caller.Name,
+			Key:      funcNode.Key,
+			FullName: funcNode.FullName,
+			Pkg:      funcNode.Pkg,
+			Name:     funcNode.Name,
 		}
 		nodes = append(nodes, node)
 	}
@@ -170,9 +176,9 @@ func (s *StaticEntDBImpl) GetCalleeEdges(callerKey string) ([]*dos.FuncNode, err
 	ctx := context.Background()
 
 	// 查询调用该函数的节点
-	callers, err := s.client.FuncNode.
+	callers, err := s.client.FuncEdge.
 		Query().
-		Where(funcnode.Key(callerKey)).
+		Where(funcedge.CallerKey(callerKey)).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get caller edges failed: %w", err)
@@ -181,10 +187,18 @@ func (s *StaticEntDBImpl) GetCalleeEdges(callerKey string) ([]*dos.FuncNode, err
 	// 转换为业务实体
 	var nodes []*dos.FuncNode
 	for _, caller := range callers {
+		funcNode, err := s.client.FuncNode.
+			Query().
+			Where(funcnode.Key(caller.CalleeKey)).
+			Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get caller node failed: %w", err)
+		}
 		node := &dos.FuncNode{
-			Key:  caller.Key,
-			Pkg:  caller.Pkg,
-			Name: caller.Name,
+			Key:      funcNode.Key,
+			FullName: funcNode.FullName,
+			Pkg:      funcNode.Pkg,
+			Name:     funcNode.Name,
 		}
 		nodes = append(nodes, node)
 	}
@@ -207,9 +221,10 @@ func (s *StaticEntDBImpl) GetAllFuncNodes() ([]*dos.FuncNode, error) {
 	var nodes []*dos.FuncNode
 	for _, funcEnt := range funcEnts {
 		node := &dos.FuncNode{
-			Key:  funcEnt.Key,
-			Pkg:  funcEnt.Pkg,
-			Name: funcEnt.Name,
+			Key:      funcEnt.Key,
+			FullName: funcEnt.FullName,
+			Pkg:      funcEnt.Pkg,
+			Name:     funcEnt.Name,
 		}
 		nodes = append(nodes, node)
 	}
@@ -240,6 +255,40 @@ func (s *StaticEntDBImpl) GetAllFuncEdges() ([]*dos.FuncEdge, error) {
 	}
 
 	return edges, nil
+}
+
+// SearchFuncNodes 模糊搜索函数节点
+func (s *StaticEntDBImpl) SearchFuncNodes(query string, limit int) ([]*dos.FuncNode, error) {
+	ctx := context.Background()
+
+	// 构建模糊查询条件
+	funcEnts, err := s.client.FuncNode.
+		Query().
+		Where(
+			funcnode.Or(
+				funcnode.NameContainsFold(query), // 函数名模糊匹配（不区分大小写）
+				funcnode.PkgContainsFold(query),  // 包名模糊匹配（不区分大小写）
+			),
+		).
+		Limit(limit).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("模糊搜索函数节点失败: %w", err)
+	}
+
+	// 转换为业务实体
+	var nodes []*dos.FuncNode
+	for _, funcEnt := range funcEnts {
+		node := &dos.FuncNode{
+			Key:      funcEnt.Key,
+			FullName: funcEnt.FullName,
+			Pkg:      funcEnt.Pkg,
+			Name:     funcEnt.Name,
+		}
+		nodes = append(nodes, node)
+	}
+
+	return nodes, nil
 }
 
 // Close 关闭数据库连接

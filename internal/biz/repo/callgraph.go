@@ -27,6 +27,9 @@ type StaticDBStore interface {
 	// GetAllFuncEdges 获取所有函数调用边
 	GetAllFuncEdges() ([]*dos.FuncEdge, error)
 
+	// SearchFuncNodes 模糊搜索函数节点
+	SearchFuncNodes(query string, limit int) ([]*dos.FuncNode, error)
+
 	// InitTable 初始化数据库表
 	InitTable() error
 }

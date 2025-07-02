@@ -1,0 +1,140 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# API协议与规范
+
+## 协议概览
+
+GoAnalysis使用Protocol Buffers定义API，支持gRPC和HTTP两种协议，实现强类型、高性能的服务间通信。
+
+## API服务定义
+
+### 分析服务 ([api/analysis/v1/](mdc:goanalysis/api/analysis/v1))
+
+#### 核心文件
+- [analysis.proto](mdc:goanalysis/api/analysis/v1/analysis.proto) - 分析服务protobuf定义
+- [analysis.pb.go](mdc:goanalysis/api/analysis/v1/analysis.pb.go) - 生成的Go消息类型
+- [analysis_grpc.pb.go](mdc:goanalysis/api/analysis/v1/analysis_grpc.pb.go) - gRPC服务接口
+- [analysis.pb.gw.go](mdc:goanalysis/api/analysis/v1/analysis.pb.gw.go) - HTTP网关映射
+
+#### 错误处理
+- [error_reason.proto](mdc:goanalysis/api/analysis/v1/error_reason.proto) - 错误码定义
+- [error_reason.pb.go](mdc:goanalysis/api/analysis/v1/error_reason.pb.go) - 错误类型
+
+### 静态分析服务 ([api/staticanalysis/v1/](mdc:goanalysis/api/staticanalysis/v1))
+
+#### 核心文件  
+- [staticanalysis.proto](mdc:goanalysis/api/staticanalysis/v1/staticanalysis.proto) - 静态分析API定义
+- [staticanalysis.pb.go](mdc:goanalysis/api/staticanalysis/v1/staticanalysis.pb.go) - 消息类型
+- [staticanalysis_grpc.pb.go](mdc:goanalysis/api/staticanalysis/v1/staticanalysis_grpc.pb.go) - gRPC接口
+- [staticanalysis.pb.gw.go](mdc:goanalysis/api/staticanalysis/v1/staticanalysis.pb.gw.go) - HTTP网关
+- [staticanalysis_http.pb.go](mdc:goanalysis/api/staticanalysis/v1/staticanalysis_http.pb.go) - HTTP处理器
+
+### 文件管理服务 ([api/filemanager/v1/](mdc:goanalysis/api/filemanager/v1))
+
+#### 核心文件
+- [filemanager.proto](mdc:goanalysis/api/filemanager/v1/filemanager.proto) - 文件管理API定义  
+- [filemanager.pb.go](mdc:goanalysis/api/filemanager/v1/filemanager.pb.go) - 消息类型
+- [filemanager_grpc.pb.go](mdc:goanalysis/api/filemanager/v1/filemanager_grpc.pb.go) - gRPC接口
+- [filemanager.pb.gw.go](mdc:goanalysis/api/filemanager/v1/filemanager.pb.gw.go) - HTTP网关
+
+## 第三方协议 ([third_party/](mdc:goanalysis/third_party))
+
+### Google APIs
+- [google/api/annotations.proto](mdc:goanalysis/third_party/google/api/annotations.proto) - HTTP注解
+- [google/api/http.proto](mdc:goanalysis/third_party/google/api/http.proto) - HTTP路由定义
+- [google/api/field_behavior.proto](mdc:goanalysis/third_party/google/api/field_behavior.proto) - 字段行为注解
+
+### 标准类型
+- [google/protobuf/empty.proto](mdc:goanalysis/third_party/google/protobuf/empty.proto) - 空消息
+- [google/protobuf/timestamp.proto](mdc:goanalysis/third_party/google/protobuf/timestamp.proto) - 时间戳
+- [google/protobuf/duration.proto](mdc:goanalysis/third_party/google/protobuf/duration.proto) - 时间间隔
+- [google/protobuf/struct.proto](mdc:goanalysis/third_party/google/protobuf/struct.proto) - 动态结构
+
+### 验证和错误处理
+- [validate/validate.proto](mdc:goanalysis/third_party/validate/validate.proto) - 字段验证规则
+- [errors/errors.proto](mdc:goanalysis/third_party/errors/errors.proto) - 错误处理
+
+### OpenAPI
+- [openapi/v3/annotations.proto](mdc:goanalysis/third_party/openapi/v3/annotations.proto) - OpenAPI注解
+- [openapi/v3/openapi.proto](mdc:goanalysis/third_party/openapi/v3/openapi.proto) - OpenAPI规范
+
+## API设计原则
+
+### 1. 统一的消息格式
+```protobuf
+// 标准请求格式
+message XxxRequest {
+  // 请求参数
+}
+
+// 标准响应格式  
+message XxxResponse {
+  // 响应数据
+}
+```
+
+### 2. 错误处理规范
+- 使用标准错误码
+- 提供详细错误信息
+- 支持国际化错误消息
+
+### 3. HTTP映射规范
+- RESTful URL设计
+- 标准HTTP方法使用
+- 统一响应格式
+
+### 4. 版本管理
+- API版本化（v1, v2等）
+- 向后兼容性保证
+- 渐进式废弃策略
+
+## 代码生成
+
+### protobuf编译
+使用protoc编译器生成代码：
+```bash
+# 生成Go代码
+protoc --go_out=. --go-grpc_out=. api/analysis/v1/analysis.proto
+
+# 生成HTTP网关
+protoc --grpc-gateway_out=. api/analysis/v1/analysis.proto
+```
+
+### 依赖管理
+- 所有.pb.go文件由protoc自动生成
+- 不要手动编辑生成的文件
+- 更新proto文件后重新生成代码
+
+## OpenAPI文档
+
+项目根目录的 [openapi.yaml](mdc:goanalysis/openapi.yaml) 提供完整的API文档，包括：
+- 所有API端点定义
+- 请求/响应schema
+- 错误码说明
+- 示例数据
+
+## 客户端集成
+
+### Go客户端
+直接导入生成的Go包：
+```go
+import "your-project/api/analysis/v1"
+```
+
+### 前端集成
+通过HTTP API调用，配置在：
+- [goanalysis-web/src/config/api.js](mdc:goanalysis/goanalysis-web/src/config/api.js)
+- [goanalysis-web/src/axios.js](mdc:goanalysis/goanalysis-web/src/axios.js)
+
+## 开发工作流
+
+1. **修改proto文件** - 在对应的.proto文件中定义API
+2. **生成代码** - 运行protoc生成Go代码
+3. **实现服务** - 在service层实现业务逻辑
+4. **注册服务** - 在server层注册gRPC和HTTP服务
+5. **更新文档** - 更新OpenAPI文档
+6. **前端适配** - 更新前端API调用代码
+

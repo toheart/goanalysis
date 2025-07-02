@@ -50,7 +50,7 @@ service StaticAnalysis {
   // 获取函数调用关系图
   rpc GetFunctionCallGraph(GetFunctionCallGraphReq) returns (GetFunctionCallGraphReply) {
     option (google.api.http) = {
-      get: "/api/static/function/{function_name}/graph"
+      get: "/api/static/function/{function_key}/graph"
       additional_bindings {
         get: "/api/static/function/graph"
         response_body: "*"
@@ -129,6 +129,8 @@ service StaticAnalysis {
       body: "*"
     };
   }
+  
+  // GetFunctionMindMap API 已删除 - 已替换为树形表格功能
 }
 
 // 获取静态分析数据库文件列表请求
@@ -243,7 +245,7 @@ message GetFunctionAnalysisReply {
 
 // 获取函数调用关系图的请求
 message GetFunctionCallGraphReq {
-  string function_name = 1; // 函数名称
+  string function_key = 1; // 函数唯一标识符(短格式key)
   int32 depth = 2;          // 调用深度，默认为2
   string direction = 3;     // 方向: "caller"(调用者), "callee"(被调用), "both"(双向)
 }
@@ -251,7 +253,7 @@ message GetFunctionCallGraphReq {
 // 获取函数调用关系图的响应
 message GetFunctionCallGraphReply {
   message GraphNode {
-    string id = 1;           // 节点ID
+    string key = 1;          // 函数唯一标识符(短格式key)
     string name = 2;         // 函数名称
     string package = 3;      // 包名
     int32 call_count = 4;    // 调用次数
@@ -260,8 +262,8 @@ message GetFunctionCallGraphReply {
   }
   
   message GraphEdge {
-    string source = 1;       // 源节点ID
-    string target = 2;       // 目标节点ID
+    string source = 1;       // 源节点Key
+    string target = 2;       // 目标节点Key
     string label = 3;        // 边标签
     string edge_type = 4;    // 边类型: "caller_to_root", "root_to_callee"
   }
@@ -359,13 +361,15 @@ message SearchFunctionsResponse {
 
 // 获取函数上游调用关系请求
 message GetFunctionUpstreamRequest {
-  string db_path = 1;      // 数据库路径
-  string function_key = 2; // 函数唯一标识
+  string db_path = 1;         // 数据库路径
+  string function_key = 2;    // 函数唯一标识符(短格式key)
+  string function_package = 3; // 函数包名
+  int32 depth = 4;            // 查询深度，默认为2
 }
 
 // 图节点
 message GraphNode {
-  string id = 1;           // 节点ID
+  string key = 1;          // 函数唯一标识符(短格式key)
   string name = 2;         // 函数名称
   string package = 3;      // 包名
   int32 call_count = 4;    // 调用次数
@@ -373,8 +377,8 @@ message GraphNode {
 
 // 图边
 message GraphEdge {
-  string source = 1;       // 源节点ID
-  string target = 2;       // 目标节点ID
+  string source = 1;       // 源节点Key
+  string target = 2;       // 目标节点Key
   int32 value = 3;         // 边权重
 }
 
@@ -386,8 +390,10 @@ message GetFunctionUpstreamResponse {
 
 // 获取函数下游调用关系请求
 message GetFunctionDownstreamRequest {
-  string db_path = 1;      // 数据库路径
-  string function_key = 2; // 函数唯一标识
+  string db_path = 1;         // 数据库路径
+  string function_key = 2;    // 函数唯一标识符(短格式key)
+  string function_package = 3; // 函数包名
+  int32 depth = 4;            // 查询深度，默认为2
 }
 
 // 获取函数下游调用关系响应
@@ -399,7 +405,7 @@ message GetFunctionDownstreamResponse {
 // 获取函数全链路调用关系请求
 message GetFunctionFullChainRequest {
   string db_path = 1;      // 数据库路径
-  string function_key = 2; // 函数唯一标识
+  string function_key = 2; // 函数唯一标识符(短格式key)
 }
 
 // 获取函数全链路调用关系响应
@@ -411,7 +417,7 @@ message GetFunctionFullChainResponse {
 // 获取树状图请求
 message GetTreeGraphReq {
   string db_path = 1; // 数据库路径
-  string function_name = 2; // 函数名称
+  string function_key = 2; // 函数唯一标识符(短格式key)
 }
 
 
@@ -426,4 +432,6 @@ message TreeNode {
 // 获取树状图响应
 message GetTreeGraphReply {
   TreeNode root = 1; // 根节点
-} 
+}
+
+// 思维导图相关message已删除 - 已替换为树形表格功能 

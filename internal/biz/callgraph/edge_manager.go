@@ -33,8 +33,8 @@ func (em *EdgeManager) AddEdge(callerKey, calleeKey string) {
 func (em *EdgeManager) BuildRelationship(caller, callee *dos.FuncNode) {
 	if caller != nil && callee != nil {
 		// 建立父子关系
-		caller.Children = append(caller.Children, callee.Key)
-		callee.Parent = append(callee.Parent, caller.Key)
+		caller.Childrens = append(caller.Childrens, callee)
+		callee.Parents = append(callee.Parents, caller)
 
 		// 添加边到通道
 		em.AddEdge(caller.Key, callee.Key)

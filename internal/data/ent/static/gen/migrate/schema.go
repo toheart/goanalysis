@@ -38,6 +38,7 @@ var (
 	FuncNodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "full_name", Type: field.TypeString},
 		{Name: "pkg", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
@@ -52,12 +53,17 @@ var (
 			{
 				Name:    "funcnode_pkg",
 				Unique:  false,
-				Columns: []*schema.Column{FuncNodesColumns[2]},
+				Columns: []*schema.Column{FuncNodesColumns[3]},
 			},
 			{
 				Name:    "funcnode_key",
 				Unique:  true,
 				Columns: []*schema.Column{FuncNodesColumns[1]},
+			},
+			{
+				Name:    "funcnode_full_name",
+				Unique:  false,
+				Columns: []*schema.Column{FuncNodesColumns[2]},
 			},
 		},
 	}

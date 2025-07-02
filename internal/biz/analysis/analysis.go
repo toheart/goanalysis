@@ -236,21 +236,6 @@ func (a *AnalysisBiz) IsGoroutineFinished(dbpath string, gid uint64) (bool, erro
 	return traceDB.IsGoroutineFinished(gid)
 }
 
-// GetUnfinishedFunctions 获取未完成的函数列表
-func (a *AnalysisBiz) GetUnfinishedFunctions(dbpath string, threshold int64) ([]entity.AllUnfinishedFunction, error) {
-	a.log.Infof("get unfinished functions with threshold: %d ms from db: %s", threshold, dbpath)
-	traceDB, err := a.data.GetTraceDB(dbpath)
-	if err != nil {
-		return nil, err
-	}
-	functions, err := traceDB.GetAllUnfinishedFunctions(threshold)
-	if err != nil {
-		return nil, err
-	}
-
-	return functions, nil
-}
-
 func (a *AnalysisBiz) GetUpstreamTreeGraph(dbpath string, functionName string, depth int) ([]*entity.TreeNode, error) {
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
@@ -473,26 +458,6 @@ func (a *AnalysisBiz) buildFullChainTreeNodes(functionName string, upstreamGraph
 	}
 
 	return upstreamGraph, nil
-}
-
-// 根据节点ID获取节点名称
-func getNodeNameById(nodes []entity.FunctionGraphNode, id string) string {
-	for _, node := range nodes {
-		if node.ID == id {
-			return node.Name
-		}
-	}
-	return id // 如果找不到，返回ID本身
-}
-
-// 从边标签解析调用次数
-func parseCallCount(label string) (int, error) {
-	var count int
-	_, err := fmt.Sscanf(label, "调用次数: %d", &count)
-	if err != nil {
-		return 1, err // 默认返回1
-	}
-	return count, nil
 }
 
 // GetTreeGraphByGID 根据GID获取多棵树状图数据

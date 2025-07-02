@@ -17,8 +17,10 @@ type FuncNode struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// Key holds the value of the "key" field.
+	// 短格式唯一标识，如 n6796
 	Key string `json:"key,omitempty"`
+	// 完整的函数路径，如 crypto/hmac.New$1
+	FullName string `json:"full_name,omitempty"`
 	// Pkg holds the value of the "pkg" field.
 	Pkg string `json:"pkg,omitempty"`
 	// Name holds the value of the "name" field.
@@ -37,7 +39,7 @@ func (*FuncNode) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case funcnode.FieldID:
 			values[i] = new(sql.NullInt64)
-		case funcnode.FieldKey, funcnode.FieldPkg, funcnode.FieldName:
+		case funcnode.FieldKey, funcnode.FieldFullName, funcnode.FieldPkg, funcnode.FieldName:
 			values[i] = new(sql.NullString)
 		case funcnode.FieldCreatedAt, funcnode.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -67,6 +69,12 @@ func (fn *FuncNode) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field key", values[i])
 			} else if value.Valid {
 				fn.Key = value.String
+			}
+		case funcnode.FieldFullName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field full_name", values[i])
+			} else if value.Valid {
+				fn.FullName = value.String
 			}
 		case funcnode.FieldPkg:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -130,6 +138,9 @@ func (fn *FuncNode) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", fn.ID))
 	builder.WriteString("key=")
 	builder.WriteString(fn.Key)
+	builder.WriteString(", ")
+	builder.WriteString("full_name=")
+	builder.WriteString(fn.FullName)
 	builder.WriteString(", ")
 	builder.WriteString("pkg=")
 	builder.WriteString(fn.Pkg)

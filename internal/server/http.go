@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rakyll/statik/fs"
 	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/biz/filemanager"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
@@ -21,6 +21,9 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/rs/cors"
+
+	// 导入生成的 statik 包
+	_ "github.com/toheart/goanalysis/statik"
 )
 
 var _ transport.Server = (*HttpServer)(nil)
@@ -151,10 +154,42 @@ func sendSSEEvent(w http.ResponseWriter, data interface{}) error {
 	return err
 }
 
-// 添加一个辅助函数来检查文件是否存在
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
+// createSPAFileServer 创建SPA友好的文件服务器
+func (h *HttpServer) createSPAFileServer(statikFS http.FileSystem) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 尝试打开请求的文件
+		file, err := statikFS.Open(r.URL.Path)
+		if err == nil {
+			// 文件存在，提供文件内容
+			defer file.Close()
+
+			// 获取文件信息
+			stat, err := file.Stat()
+			if err == nil && !stat.IsDir() {
+				http.ServeContent(w, r, stat.Name(), stat.ModTime(), file)
+				return
+			}
+		}
+
+		// 文件不存在或是目录，对于SPA应用返回index.html
+		indexFile, err := statikFS.Open("/index.html")
+		if err != nil {
+			// 如果连index.html都不存在，返回404
+			http.NotFound(w, r)
+			return
+		}
+		defer indexFile.Close()
+
+		stat, err := indexFile.Stat()
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		// 设置正确的Content-Type
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		http.ServeContent(w, r, stat.Name(), stat.ModTime(), indexFile)
+	})
 }
 
 // NewHTTPServer new an HTTP server.
@@ -188,16 +223,21 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 	handler.HandleFunc("/api/static/analysis/", h.handleAnalysisEvents)
 	logHelper.Infof("SSE endpoint registered: /api/static/analysis/{taskId}")
 
-	// 定义前端目录
-	frontendDir := "./web"
-	fileServer := http.FileServer(http.Dir(frontendDir))
+	// 使用 statik 嵌入的静态文件
+	statikFS, err := fs.New()
+	if err != nil {
+		logHelper.Fatalf("Failed to create statik filesystem: %v", err)
+	}
+
+	// 创建SPA友好的文件服务器
+	fileServer := h.createSPAFileServer(statikFS)
 
 	// 创建一个处理所有请求的处理器
-	rootHandler := h.BaseHandler(mux, frontendDir, fileServer)
+	rootHandler := h.BaseHandler(mux, fileServer)
 
 	// 将根处理器包装在CORS处理器中
 	handler.Handle("/", corsHandler.Handler(rootHandler))
-	logHelper.Infof("Root handler with CORS and static file serving registered")
+	logHelper.Infof("Root handler with CORS and embedded static file serving registered")
 
 	serverAddr := c.Http.Addr
 	h.server = &http.Server{
@@ -214,7 +254,7 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 	}
 
 	// 添加Prometheus 接口
-	err := mux.HandlePath("GET", "/metrics", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+	err = mux.HandlePath("GET", "/metrics", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		promhttp.Handler().ServeHTTP(w, r)
 	})
 	if err != nil {

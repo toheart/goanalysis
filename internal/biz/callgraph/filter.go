@@ -47,8 +47,8 @@ func (f *Filter) ShouldProcessEdge(edge *callgraph.Edge) bool {
 	caller := edge.Caller
 	callee := edge.Callee
 
-	// 排除标准库
-	if f.IsStandardLibrary(caller) && f.IsStandardLibrary(callee) {
+	// 排除标准库节点：如果调用者或被调用者是标准库，则排除
+	if f.IsStandardLibrary(caller) || f.IsStandardLibrary(callee) {
 		return false
 	}
 
@@ -57,8 +57,12 @@ func (f *Filter) ShouldProcessEdge(edge *callgraph.Edge) bool {
 		return false
 	}
 
-	// 至少有一个是内部模块
-	if !f.IsInternal(caller) && !f.IsInternal(callee) {
+	// 排除调用者、被调用者两者都不属于当前项目的方法
+	callerIsInternal := f.IsInternal(caller)
+	calleeIsInternal := f.IsInternal(callee)
+
+	// 至少有一个必须是内部模块，否则排除
+	if !callerIsInternal && !calleeIsInternal {
 		return false
 	}
 
@@ -74,9 +78,42 @@ func isSynthetic(edge *callgraph.Edge) bool {
 
 // isStdPkgPath 检查包路径是否为标准库
 func isStdPkgPath(path string) bool {
-	// 标准库包路径通常不包含域名（没有点号）
+	// 标准库包路径特征：
+	// 1. 不包含域名（没有点号）
+	// 2. 常见的标准库包前缀
+
+	// 如果包含点号，通常是第三方包
 	if strings.Contains(path, ".") {
 		return false
 	}
-	return true
+
+	// 空路径或特殊路径
+	if path == "" || path == "command-line-arguments" {
+		return false
+	}
+
+	// 常见的标准库包
+	stdPkgs := []string{
+		"fmt", "os", "io", "net", "http", "time", "strings", "bytes",
+		"context", "errors", "log", "math", "sort", "sync", "unsafe",
+		"runtime", "reflect", "encoding", "crypto", "database", "go",
+		"html", "image", "index", "mime", "path", "regexp", "strconv",
+		"testing", "text", "unicode", "archive", "bufio", "builtin",
+		"compress", "container", "debug", "expvar", "flag", "hash",
+		"heap", "plugin", "syscall",
+	}
+
+	// 检查是否是标准库包或其子包
+	for _, stdPkg := range stdPkgs {
+		if path == stdPkg || strings.HasPrefix(path, stdPkg+"/") {
+			return true
+		}
+	}
+
+	// 其他判断：不包含斜杠的单个词通常是标准库
+	if !strings.Contains(path, "/") && path != "" {
+		return true
+	}
+
+	return false
 }
