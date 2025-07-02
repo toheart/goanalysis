@@ -68,6 +68,14 @@ jobs:
           echo "version=$FRONTEND_VERSION" >> $GITHUB_OUTPUT
           echo "Using frontend version: $FRONTEND_VERSION"
 
+      - name: install statik
+        run: |
+          go install github.com/rakyll/statik
+
+      - name: generate static assets
+        run: |
+          statik -src=web
+
       - name: build application
         run: |
           make build VERSION=$VERSION
@@ -116,8 +124,8 @@ jobs:
         with:
           name: goanalysis-packages
           path: |
-            release/goanalysis-linux-${{ env.VERSION }}.tar.gz
-            release/goanalysis-windows-${{ env.VERSION }}.tar.gz
+            release/goanalysis-linux-${{ env.VERSION }}
+            release/goanalysis-windows-${{ env.VERSION }}.exe
 
   release:
     needs: build

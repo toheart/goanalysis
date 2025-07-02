@@ -126,5 +126,5 @@ jobs:
         with:
           name: goanalysis-packages
           path: |
-            release/goanalysis-linux-${{ env.VERSION }}.tar.gz
-            release/goanalysis-windows-${{ env.VERSION }}.tar.gz
+            release/goanalysis-linux-${{ env.VERSION }}
+            release/goanalysis-windows-${{ env.VERSION }}.exe
