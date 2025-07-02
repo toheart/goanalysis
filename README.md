@@ -1,196 +1,176 @@
-# 🔍 FuncTrace Analyzer
+# 🔍 GoAnalysis
 
 <p align="right">
   <a href="README.ZH.md">中文版</a> |
-  <a href="README.md">English Version</a>
+  <a href="README.md">English</a>
 </p>
 
 <div align="center">
-  <h1>FuncTrace Analyzer</h1>
-  <h3>Go Function Tracing Analysis & Visualization Expert System</h3>
-  <p><strong>Current Version: v1.1.4</strong></p>
-
+  <h1>GoAnalysis</h1>
+  <h3>Go Function Tracing & Visualization Tool</h3>
+  
   ![License](https://img.shields.io/badge/License-MIT-blue.svg)
-  ![Version](https://img.shields.io/badge/Version-v1.0.0-brightgreen.svg)
-  ![Status](https://img.shields.io/badge/Status-Developing-orange.svg)
-  ![Language](https://img.shields.io/badge/Language-Golang%20|%20Vue-yellow.svg)
+  ![Version](https://img.shields.io/badge/Version-v1.1.4-brightgreen.svg)
+  ![Go](https://img.shields.io/badge/Language-Go%20|%20Vue3-yellow.svg)
 </div>
 
-## 🌟 Project Overview
+## 🌟 Overview
 
-**FuncTrace Analyzer** is a professional Go function tracing analysis tool that helps developers deeply understand function call relationships and performance bottlenecks through visualization technologies. The system uses the Kratos microservices framework for the backend and Vue.js for the frontend, providing a complete solution from data collection to 3D visualization.
+Professional Go function tracing analysis tool with advanced visualization. Built with **Kratos** backend and **Vue3** frontend.
 
-### 🚀 Core Features
+## 🚀 Features
 
-- **Intelligent Function Tracing** - Real-time goroutine execution path capture
-- **Multi-dimensional Analysis** - Time dimension, call depth, resource consumption analysis
-- **Interactive Visualization** - Dynamic zoomable Mermaid flowcharts + parameter heatmaps
-- **Smart Diagnostics** - Performance bottleneck prediction based on historical data
-- **Cross-platform Support** - Lightweight SQLite storage solution
+- **🔍 Function Tracing** - Real-time goroutine execution capture
+- **📊 Visualization** - Interactive Mermaid flowcharts and heatmaps  
+- **📈 Performance** - Bottleneck identification and analysis
+- **🔄 Git Integration** - GitLab MR change analysis
+- **🌐 Web UI** - Modern Vue3 interface
 
-### 🎯 Design Goals
+## 🛠️ Tech Stack
 
-1. **Low-overhead Monitoring** - Under 5% performance overhead
-2. **Zero-Intrusive Integration** - No code modification required
-3. **Millisecond Response** - Fast query for 10M+ call chains
+- **Backend**: Kratos, gRPC, SQLite
+- **Frontend**: Vue3, Bootstrap, ECharts
+- **Visualization**: Mermaid.js, D3.js
 
-## 🛠️ Technology Stack
+## 🚀 Quick Start
 
-| Domain            | Technologies               |
-|-------------------|----------------------------|
-| **Backend**       | Kratos (Microservices)     |
-| **Frontend**      | Vue3 + Composition API     |
-| **Visualization** | Mermaid.js + ECharts       |
-| **Storage**       | SQLite + WAL Mode + Ent    |
-| **Search**        | fuse.js fuzzy search       |
-| **Deployment**    | Docker + Kubernetes-ready  |
+### Using Pre-built Binaries
+
+1. Download from [GitHub Releases](https://github.com/toheart/goanalysis/releases)
+2. Extract and run:
+   ```bash
+   # Linux
+   ./goanalysis-linux-v* server
+   
+   # Windows  
+   goanalysis-windows-v*.exe server
+   ```
+3. Open http://localhost:8000
+
+### Building from Source
+
+```bash
+git clone https://github.com/toheart/goanalysis.git
+cd goanalysis
+make init
+make sync-frontend  
+make build
+./bin/goanalysis server
+```
+
+## ⚙️ Configuration
+
+Edit `configs/config.yaml`:
+
+```yaml
+server:
+  http:
+    addr: 0.0.0.0:8000
+  grpc:
+    addr: 0.0.0.0:9000
+
+data:
+  dbpath: ./goanalysis.db
+
+biz:
+  gitlab:
+    token: "${GITLAB_TOKEN}"
+    url: "${GITLAB_API_URL}"
+```
+
+## 📡 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/gids` | GET | Get goroutine IDs |
+| `/api/functions` | GET | List traced functions |
+| `/api/traces/{gid}` | GET | Get trace details |
+| `/api/traces/{gid}/mermaid` | GET | Get diagram data |
+
+## 🔧 Usage
+
+### Basic Tracing
+```bash
+./goanalysis server
+./goanalysis rewrite -d /path/to/project
+```
+
+### Git Analysis  
+```bash
+export GITLAB_TOKEN="your-token"
+./goanalysis gitanalysis --project=123 --mr=45
+```
 
 ## 📂 Project Structure
 
 ```
-├── api                 # API definitions (protobuf)
-├── cmd                 # Main applications
-├── configs             # Configuration files
-├── internal            # Private application code
-│   ├── biz             # Business logic
-│   ├── data            # Data processing and storage (Ent)
-│   ├── server          # Server implementations
-│   └── service         # Service implementations
-├── third_party         # Third party dependencies
-└── README.md           # This file
+├── api/           # API definitions
+├── cmd/           # CLI commands  
+├── internal/      # Core logic
+├── web/           # Frontend files
+└── configs/       # Configuration
 ```
 
-## 🧩 Feature Modules
+## 🏗️ Deployment
 
-### 1. Smart Trace Viewer
-
-- **Description**: Search and display goroutines related to specific functions
-- **Component**: `TraceViewer.vue`
-- **Details**:
-  - Dynamic filtering with input and dropdown
-  - API integration for GID retrieval
-  - Fuzzy search using `fuse.js`
-
-### 2. 3D Call Graph Visualization
-
-- **Description**: Detailed trace analysis for specific GIDs
-- **Component**: `TraceDetails.vue`
-- **Details**:
-  - Parameter inspection capabilities
-  - Interactive timeline navigation
-
-### 3. Parameter Heatmap Analysis
-
-- **Description**: Visualize function call relationships
-- **Component**: `MermaidViewer.vue`
-- **Details**:
-  - Mermaid.js rendering
-  - Zoom/drag support
-
-### 4. Database Operations
-
-- **Description**: SQLite data storage/query using Ent
-- **Details**:
-  - Type-safe database operations
-  - CRUD operations for trace data
-
-### 5. CORS Support
-
-- **Description**: Cross-origin resource sharing
-- **Details**: CORS middleware configuration
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Go 1.19+
-- Node.js 16+
-- SQLite3 3.36+
-
-### Backend Setup
-
+### Docker
 ```bash
-# Clone repository
-git clone https://github.com/toheart/goanalysis.git
-
-# start server 
-go run . server
-
-# Instrumentation
-go run . rewrite -d <path-to>
+docker run -p 8000:8000 -p 9000:9000 \
+  ghcr.io/toheart/goanalysis:latest
 ```
 
-## 📡 API Reference
+### Build
+```bash
+make package-linux
+make package-windows
+```
 
-| Endpoint                    | Method | Description              |
-| :-------------------------- | :----- | :----------------------- |
-| `/api/gids`                 | GET    | Get all GIDs             |
-| `/api/functions`            | GET    | List all functions       |
-| `/api/gids/function`        | POST   | Find GIDs by function    |
-| `/api/traces/{gid}`         | GET    | Get trace by GID         |
-| `/api/params/{id}`          | GET    | Get parameters by ID     |
-| `/api/traces/{gid}/mermaid` | GET    | Get Mermaid diagram data |
+## 🔧 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Port in use | `lsof -i :8000; kill -9 <PID>` |
+| DB locked | `rm -f goanalysis.db-*` |
+| Frontend missing | `make sync-frontend` |
 
 ## 🤝 Contributing
 
-We follow [Gitflow workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow):
+1. Fork repository
+2. Create feature branch
+3. Make changes with tests
+4. Submit pull request
 
-1. Create feature branch: `git checkout -b feature/your-feature`
-2. Commit atomic changes (follow Conventional Commits)
-3. Write unit tests (≥80% coverage)
-4. Update documentation
-5. Create PR to `develop` branch
+Follow [Conventional Commits](https://www.conventionalcommits.org/).
 
-## 🔧 Kratos Features Utilized
+## 📜 Releases
 
-- **Service Discovery**: Built-in service registry and discovery
-- **Error Handling**: Structured error handling and recovery
-- **Logging & Tracing**: Comprehensive logging and distributed tracing
-- **Project Structure**: Following Kratos recommended conventions
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.1.4 | 2024-12-16 | GitLab integration |
+| v1.1.0 | 2024-12-01 | Vue3 upgrade |
+| v1.0.0 | 2024-11-15 | First stable |
 
-## GitHub Actions Pipeline and Docker Images  
+## 📄 License
 
-This project has configured a GitHub Actions pipeline for automatically building and publishing Docker images and packages.
+MIT License - see [LICENSE](LICENSE) file.
 
-### Automatic Build Process
+## 📞 Support
 
-When code is pushed to the `main` branch or a new tag (in the format of `v*`, such as `v1.0.0`) is created, the build process is automatically triggered:
-
-1. Checkout code
-2. Set up Go environment
-3. Retrieve version information
-4. Sync frontend code (from the latest release version of https://github.com/toheart/goanalysis-web)
-5. Build application
-6. Package Linux and Windows versions
-7. Build and push Docker image (only when pushing to a branch or tag)
-8. Create GitHub Release (only when creating a tag)
-
-### Frontend Version Synchronization
-
-The system will automatically fetch the latest release version from the https://github.com/toheart/goanalysis-web repository for building:
-
-1. Retrieve the latest release version information via GitHub API
-2. Download the corresponding release package or source code
-3. If the release package contains a compiled dist directory, use it directly
-4. If only the source code is available, it will be compiled automatically
-5. The Release notes will include the frontend version information used
-
-## 📜 Version History
-
-| Version | Date       | Milestone                   |
-| :------ | :--------- | :-------------------------- |
-| v1.0.0  | 2025-03-09 | Official release            |
-| v0.9.0  | 2025-02-25 | Distributed tracing support |
-| v0.8.0  | 2025-02-18 | Parameter heatmap analysis  |
-
-## 📞 Contact
-
-- **Maintainer**: [toheart](https://github.com/toheart)
-- **Issues**: [GitHub Issues](https://github.com/toheart/goanalysis/issues)
-- **WeChat**: [小唐的技术日志](https://mp.weixin.qq.com/)
+- **🐛 Issues**: [GitHub Issues](https://github.com/toheart/goanalysis/issues)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/toheart/goanalysis/discussions)
+- **📖 Docs**: [Wiki](https://github.com/toheart/goanalysis/wiki)
+- **📱 WeChat**: Follow "小唐的技术日志" for updates
 
 <div align="center">
-	<p><strong>FuncTrace Analyzer</strong> - Powered by Kratos+Vue Tech Stack</p> 
-	<p><i>📌 Last Updated: 2025-03-09 CST</i></p>
-	<hr>
+  <h4>📱 Follow WeChat</h4>
+  <p><strong>小唐的技术日志</strong></p>
+  <img src="docs/images/wechat-qr.jpg" alt="WeChat QR Code" width="200"/>
+  <p><i>Scan for latest updates</i></p>
+</div>
+
+---
+
+<div align="center">
+  <p><strong>GoAnalysis</strong> - Empowering Go developers</p>
+  <p>⭐ Star us on GitHub!</p>
 </div>
