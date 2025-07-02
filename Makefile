@@ -80,7 +80,6 @@ sync-frontend:
 		rm -rf dist_temp ;\
 		unzip -q dist.zip -d dist_temp &&  cp -r dist_temp/* web/;\
 		rm -rf dist_temp dist.zip; \
-
 	fi;
 	@echo "Frontend code sync completed."
 
