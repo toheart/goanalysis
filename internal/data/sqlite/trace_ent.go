@@ -61,6 +61,7 @@ func (d *TraceEntDB) GetTracesByGID(gid uint64, depth int, createTime string) ([
 		if err != nil {
 			return nil, fmt.Errorf("parse createdAt failed: %w", err)
 		}
+
 		// 创建业务实体
 		traceData := entity.TraceData{
 			ID:         int64(trace.ID),
@@ -246,17 +247,65 @@ func (d *TraceEntDB) GetParamsByID(id int32) ([]entity.TraceParams, error) {
 func (d *TraceEntDB) GetGidsByFunctionName(functionName string) ([]string, error) {
 	ctx := context.Background()
 
-	// 查询具有指定函数名的所有 GID
-	gids, err := d.client.TraceData.
+	// 查询具有指定函数名的所有跟踪数据，不按GID分组
+	traces, err := d.client.TraceData.
 		Query().
 		Where(tracedata.Name(functionName)).
-		GroupBy(tracedata.FieldGid).
-		Strings(ctx)
+		All(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("查询函数名对应的 GID 失败: %w", err)
+		return nil, fmt.Errorf("查询函数名对应的跟踪数据失败: %w", err)
 	}
 
-	return gids, nil
+	// 用于去重的map，key为"gid:parentId"
+	processedGIDParentID := make(map[string]bool)
+	var result []string
+
+	for _, trace := range traces {
+		// 创建唯一键：gid:parentId
+		uniqueKey := fmt.Sprintf("%d:%d", trace.Gid, trace.ParentId)
+
+		// 如果已经处理过相同的gid:parentId组合，跳过
+		if processedGIDParentID[uniqueKey] {
+			continue
+		}
+
+		// 标记为已处理
+		processedGIDParentID[uniqueKey] = true
+
+		// 将GID添加到结果中
+		result = append(result, fmt.Sprintf("%d", trace.Gid))
+	}
+
+	return result, nil
+}
+
+// GetGoroutineByGID 根据 GID 获取单个 Goroutine 信息
+func (d *TraceEntDB) GetGoroutineByGID(gid int64) (*entity.GoroutineTrace, error) {
+	ctx := context.Background()
+
+	// 查询指定 GID 的 Goroutine 信息
+	goroutine, err := d.client.GoroutineTrace.
+		Query().
+		Where(goroutinetrace.ID(gid)).
+		First(ctx)
+	if err != nil {
+		if gen.IsNotFound(err) {
+			return nil, fmt.Errorf("Goroutine with GID %d not found", gid)
+		}
+		return nil, fmt.Errorf("查询 Goroutine 信息失败: %w", err)
+	}
+
+	// 转换为业务实体
+	result := &entity.GoroutineTrace{
+		ID:           int64(goroutine.ID),
+		GID:          goroutine.OriginGid,
+		TimeCost:     goroutine.TimeCost,
+		CreateTime:   goroutine.CreateTime,
+		IsFinished:   goroutine.IsFinished,
+		InitFuncName: goroutine.InitFuncName,
+	}
+
+	return result, nil
 }
 
 // GetTotalGIDs 获取 GID 总数
@@ -973,6 +1022,90 @@ func (d *TraceEntDB) SearchFunctions(ctx context.Context, dbPath string, query s
 	return functions, int32(len(functions)), nil
 }
 
-func formatTime(totalTime int64) string {
-	return fmt.Sprintf("%d ms", totalTime) // 返回总时间的字符串格式
+// GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
+func (d *TraceEntDB) GetFunctionInfoInGoroutine(gid uint64, targetFunctionId int64) (*entity.FunctionInfo, error) {
+	ctx := context.Background()
+
+	// 1. 先查询目标函数信息
+	targetTrace, err := d.client.TraceData.Query().Where(
+		tracedata.ID(int(targetFunctionId)),
+		tracedata.Gid(uint64(gid)),
+	).First(ctx)
+	if err != nil {
+		if gen.IsNotFound(err) {
+			return nil, fmt.Errorf("function not found")
+		}
+		return nil, fmt.Errorf("query target function failed: %w", err)
+	}
+
+	functionInfo := &entity.FunctionInfo{
+		ID:     targetFunctionId,
+		Name:   targetTrace.Name,
+		Indent: targetTrace.Indent,
+	}
+
+	// 2. 获取从当前函数到深度为0的所有父函数
+	parentInfos, err := d.getParentFunctionInfos(targetTrace.Gid, targetFunctionId)
+	if err != nil {
+		return nil, fmt.Errorf("get parent function infos failed: %w", err)
+	}
+	functionInfo.ParentIds = parentInfos
+
+	return functionInfo, nil
+}
+
+// getParentFunctionInfos 获取从当前函数到深度为0的所有父函数信息列表（去重）
+func (d *TraceEntDB) getParentFunctionInfos(gid uint64, targetFunctionId int64) ([]entity.ParentInfo, error) {
+	ctx := context.Background()
+
+	// 使用map去重，key为parentId
+	parentInfoMap := make(map[int64]entity.ParentInfo)
+
+	// 从目标函数开始向上查找父函数，直到深度为0
+	currentId := targetFunctionId
+	for {
+		// 查询当前函数
+		currentTrace, err := d.client.TraceData.Get(ctx, int(currentId))
+		if err != nil {
+			if gen.IsNotFound(err) {
+				break // 到达根节点
+			}
+			return nil, fmt.Errorf("query current function failed: %w", err)
+		}
+
+		// 验证是否属于指定的Goroutine
+		if currentTrace.Gid != gid {
+			break // 不属于指定Goroutine，停止查找
+		}
+
+		// 如果不是目标函数本身，则添加到父函数列表
+		if currentId != targetFunctionId {
+			parentInfo := entity.ParentInfo{
+				ParentId: currentId,
+				Depth:    currentTrace.Indent,
+				Name:     currentTrace.Name,
+			}
+			parentInfoMap[currentId] = parentInfo
+		}
+
+		// 如果当前函数深度为0，停止向上查找
+		if currentTrace.Indent == 0 {
+			break
+		}
+
+		// 查找父函数
+		if currentTrace.ParentId == 0 {
+			break // 到达根节点
+		}
+
+		currentId = int64(currentTrace.ParentId)
+	}
+
+	// 将map转换为slice
+	var parentInfos []entity.ParentInfo
+	for _, parentInfo := range parentInfoMap {
+		parentInfos = append(parentInfos, parentInfo)
+	}
+
+	return parentInfos, nil
 }

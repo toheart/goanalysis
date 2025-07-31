@@ -8,7 +8,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/toheart/goanalysis/api/analysis/v1"
 	"github.com/toheart/goanalysis/internal/biz/analysis"
-	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/biz/rewrite"
 	"google.golang.org/grpc"
 )
@@ -145,51 +144,38 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 	includeMetrics := in.IncludeMetrics
 	dbpath := in.Path // 使用 Path 字段作为 dbpath
 
-	// 获取所有GID
-	groutines, err := a.uc.GetAllGIDs(dbpath, 0, 1000) // 假设最多1000个GID
+	a.log.Infof("find %s in which goroutines, dbpath: %s", functionName, dbpath)
+
+	// 调用业务逻辑层获取GID列表（已经处理了去重逻辑）
+	functions, err := a.uc.GetGidsByFunctionName(dbpath, functionName)
 	if err != nil {
+		a.log.Errorf("found %s gids failed: %v", functionName, err)
 		return nil, err
-	}
-
-	// 过滤包含指定函数的GID
-	var matchingG []entity.GoroutineTrace
-	for _, g := range groutines {
-		traces, err := a.uc.GetTracesByGID(&v1.AnalysisByGIDRequest{
-			Dbpath:     dbpath,
-			Gid:        uint64(g.ID),
-			Depth:      3,
-			CreateTime: "",
-		})
-		if err != nil {
-			continue
-		}
-
-		// 检查是否包含指定函数
-		for _, trace := range traces {
-			// 简化函数名称进行比较
-			simplifiedName := getLastSegment(removeParentheses(trace.Name))
-			if simplifiedName == functionName {
-				matchingG = append(matchingG, g)
-				break
-			}
-		}
 	}
 
 	// 构建响应
 	reply := &v1.GetGidsByFunctionNameReply{}
-	for _, g := range matchingG {
 
-		isfinished := (g.IsFinished == 1)
+	for _, function := range functions {
+		// 获取Goroutine的基本信息
+		goroutine, err := a.uc.GetGoroutineByGID(dbpath, function.GID)
+		if err != nil {
+			a.log.Warnf("get goroutine %d info failed: %v", function.GID, err)
+			continue
+		}
+
+		isfinished := (goroutine.IsFinished == 1)
 		body := &v1.GetGidsByFunctionNameReply_Body{
-			Gid:         uint64(g.ID),
-			InitialFunc: g.InitFuncName,
+			Gid:         function.GID,
+			InitialFunc: goroutine.InitFuncName,
 			IsFinished:  isfinished,
+			FunctionId:  function.ID,
 		}
 
 		// 如果需要包含调用深度和执行时间
 		if includeMetrics {
 			// 获取调用深度
-			depth, err := a.uc.GetGoroutineCallDepth(dbpath, uint64(g.ID))
+			depth, err := a.uc.GetGoroutineCallDepth(dbpath, function.GID)
 			if err != nil {
 				// 如果获取失败，使用默认值
 				body.Depth = 0
@@ -198,7 +184,7 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 			}
 
 			// 获取执行时间
-			execTime, err := a.uc.GetGoroutineExecutionTime(dbpath, g)
+			execTime, err := a.uc.GetGoroutineExecutionTime(dbpath, *goroutine)
 			if err != nil {
 				// 如果获取失败，使用默认值
 				body.ExecutionTime = "N/A"
@@ -211,7 +197,9 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 	}
 
 	// 获取总数
-	reply.Total = int32(len(matchingG))
+	reply.Total = int32(len(reply.Body))
+
+	a.log.Infof("found %s in %d goroutines", functionName, len(reply.Body))
 
 	return reply, nil
 }
@@ -336,39 +324,6 @@ func (a *AnalysisService) GetGoroutineStats(ctx context.Context, in *v1.GetGorou
 	}, nil
 }
 
-// GetFunctionAnalysis 获取函数调用关系分析
-func (a *AnalysisService) GetFunctionAnalysis(ctx context.Context, in *v1.GetFunctionAnalysisReq) (*v1.GetFunctionAnalysisReply, error) {
-	functionNodes, err := a.uc.GetFunctionAnalysis(in.Dbpath, in.FunctionName, in.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	reply := &v1.GetFunctionAnalysisReply{}
-	reply.CallData = convertToProtoFunctionNodes(functionNodes)
-	return reply, nil
-}
-
-// 转换为protobuf类型的辅助函数
-func convertToProtoFunctionNodes(nodes []entity.FunctionNode) []*v1.GetFunctionAnalysisReply_FunctionNode {
-	protoNodes := make([]*v1.GetFunctionAnalysisReply_FunctionNode, len(nodes))
-	for i, node := range nodes {
-		protoNode := &v1.GetFunctionAnalysisReply_FunctionNode{
-			Id:        node.ID,
-			Name:      node.Name,
-			Package:   node.Package,
-			CallCount: int32(node.CallCount),
-			AvgTime:   node.AvgTime,
-		}
-
-		if len(node.Children) > 0 {
-			protoNode.Children = convertToProtoFunctionNodes(node.Children)
-		}
-
-		protoNodes[i] = protoNode
-	}
-	return protoNodes
-}
-
 // InstrumentProject 对项目进行插桩
 func (a *AnalysisService) InstrumentProject(ctx context.Context, in *v1.InstrumentProjectReq) (*v1.InstrumentProjectReply, error) {
 	a.log.Infof("Instrumenting project at path: %s", in.Path)
@@ -396,54 +351,6 @@ func (a *AnalysisService) InstrumentProject(ctx context.Context, in *v1.Instrume
 	}, nil
 }
 
-// GetTreeGraph 获取树状图
-func (a *AnalysisService) GetTreeGraph(ctx context.Context, req *v1.GetTreeGraphReq) (*v1.GetTreeGraphReply, error) {
-	a.log.Infof("get tree graph, function: %s, dbpath: %s, chain_type: %s, depth: %d", req.FunctionName, req.DbPath, req.ChainType, req.Depth)
-
-	// 调用业务逻辑获取树状图数据
-	trees, err := a.uc.GetTreeGraph(req.DbPath, req.FunctionName, req.ChainType, int(req.Depth))
-	if err != nil {
-		a.log.Errorf("get tree graph failed: %v", err)
-		return nil, err
-	}
-
-	// 转换为API响应格式
-	reply := &v1.GetTreeGraphReply{
-		Trees: make([]*v1.TreeNode, 0, len(trees)),
-	}
-
-	// 转换每棵树节点
-	for _, tree := range trees {
-		protoTree := a.convertTreeNodeToProto(tree)
-		reply.Trees = append(reply.Trees, protoTree)
-	}
-
-	return reply, nil
-}
-
-// 将实体TreeNode转换为proto TreeNode
-func (a *AnalysisService) convertTreeNodeToProto(node *entity.TreeNode) *v1.TreeNode {
-	if node == nil {
-		return nil
-	}
-
-	protoNode := &v1.TreeNode{
-		Name:      node.Name,
-		Value:     node.Value,
-		Collapsed: true,
-	}
-
-	// 递归转换子节点
-	if len(node.Children) > 0 {
-		protoNode.Children = make([]*v1.TreeNode, 0, len(node.Children))
-		for _, child := range node.Children {
-			protoNode.Children = append(protoNode.Children, a.convertTreeNodeToProto(child))
-		}
-	}
-
-	return protoNode
-}
-
 // GetTreeGraphByGID 根据GID获取多棵树状图数据
 func (a *AnalysisService) GetTreeGraphByGID(ctx context.Context, req *v1.GetTreeGraphByGIDReq) (*v1.GetTreeGraphByGIDReply, error) {
 	a.log.Infof("get tree graph by gid: %d, dbpath: %s", req.Gid, req.DbPath)
@@ -462,7 +369,11 @@ func (a *AnalysisService) GetTreeGraphByGID(ctx context.Context, req *v1.GetTree
 
 	// 转换每棵树
 	for _, tree := range treeTrees {
-		protoTree := a.convertTreeNodeToProto(tree)
+		protoTree := &v1.TreeNode{
+			Name:      tree.Name,
+			Value:     tree.Value,
+			Collapsed: true,
+		}
 		reply.Trees = append(reply.Trees, protoTree)
 	}
 
@@ -548,11 +459,39 @@ func (s *AnalysisService) SearchFunctions(ctx context.Context, req *v1.SearchFun
 
 	for _, f := range functions {
 		reply.Functions = append(reply.Functions, &v1.SearchFunctionsReply_FunctionInfo{
-			Name:      f.Name,
-			Package:   f.Package,
-			CallCount: int32(f.CallCount),
-			AvgTime:   f.AvgTime,
+			Name:    f.Name,
+			Package: f.Package,
 		})
+	}
+
+	return reply, nil
+}
+
+// GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
+func (a *AnalysisService) GetFunctionInfoInGoroutine(ctx context.Context, in *v1.GetFunctionInfoInGoroutineReq) (*v1.GetFunctionInfoInGoroutineReply, error) {
+	a.log.Infof("get function info in goroutine, gid: %d, functionId: %d from db: %s", in.Gid, in.FunctionId, in.Dbpath)
+
+	functionInfo, err := a.uc.GetFunctionInfoInGoroutine(in.Dbpath, in.Gid, in.FunctionId)
+	if err != nil {
+		return nil, err
+	}
+	// 转换ParentInfo为proto格式
+	var parentInfos []*v1.ParentInfo
+	for _, parentInfo := range functionInfo.ParentIds {
+		parentInfos = append(parentInfos, &v1.ParentInfo{
+			ParentId: parentInfo.ParentId,
+			Depth:    int32(parentInfo.Depth),
+			Name:     parentInfo.Name,
+		})
+	}
+
+	reply := &v1.GetFunctionInfoInGoroutineReply{
+		FunctionInfo: &v1.GetFunctionInfoInGoroutineReply_FunctionInfo{
+			Id:        functionInfo.ID,
+			Name:      functionInfo.Name,
+			Depth:     int32(functionInfo.Indent),
+			ParentIds: parentInfos,
+		},
 	}
 
 	return reply, nil

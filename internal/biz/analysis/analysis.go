@@ -80,12 +80,48 @@ func (a *AnalysisBiz) GetParamsByID(dbpath string, id int32) ([]entity.TracePara
 	return traceDB.GetParamsByID(id)
 }
 
-func (a *AnalysisBiz) GetGidsByFunctionName(dbpath string, functionName string) ([]string, error) {
+func (a *AnalysisBiz) GetGidsByFunctionName(dbpath string, functionName string) ([]*entity.TraceData, error) {
 	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err
 	}
-	return traceDB.GetGidsByFunctionName(functionName)
+	a.log.Infof("get gids by function name: %s from db: %s", functionName, dbpath)
+	traces, err := traceDB.GetTracesByFuncName(functionName)
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[string]bool)
+	var result []*entity.TraceData
+	for _, trace := range traces {
+		if _, ok := set[fmt.Sprintf("%d:%d", trace.GID, trace.ParentId)]; !ok {
+			set[fmt.Sprintf("%d:%d", trace.GID, trace.ParentId)] = true
+			result = append(result, &entity.TraceData{
+				ID:       int64(trace.ID),
+				Name:     trace.Name,
+				GID:      trace.GID,
+				ParentId: trace.ParentId,
+			})
+		}
+	}
+
+	return result, nil
+}
+
+// GetTracesByFunctionName 根据函数名获取所有跟踪数据
+func (a *AnalysisBiz) GetTracesByFunctionName(dbpath string, functionName string) ([]entity.TraceData, error) {
+	traceDB, err := a.data.GetTraceDB(dbpath)
+	if err != nil {
+		return nil, err
+	}
+	return traceDB.GetTracesByFuncName(functionName)
+}
+
+func (a *AnalysisBiz) GetGoroutineByGID(dbpath string, gid uint64) (*entity.GoroutineTrace, error) {
+	traceDB, err := a.data.GetTraceDB(dbpath)
+	if err != nil {
+		return nil, err
+	}
+	return traceDB.GetGoroutineByGID(int64(gid))
 }
 
 func (a *AnalysisBiz) VerifyProjectPath(path string) bool {
@@ -145,16 +181,6 @@ func (a *AnalysisBiz) GetGoroutineStats(dbpath string) (*entity.GoroutineStats, 
 		return nil, err
 	}
 	return traceDB.GetGoroutineStats()
-}
-
-// GetFunctionAnalysis 获取函数调用关系分析
-func (a *AnalysisBiz) GetFunctionAnalysis(dbpath string, functionName string, queryType string) ([]entity.FunctionNode, error) {
-	a.log.Infof("get function analysis, function: %s, type: %s from db: %s", functionName, queryType, dbpath)
-	traceDB, err := a.data.GetTraceDB(dbpath)
-	if err != nil {
-		return nil, err
-	}
-	return traceDB.GetFunctionAnalysis(functionName, queryType)
 }
 
 // GetGoroutineCallDepth 获取指定 Goroutine 的最大调用深度
@@ -234,230 +260,6 @@ func (a *AnalysisBiz) IsGoroutineFinished(dbpath string, gid uint64) (bool, erro
 		return false, err
 	}
 	return traceDB.IsGoroutineFinished(gid)
-}
-
-func (a *AnalysisBiz) GetUpstreamTreeGraph(dbpath string, functionName string, depth int) ([]*entity.TreeNode, error) {
-	traceDB, err := a.data.GetTraceDB(dbpath)
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取指定函数的所有跟踪数据
-	traces, err := traceDB.GetTracesByFuncName(functionName)
-	if err != nil {
-		return nil, err
-	}
-
-	// 存储所有生成的树节点
-	var trees []*entity.TreeNode
-
-	// 为每个跟踪数据创建一个树
-	for _, trace := range traces {
-		// 创建根节点
-		rootNode := &entity.TreeNode{
-			Name:  functionName,
-			Value: trace.ID,
-		}
-
-		// 递归构建上游调用树
-		err = a.buildUpstreamTree(traceDB, rootNode, trace.ParentId, depth-1)
-		if err != nil {
-			return nil, err
-		}
-
-		trees = append(trees, rootNode)
-	}
-
-	return trees, nil
-}
-
-// 递归构建上游调用树
-func (a *AnalysisBiz) buildUpstreamTree(traceDB *sqlite.TraceEntDB, currentNode *entity.TreeNode, parentId uint64, remainingDepth int) error {
-	// 如果父ID为0或者已达到最大深度，则停止递归
-	if parentId == 0 || remainingDepth <= 0 {
-		return nil
-	}
-
-	// 获取父函数的跟踪数据
-	parentTrace, err := traceDB.GetTraceByID(int(parentId))
-	if err != nil {
-		return err
-	}
-
-	if parentTrace == nil {
-		return nil // 父跟踪不存在，可能是根调用
-	}
-
-	// 创建父节点
-	parentNode := &entity.TreeNode{
-		Name:  parentTrace.Name,
-		Value: parentTrace.ID,
-	}
-
-	// 将当前节点添加为父节点的子节点
-	if parentNode.Children == nil {
-		parentNode.Children = []*entity.TreeNode{}
-	}
-	parentNode.Children = append(parentNode.Children, currentNode)
-
-	// 继续向上递归构建树
-	return a.buildUpstreamTree(traceDB, parentNode, parentTrace.ParentId, remainingDepth-1)
-}
-
-func (a *AnalysisBiz) GetDownstreamTreeGraph(dbpath string, functionName string, depth int) (*entity.TreeNode, error) {
-	a.log.Infof("get downstream tree graph, function: %s, depth: %d, dbpath: %s", functionName, depth, dbpath)
-
-	// 获取追踪数据库
-	traceDB, err := a.data.GetTraceDB(dbpath)
-	if err != nil {
-		return nil, fmt.Errorf("get trace db failed: %w", err)
-	}
-
-	// 获取函数的所有调用记录
-	traces, err := traceDB.GetTracesByFuncName(functionName)
-	if err != nil {
-		return nil, fmt.Errorf("get traces by func name failed: %w", err)
-	}
-
-	// 如果没有找到调用记录，返回空数组
-	if len(traces) == 0 {
-		return nil, nil
-	}
-
-	// 为每个trace创建一个根节点
-	root := &entity.TreeNode{
-		Name:     functionName,
-		Value:    traces[0].ID,
-		Children: []*entity.TreeNode{},
-	}
-	parentIds := []int64{}
-
-	for _, trace := range traces {
-		parentIds = append(parentIds, trace.ID)
-	}
-
-	// 递归构建下游调用树
-	err = a.buildDownstreamTree(traceDB, root, parentIds, depth)
-	if err != nil {
-		return nil, fmt.Errorf("build downstream tree failed: %w", err)
-	}
-
-	return root, nil
-}
-
-// 递归构建下游调用树
-func (a *AnalysisBiz) buildDownstreamTree(traceDB *sqlite.TraceEntDB, currentNode *entity.TreeNode, parentIds []int64, remainingDepth int) error {
-	// 如果已达到最大深度，则停止递归
-	if remainingDepth <= 0 || currentNode == nil {
-		return nil
-	}
-
-	for _, parentId := range parentIds {
-		// 获取当前函数调用的子函数
-		childFunctions, err := traceDB.GetTracesByParentId(parentId)
-		if err != nil {
-			return err
-		}
-
-		// 为每个子函数创建节点
-		for _, childFunc := range childFunctions {
-			// 获取子函数的统计信息
-
-			// 创建子节点
-			childNode := &entity.TreeNode{
-				Name:     childFunc.Name,
-				Children: []*entity.TreeNode{},
-			}
-
-			// 递归构建子节点的下游调用
-			err = a.buildDownstreamTree(traceDB, childNode, []int64{childFunc.ID}, remainingDepth-1)
-			if err != nil {
-				return err
-			}
-			currentNode.Children = append(currentNode.Children, childNode)
-		}
-	}
-
-	return nil
-}
-
-// GetTreeGraph 获取运行时的树状图数据
-func (a *AnalysisBiz) GetTreeGraph(dbpath string, functionName string, chainType string, depth int) ([]*entity.TreeNode, error) {
-	a.log.Infof("get tree graph, function: %s, chain type: %s, dbpath: %s", functionName, chainType, dbpath)
-
-	// 根据链路类型选择不同的查询方向
-	var trees []*entity.TreeNode
-	var err error
-	switch chainType {
-	case "upstream":
-		trees, err = a.GetUpstreamTreeGraph(dbpath, functionName, depth)
-		if err != nil {
-			return nil, err
-		}
-	case "downstream":
-		tree, err := a.GetDownstreamTreeGraph(dbpath, functionName, depth)
-		if err != nil {
-			return nil, err
-		}
-		trees = append(trees, tree)
-	case "full":
-		// 全链路需要分别获取上游和下游调用，然后合并
-		upstreamGraph, err := a.GetUpstreamTreeGraph(dbpath, functionName, depth)
-		if err != nil {
-			a.log.Warnf("get upstream call graph failed: %v", err)
-		}
-
-		downstreamGraph, err := a.GetDownstreamTreeGraph(dbpath, functionName, depth)
-		if err != nil {
-			a.log.Warnf("get downstream call graph failed: %v", err)
-		}
-
-		// 合并处理上游和下游调用图
-		trees, err := a.buildFullChainTreeNodes(functionName, upstreamGraph, downstreamGraph)
-		if err != nil {
-			return nil, err
-		}
-		return trees, nil
-	default:
-		return nil, fmt.Errorf("invalid chain type: %s", chainType)
-	}
-
-	return trees, nil
-}
-
-func (a *AnalysisBiz) buildFullChainTreeNodes(functionName string, upstreamGraph []*entity.TreeNode, downstreamGraph *entity.TreeNode) ([]*entity.TreeNode, error) {
-	// 如果上游图为空，直接返回下游图
-	if len(upstreamGraph) == 0 {
-		return []*entity.TreeNode{downstreamGraph}, nil
-	}
-
-	for _, node := range upstreamGraph {
-		// 递归查找叶子节点
-		var findLeafNodes func(node *entity.TreeNode) *entity.TreeNode
-		findLeafNodes = func(node *entity.TreeNode) *entity.TreeNode {
-			// 如果节点没有子节点，则为叶子节点
-			if len(node.Children) == 0 {
-				return node
-			}
-
-			// 递归处理所有子节点
-			for _, child := range node.Children {
-				leafNode := findLeafNodes(child)
-				if leafNode != nil {
-					return leafNode
-				}
-			}
-			return nil
-		}
-
-		// 对当前节点执行递归查找
-		leafNode := findLeafNodes(node)
-		if leafNode != nil {
-			leafNode.Children = append(leafNode.Children, downstreamGraph)
-		}
-	}
-
-	return upstreamGraph, nil
 }
 
 // GetTreeGraphByGID 根据GID获取多棵树状图数据
@@ -734,6 +536,18 @@ func (a *AnalysisBiz) GetFunctionCallStats(dbpath string, functionName string) (
 	}
 
 	return stats, nil
+}
+
+// GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
+func (a *AnalysisBiz) GetFunctionInfoInGoroutine(dbpath string, gid uint64, targetFunctionId int64) (*entity.FunctionInfo, error) {
+	a.log.Infof("get function info in goroutine, gid: %d, functionId: %d from db: %s", gid, targetFunctionId, dbpath)
+
+	traceDB, err := a.data.GetTraceDB(dbpath)
+	if err != nil {
+		return nil, err
+	}
+
+	return traceDB.GetFunctionInfoInGoroutine(gid, targetFunctionId)
 }
 
 // GetPerformanceAnomalies 获取性能异常检测结果
@@ -1086,6 +900,15 @@ func (a *AnalysisBiz) SearchFunctions(ctx context.Context, dbPath string, query 
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to search functions: %v", err)
 	}
+	// 名字去重
+	set := make(map[string]bool)
+	var result []*entity.Function
+	for _, function := range functions {
+		if _, ok := set[function.Name]; !ok {
+			set[function.Name] = true
+			result = append(result, function)
+		}
+	}
 
-	return functions, total, nil
+	return result, total, nil
 }

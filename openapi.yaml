@@ -160,6 +160,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReply'
+    /api/runtime/function/info:
+        post:
+            tags:
+                - Analysis
+            description: GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
+            operationId: Analysis_GetFunctionInfoInGoroutine
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetFunctionInfoInGoroutineReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetFunctionInfoInGoroutineReply'
     /api/runtime/function/stats:
         post:
             tags:
@@ -1015,6 +1034,39 @@ components:
                 functionName:
                     type: string
             description: 获取函数调用统计请求
+        analysis.v1.GetFunctionInfoInGoroutineReply:
+            type: object
+            properties:
+                functionInfo:
+                    $ref: '#/components/schemas/analysis.v1.GetFunctionInfoInGoroutineReply_FunctionInfo'
+            description: GetFunctionInfoInGoroutineReply 获取函数在指定Goroutine中的信息响应
+        analysis.v1.GetFunctionInfoInGoroutineReply_FunctionInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                depth:
+                    type: integer
+                    format: int32
+                parentIds:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/analysis.v1.ParentInfo'
+        analysis.v1.GetFunctionInfoInGoroutineReq:
+            type: object
+            properties:
+                dbpath:
+                    type: string
+                gid:
+                    type: string
+                functionId:
+                    type: string
+                currentDepth:
+                    type: integer
+                    format: int32
+            description: GetFunctionInfoInGoroutineReq 获取函数在指定Goroutine中的信息请求
         analysis.v1.GetGidsByFunctionNameReply:
             type: object
             properties:
@@ -1039,6 +1091,8 @@ components:
                     type: string
                 isFinished:
                     type: boolean
+                functionId:
+                    type: string
         analysis.v1.GetGidsByFunctionNameReq:
             type: object
             properties:
@@ -1238,6 +1292,17 @@ components:
                 path:
                     type: string
             description: 插桩请求
+        analysis.v1.ParentInfo:
+            type: object
+            properties:
+                parentId:
+                    type: string
+                name:
+                    type: string
+                depth:
+                    type: integer
+                    format: int32
+            description: ParentInfo 父函数信息
         analysis.v1.PerformanceAnomaly:
             type: object
             properties:
@@ -1274,11 +1339,6 @@ components:
                 name:
                     type: string
                 package:
-                    type: string
-                callCount:
-                    type: integer
-                    format: int32
-                avgTime:
                     type: string
         analysis.v1.SearchFunctionsReq:
             type: object

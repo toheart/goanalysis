@@ -1,5 +1,13 @@
 package entity
 
+// GoroutineFunctionInfo 存储Goroutine和函数信息的结构体
+type GoroutineFunctionInfo struct {
+	GID         uint64 `json:"gid"`         // Goroutine ID
+	ParentId    uint64 `json:"parentId"`    // 父函数ID
+	InitialFunc string `json:"initialFunc"` // 初始函数名
+	IsFinished  bool   `json:"isFinished"`  // 是否完成
+}
+
 // TraceData 存储跟踪数据的结构体
 type TraceData struct {
 	ID         int64  `json:"id"`         // 唯一标识符
@@ -55,6 +63,23 @@ type FunctionGraphNode struct {
 type FunctionGraphEdge struct {
 	Source   string // 源节点ID
 	Target   string // 目标节点ID
+	Value    int    // 调用次数
 	Label    string // 边标签
 	EdgeType string // 边类型: "caller_to_root", "root_to_callee"
+}
+
+// FunctionInfo 函数在Goroutine中的信息
+type FunctionInfo struct {
+	ID        int64        `json:"id"`        // 函数ID
+	Name      string       `json:"name"`      // 函数名称
+	Indent    int          `json:"indent"`    // 函数在调用链中的实际深度
+	Found     bool         `json:"found"`     // 是否在当前深度范围内找到
+	ParentIds []ParentInfo `json:"parentIds"` // 父函数ID+深度列表（去重）
+}
+
+// ParentInfo 父函数信息
+type ParentInfo struct {
+	ParentId int64  `json:"parentId"` // 父函数ID
+	Depth    int    `json:"depth"`    // 深度
+	Name     string `json:"name"`     // 父函数名称
 }

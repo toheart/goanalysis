@@ -156,6 +156,14 @@ service Analysis {
       body: "*"
     };
   }
+
+  // GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
+  rpc GetFunctionInfoInGoroutine(GetFunctionInfoInGoroutineReq) returns (GetFunctionInfoInGoroutineReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/function/info"
+      body: "*"
+    };
+  }
 }
 
 
@@ -180,6 +188,7 @@ message GetGidsByFunctionNameReply {
     int32 depth = 3; // 调用深度
     string executionTime = 4; // 执行时间
     bool isFinished = 5; // 是否完成
+    int64 functionId = 6; // 函数ID
   }
   repeated Body body = 1;
   int32 total = 2; // 总的 GID 数量
@@ -542,9 +551,33 @@ message SearchFunctionsReply {
   message FunctionInfo {
     string name = 1;      // 函数名称
     string package = 2;   // 包名
-    int32 callCount = 3; // 调用次数
-    string avgTime = 4;  // 平均执行时间
   }
   repeated FunctionInfo functions = 1; // 搜索到的函数列表
   int32 total = 2;                    // 总匹配数量
+}
+
+// GetFunctionInfoInGoroutineReq 获取函数在指定Goroutine中的信息请求
+message GetFunctionInfoInGoroutineReq {
+  string dbpath = 1; // 数据库路径
+  uint64 gid = 2; // Goroutine ID
+  int64 functionId = 3; // 目标函数ID
+  int32 currentDepth = 4; // 当前显示深度
+}
+
+// ParentInfo 父函数信息
+message ParentInfo {
+  int64 parentId = 1; // 父函数ID
+  string name = 2; // 父函数名称
+  int32 depth = 3; // 深度
+}
+
+// GetFunctionInfoInGoroutineReply 获取函数在指定Goroutine中的信息响应
+message GetFunctionInfoInGoroutineReply {
+  message FunctionInfo {
+    int64 id = 1; // 函数ID
+    string name = 2; // 函数名称
+    int32 depth = 3; // 函数在调用链中的实际深度
+    repeated ParentInfo parentIds = 4; // 父函数ID+深度列表（去重）
+  }
+  FunctionInfo functionInfo = 1;
 }
