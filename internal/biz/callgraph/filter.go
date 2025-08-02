@@ -34,7 +34,13 @@ func (f *Filter) IsStandardLibrary(node *callgraph.Node) bool {
 
 // IsInternal 检查节点是否为内部模块
 func (f *Filter) IsInternal(node *callgraph.Node) bool {
-	return strings.Contains(node.Func.String(), f.config.ModuleName)
+	// 增加nil检查以提高健壮性
+	if node.Func == nil || node.Func.Pkg == nil || node.Func.Pkg.Pkg == nil {
+		return false
+	}
+	// node.Func.Pkg.Pkg.Path() 返回纯包路径，如 "github.com/toheart/goanalysis/internal/biz"
+	// 使用 HasPrefix 匹配模块名，更精确
+	return strings.HasPrefix(node.Func.Pkg.Pkg.Path(), f.config.ModuleName)
 }
 
 // ShouldProcessEdge 检查边是否应该被处理
@@ -47,25 +53,25 @@ func (f *Filter) ShouldProcessEdge(edge *callgraph.Edge) bool {
 	caller := edge.Caller
 	callee := edge.Callee
 
-	// 排除标准库节点：如果调用者或被调用者是标准库，则排除
-	if f.IsStandardLibrary(caller) || f.IsStandardLibrary(callee) {
+	// 规则1：调用者必须是项目内部函数。这是最核心的过滤条件。
+	if !f.IsInternal(caller) {
 		return false
 	}
 
-	// 排除忽略的包
+	// 规则2：被调用者不能是标准库函数 (排除对 builtin 和 std lib 的调用)
+	if f.IsStandardLibrary(callee) {
+		return false
+	}
+
+	// 规则3：调用者和被调用者都不能在用户指定的忽略路径中
 	if f.ShouldIgnore(caller) || f.ShouldIgnore(callee) {
 		return false
 	}
 
-	// 排除调用者、被调用者两者都不属于当前项目的方法
-	callerIsInternal := f.IsInternal(caller)
-	calleeIsInternal := f.IsInternal(callee)
-
-	// 至少有一个必须是内部模块，否则排除
-	if !callerIsInternal && !calleeIsInternal {
-		return false
-	}
-
+	// 如果通过以上所有检查，则处理该边。
+	// 这个逻辑精确地保留了以下两种调用关系：
+	// 1. internal -> internal
+	// 2. internal -> third-party
 	return true
 }
 

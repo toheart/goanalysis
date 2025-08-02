@@ -63,7 +63,7 @@ func Position(v int) predicate.ParamStoreData {
 }
 
 // Data applies equality check predicate on the "data" field. It's identical to DataEQ.
-func Data(v string) predicate.ParamStoreData {
+func Data(v []byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldEQ(FieldData, v))
 }
 
@@ -158,68 +158,43 @@ func PositionLTE(v int) predicate.ParamStoreData {
 }
 
 // DataEQ applies the EQ predicate on the "data" field.
-func DataEQ(v string) predicate.ParamStoreData {
+func DataEQ(v []byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldEQ(FieldData, v))
 }
 
 // DataNEQ applies the NEQ predicate on the "data" field.
-func DataNEQ(v string) predicate.ParamStoreData {
+func DataNEQ(v []byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldNEQ(FieldData, v))
 }
 
 // DataIn applies the In predicate on the "data" field.
-func DataIn(vs ...string) predicate.ParamStoreData {
+func DataIn(vs ...[]byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldIn(FieldData, vs...))
 }
 
 // DataNotIn applies the NotIn predicate on the "data" field.
-func DataNotIn(vs ...string) predicate.ParamStoreData {
+func DataNotIn(vs ...[]byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldNotIn(FieldData, vs...))
 }
 
 // DataGT applies the GT predicate on the "data" field.
-func DataGT(v string) predicate.ParamStoreData {
+func DataGT(v []byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldGT(FieldData, v))
 }
 
 // DataGTE applies the GTE predicate on the "data" field.
-func DataGTE(v string) predicate.ParamStoreData {
+func DataGTE(v []byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldGTE(FieldData, v))
 }
 
 // DataLT applies the LT predicate on the "data" field.
-func DataLT(v string) predicate.ParamStoreData {
+func DataLT(v []byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldLT(FieldData, v))
 }
 
 // DataLTE applies the LTE predicate on the "data" field.
-func DataLTE(v string) predicate.ParamStoreData {
+func DataLTE(v []byte) predicate.ParamStoreData {
 	return predicate.ParamStoreData(sql.FieldLTE(FieldData, v))
-}
-
-// DataContains applies the Contains predicate on the "data" field.
-func DataContains(v string) predicate.ParamStoreData {
-	return predicate.ParamStoreData(sql.FieldContains(FieldData, v))
-}
-
-// DataHasPrefix applies the HasPrefix predicate on the "data" field.
-func DataHasPrefix(v string) predicate.ParamStoreData {
-	return predicate.ParamStoreData(sql.FieldHasPrefix(FieldData, v))
-}
-
-// DataHasSuffix applies the HasSuffix predicate on the "data" field.
-func DataHasSuffix(v string) predicate.ParamStoreData {
-	return predicate.ParamStoreData(sql.FieldHasSuffix(FieldData, v))
-}
-
-// DataEqualFold applies the EqualFold predicate on the "data" field.
-func DataEqualFold(v string) predicate.ParamStoreData {
-	return predicate.ParamStoreData(sql.FieldEqualFold(FieldData, v))
-}
-
-// DataContainsFold applies the ContainsFold predicate on the "data" field.
-func DataContainsFold(v string) predicate.ParamStoreData {
-	return predicate.ParamStoreData(sql.FieldContainsFold(FieldData, v))
 }
 
 // IsReceiverEQ applies the EQ predicate on the "isReceiver" field.

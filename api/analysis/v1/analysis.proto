@@ -16,6 +16,14 @@ service Analysis {
     };
   }
 
+  // InstrumentProject 对项目进行插桩
+  rpc InstrumentProject(InstrumentProjectReq) returns (InstrumentProjectReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/instrument"
+      body: "*"
+    };
+  }
+
   rpc GetAnalysisByGID (AnalysisByGIDRequest) returns (AnalysisByGIDReply) {
     option (google.api.http) = {
       post: "/api/runtime/traces/{gid}"
@@ -36,12 +44,6 @@ service Analysis {
     };
   }
 
-  rpc GetAllFunctionName (GetAllFunctionNameReq) returns (GetAllFunctionNameReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/functions"
-      body: "*"
-    };
-  }
   rpc GetGidsByFunctionName (GetGidsByFunctionNameReq) returns (GetGidsByFunctionNameReply) {
     option (google.api.http) = {
       post: "/api/runtime/gids/function"
@@ -96,42 +98,6 @@ service Analysis {
     };
   }
 
-  // GetFunctionAnalysis 获取函数调用关系分析
-  rpc GetFunctionAnalysis(GetFunctionAnalysisReq) returns (GetFunctionAnalysisReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/function/analysis"
-      body: "*"
-    };
-  }
-
-
-  // InstrumentProject 对项目进行插桩
-  rpc InstrumentProject(InstrumentProjectReq) returns (InstrumentProjectReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/instrument"
-      body: "*"
-    };
-  }
-  
-
-
-  
-  // 获取运行时树状图数据
-  rpc GetTreeGraph (GetTreeGraphReq) returns (GetTreeGraphReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/tree-graph"
-      body: "*"
-    };
-  }
-
-  // 根据GID获取多棵树状图数据
-  rpc GetTreeGraphByGID (GetTreeGraphByGIDReq) returns (GetTreeGraphByGIDReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/tree-graph/gid"
-      body: "*"
-    };
-  }
-  
   
   // GetFunctionCallStats 获取函数调用统计分析
   rpc GetFunctionCallStats(GetFunctionCallStatsReq) returns (GetFunctionCallStatsReply) {
@@ -141,13 +107,6 @@ service Analysis {
     };
   }
   
-  // GetPerformanceAnomalies 获取性能异常检测结果
-  rpc GetPerformanceAnomalies(GetPerformanceAnomaliesReq) returns (GetPerformanceAnomaliesReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/function/anomalies"
-      body: "*"
-    };
-  }
 
   // SearchFunctions 搜索函数
   rpc SearchFunctions(SearchFunctionsReq) returns (SearchFunctionsReply) {
@@ -161,6 +120,14 @@ service Analysis {
   rpc GetFunctionInfoInGoroutine(GetFunctionInfoInGoroutineReq) returns (GetFunctionInfoInGoroutineReply) {
     option (google.api.http) = {
       post: "/api/runtime/function/info"
+      body: "*"
+    };
+  }
+
+  // GetModuleNames 获取数据库中的模块名称列表
+  rpc GetModuleNames(GetModuleNamesReq) returns (GetModuleNamesReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/modules"
       body: "*"
     };
   }
@@ -580,4 +547,15 @@ message GetFunctionInfoInGoroutineReply {
     repeated ParentInfo parentIds = 4; // 父函数ID+深度列表（去重）
   }
   FunctionInfo functionInfo = 1;
+}
+
+// GetModuleNamesReq 获取模块名称请求
+message GetModuleNamesReq {
+  string dbpath = 1; // 数据库路径
+  int32 maxSamples = 2; // 最大采样数量，默认5000
+}
+
+// GetModuleNamesReply 获取模块名称响应
+message GetModuleNamesReply {
+  repeated string moduleNames = 1; // 前5个最频繁的模块名称（按频率排序）
 }

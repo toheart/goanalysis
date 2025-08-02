@@ -129,15 +129,6 @@ func (a *AnalysisService) GetParamsByID(ctx context.Context, in *v1.GetParamsByI
 	return reply, nil
 }
 
-func (a *AnalysisService) GetAllFunctionName(ctx context.Context, in *v1.GetAllFunctionNameReq) (*v1.GetAllFunctionNameReply, error) {
-	a.log.Infof("get all function name from db: %s", in.Dbpath)
-	functionNames, err := a.uc.GetAllFunctionName(in.Dbpath)
-	if err != nil {
-		return nil, err
-	}
-	return &v1.GetAllFunctionNameReply{FunctionNames: functionNames}, nil
-}
-
 func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetGidsByFunctionNameReq) (*v1.GetGidsByFunctionNameReply, error) {
 	// 获取函数名称
 	functionName := in.FunctionName
@@ -351,35 +342,6 @@ func (a *AnalysisService) InstrumentProject(ctx context.Context, in *v1.Instrume
 	}, nil
 }
 
-// GetTreeGraphByGID 根据GID获取多棵树状图数据
-func (a *AnalysisService) GetTreeGraphByGID(ctx context.Context, req *v1.GetTreeGraphByGIDReq) (*v1.GetTreeGraphByGIDReply, error) {
-	a.log.Infof("get tree graph by gid: %d, dbpath: %s", req.Gid, req.DbPath)
-
-	// 调用业务逻辑获取树状图数据
-	treeTrees, err := a.uc.GetTreeGraphByGID(req.DbPath, req.Gid)
-	if err != nil {
-		a.log.Errorf("get tree graph by gid failed: %v", err)
-		return nil, err
-	}
-
-	// 转换为API响应格式
-	reply := &v1.GetTreeGraphByGIDReply{
-		Trees: make([]*v1.TreeNode, 0, len(treeTrees)),
-	}
-
-	// 转换每棵树
-	for _, tree := range treeTrees {
-		protoTree := &v1.TreeNode{
-			Name:      tree.Name,
-			Value:     tree.Value,
-			Collapsed: true,
-		}
-		reply.Trees = append(reply.Trees, protoTree)
-	}
-
-	return reply, nil
-}
-
 // GetFunctionCallStats 获取函数调用统计分析
 func (a *AnalysisService) GetFunctionCallStats(ctx context.Context, req *v1.GetFunctionCallStatsReq) (*v1.GetFunctionCallStatsReply, error) {
 	a.log.Infof("get function call stats, function: %s, dbpath: %s", req.FunctionName, req.DbPath)
@@ -409,37 +371,6 @@ func (a *AnalysisService) GetFunctionCallStats(ctx context.Context, req *v1.GetF
 			TimeStdDev:  stat.TimeStdDev,
 		}
 		reply.Stats = append(reply.Stats, functionStat)
-	}
-
-	return reply, nil
-}
-
-// GetPerformanceAnomalies 获取性能异常检测结果
-func (a *AnalysisService) GetPerformanceAnomalies(ctx context.Context, req *v1.GetPerformanceAnomaliesReq) (*v1.GetPerformanceAnomaliesReply, error) {
-	a.log.Infof("获取性能异常检测, 函数: %s, dbpath: %s, 阈值: %f", req.FunctionName, req.DbPath, req.Threshold)
-
-	// 调用业务逻辑获取性能异常数据
-	anomalies, err := a.uc.GetPerformanceAnomalies(req.DbPath, req.FunctionName, req.Threshold)
-	if err != nil {
-		a.log.Errorf("获取性能异常检测失败: %v", err)
-		return nil, err
-	}
-
-	// 转换为API响应格式
-	reply := &v1.GetPerformanceAnomaliesReply{
-		Anomalies: make([]*v1.PerformanceAnomaly, 0, len(anomalies)),
-	}
-
-	for _, anomaly := range anomalies {
-		performanceAnomaly := &v1.PerformanceAnomaly{
-			Name:        anomaly.Name,
-			Package:     anomaly.Package,
-			AnomalyType: anomaly.AnomalyType,
-			Description: anomaly.Description,
-			Severity:    anomaly.Severity,
-			Details:     anomaly.Details,
-		}
-		reply.Anomalies = append(reply.Anomalies, performanceAnomaly)
 	}
 
 	return reply, nil
@@ -495,4 +426,21 @@ func (a *AnalysisService) GetFunctionInfoInGoroutine(ctx context.Context, in *v1
 	}
 
 	return reply, nil
+}
+
+func (a *AnalysisService) GetModuleNames(ctx context.Context, in *v1.GetModuleNamesReq) (*v1.GetModuleNamesReply, error) {
+	// 设置默认采样数量
+	maxSamples := in.MaxSamples
+	if maxSamples <= 0 {
+		maxSamples = 5000 // 默认采样5000条记录
+	}
+
+	moduleNames, err := a.uc.GetModuleNames(in.Dbpath, maxSamples)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.GetModuleNamesReply{
+		ModuleNames: moduleNames,
+	}, nil
 }

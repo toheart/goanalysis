@@ -20,10 +20,10 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	Analysis_GetAnalysis_FullMethodName                = "/analysis.v1.Analysis/GetAnalysis"
+	Analysis_InstrumentProject_FullMethodName          = "/analysis.v1.Analysis/InstrumentProject"
 	Analysis_GetAnalysisByGID_FullMethodName           = "/analysis.v1.Analysis/GetAnalysisByGID"
 	Analysis_GetAllGIDs_FullMethodName                 = "/analysis.v1.Analysis/GetAllGIDs"
 	Analysis_GetParamsByID_FullMethodName              = "/analysis.v1.Analysis/GetParamsByID"
-	Analysis_GetAllFunctionName_FullMethodName         = "/analysis.v1.Analysis/GetAllFunctionName"
 	Analysis_GetGidsByFunctionName_FullMethodName      = "/analysis.v1.Analysis/GetGidsByFunctionName"
 	Analysis_VerifyProjectPath_FullMethodName          = "/analysis.v1.Analysis/VerifyProjectPath"
 	Analysis_GetTracesByParentFunc_FullMethodName      = "/analysis.v1.Analysis/GetTracesByParentFunc"
@@ -31,14 +31,10 @@ const (
 	Analysis_GetChildFunctions_FullMethodName          = "/analysis.v1.Analysis/GetChildFunctions"
 	Analysis_GetHotFunctions_FullMethodName            = "/analysis.v1.Analysis/GetHotFunctions"
 	Analysis_GetGoroutineStats_FullMethodName          = "/analysis.v1.Analysis/GetGoroutineStats"
-	Analysis_GetFunctionAnalysis_FullMethodName        = "/analysis.v1.Analysis/GetFunctionAnalysis"
-	Analysis_InstrumentProject_FullMethodName          = "/analysis.v1.Analysis/InstrumentProject"
-	Analysis_GetTreeGraph_FullMethodName               = "/analysis.v1.Analysis/GetTreeGraph"
-	Analysis_GetTreeGraphByGID_FullMethodName          = "/analysis.v1.Analysis/GetTreeGraphByGID"
 	Analysis_GetFunctionCallStats_FullMethodName       = "/analysis.v1.Analysis/GetFunctionCallStats"
-	Analysis_GetPerformanceAnomalies_FullMethodName    = "/analysis.v1.Analysis/GetPerformanceAnomalies"
 	Analysis_SearchFunctions_FullMethodName            = "/analysis.v1.Analysis/SearchFunctions"
 	Analysis_GetFunctionInfoInGoroutine_FullMethodName = "/analysis.v1.Analysis/GetFunctionInfoInGoroutine"
+	Analysis_GetModuleNames_FullMethodName             = "/analysis.v1.Analysis/GetModuleNames"
 )
 
 // AnalysisClient is the client API for Analysis service.
@@ -49,10 +45,11 @@ const (
 type AnalysisClient interface {
 	// Sends a greeting
 	GetAnalysis(ctx context.Context, in *AnalysisRequest, opts ...grpc.CallOption) (*AnalysisReply, error)
+	// InstrumentProject 对项目进行插桩
+	InstrumentProject(ctx context.Context, in *InstrumentProjectReq, opts ...grpc.CallOption) (*InstrumentProjectReply, error)
 	GetAnalysisByGID(ctx context.Context, in *AnalysisByGIDRequest, opts ...grpc.CallOption) (*AnalysisByGIDReply, error)
 	GetAllGIDs(ctx context.Context, in *GetAllGIDsReq, opts ...grpc.CallOption) (*GetAllGIDsReply, error)
 	GetParamsByID(ctx context.Context, in *GetParamsByIDReq, opts ...grpc.CallOption) (*GetParamsByIDReply, error)
-	GetAllFunctionName(ctx context.Context, in *GetAllFunctionNameReq, opts ...grpc.CallOption) (*GetAllFunctionNameReply, error)
 	GetGidsByFunctionName(ctx context.Context, in *GetGidsByFunctionNameReq, opts ...grpc.CallOption) (*GetGidsByFunctionNameReply, error)
 	// 将VerifyProjectPath重定向到CheckDatabase
 	VerifyProjectPath(ctx context.Context, in *VerifyProjectPathReq, opts ...grpc.CallOption) (*VerifyProjectPathReply, error)
@@ -66,22 +63,14 @@ type AnalysisClient interface {
 	GetHotFunctions(ctx context.Context, in *GetHotFunctionsReq, opts ...grpc.CallOption) (*GetHotFunctionsReply, error)
 	// GetGoroutineStats 获取Goroutine统计信息
 	GetGoroutineStats(ctx context.Context, in *GetGoroutineStatsReq, opts ...grpc.CallOption) (*GetGoroutineStatsReply, error)
-	// GetFunctionAnalysis 获取函数调用关系分析
-	GetFunctionAnalysis(ctx context.Context, in *GetFunctionAnalysisReq, opts ...grpc.CallOption) (*GetFunctionAnalysisReply, error)
-	// InstrumentProject 对项目进行插桩
-	InstrumentProject(ctx context.Context, in *InstrumentProjectReq, opts ...grpc.CallOption) (*InstrumentProjectReply, error)
-	// 获取运行时树状图数据
-	GetTreeGraph(ctx context.Context, in *GetTreeGraphReq, opts ...grpc.CallOption) (*GetTreeGraphReply, error)
-	// 根据GID获取多棵树状图数据
-	GetTreeGraphByGID(ctx context.Context, in *GetTreeGraphByGIDReq, opts ...grpc.CallOption) (*GetTreeGraphByGIDReply, error)
 	// GetFunctionCallStats 获取函数调用统计分析
 	GetFunctionCallStats(ctx context.Context, in *GetFunctionCallStatsReq, opts ...grpc.CallOption) (*GetFunctionCallStatsReply, error)
-	// GetPerformanceAnomalies 获取性能异常检测结果
-	GetPerformanceAnomalies(ctx context.Context, in *GetPerformanceAnomaliesReq, opts ...grpc.CallOption) (*GetPerformanceAnomaliesReply, error)
 	// SearchFunctions 搜索函数
 	SearchFunctions(ctx context.Context, in *SearchFunctionsReq, opts ...grpc.CallOption) (*SearchFunctionsReply, error)
 	// GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
 	GetFunctionInfoInGoroutine(ctx context.Context, in *GetFunctionInfoInGoroutineReq, opts ...grpc.CallOption) (*GetFunctionInfoInGoroutineReply, error)
+	// GetModuleNames 获取数据库中的模块名称列表
+	GetModuleNames(ctx context.Context, in *GetModuleNamesReq, opts ...grpc.CallOption) (*GetModuleNamesReply, error)
 }
 
 type analysisClient struct {
@@ -96,6 +85,16 @@ func (c *analysisClient) GetAnalysis(ctx context.Context, in *AnalysisRequest, o
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AnalysisReply)
 	err := c.cc.Invoke(ctx, Analysis_GetAnalysis_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) InstrumentProject(ctx context.Context, in *InstrumentProjectReq, opts ...grpc.CallOption) (*InstrumentProjectReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InstrumentProjectReply)
+	err := c.cc.Invoke(ctx, Analysis_InstrumentProject_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,16 +125,6 @@ func (c *analysisClient) GetParamsByID(ctx context.Context, in *GetParamsByIDReq
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetParamsByIDReply)
 	err := c.cc.Invoke(ctx, Analysis_GetParamsByID_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *analysisClient) GetAllFunctionName(ctx context.Context, in *GetAllFunctionNameReq, opts ...grpc.CallOption) (*GetAllFunctionNameReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetAllFunctionNameReply)
-	err := c.cc.Invoke(ctx, Analysis_GetAllFunctionName_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -212,60 +201,10 @@ func (c *analysisClient) GetGoroutineStats(ctx context.Context, in *GetGoroutine
 	return out, nil
 }
 
-func (c *analysisClient) GetFunctionAnalysis(ctx context.Context, in *GetFunctionAnalysisReq, opts ...grpc.CallOption) (*GetFunctionAnalysisReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetFunctionAnalysisReply)
-	err := c.cc.Invoke(ctx, Analysis_GetFunctionAnalysis_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *analysisClient) InstrumentProject(ctx context.Context, in *InstrumentProjectReq, opts ...grpc.CallOption) (*InstrumentProjectReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InstrumentProjectReply)
-	err := c.cc.Invoke(ctx, Analysis_InstrumentProject_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *analysisClient) GetTreeGraph(ctx context.Context, in *GetTreeGraphReq, opts ...grpc.CallOption) (*GetTreeGraphReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTreeGraphReply)
-	err := c.cc.Invoke(ctx, Analysis_GetTreeGraph_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *analysisClient) GetTreeGraphByGID(ctx context.Context, in *GetTreeGraphByGIDReq, opts ...grpc.CallOption) (*GetTreeGraphByGIDReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTreeGraphByGIDReply)
-	err := c.cc.Invoke(ctx, Analysis_GetTreeGraphByGID_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *analysisClient) GetFunctionCallStats(ctx context.Context, in *GetFunctionCallStatsReq, opts ...grpc.CallOption) (*GetFunctionCallStatsReply, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetFunctionCallStatsReply)
 	err := c.cc.Invoke(ctx, Analysis_GetFunctionCallStats_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *analysisClient) GetPerformanceAnomalies(ctx context.Context, in *GetPerformanceAnomaliesReq, opts ...grpc.CallOption) (*GetPerformanceAnomaliesReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetPerformanceAnomaliesReply)
-	err := c.cc.Invoke(ctx, Analysis_GetPerformanceAnomalies_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -292,6 +231,16 @@ func (c *analysisClient) GetFunctionInfoInGoroutine(ctx context.Context, in *Get
 	return out, nil
 }
 
+func (c *analysisClient) GetModuleNames(ctx context.Context, in *GetModuleNamesReq, opts ...grpc.CallOption) (*GetModuleNamesReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetModuleNamesReply)
+	err := c.cc.Invoke(ctx, Analysis_GetModuleNames_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalysisServer is the server API for Analysis service.
 // All implementations must embed UnimplementedAnalysisServer
 // for forward compatibility.
@@ -300,10 +249,11 @@ func (c *analysisClient) GetFunctionInfoInGoroutine(ctx context.Context, in *Get
 type AnalysisServer interface {
 	// Sends a greeting
 	GetAnalysis(context.Context, *AnalysisRequest) (*AnalysisReply, error)
+	// InstrumentProject 对项目进行插桩
+	InstrumentProject(context.Context, *InstrumentProjectReq) (*InstrumentProjectReply, error)
 	GetAnalysisByGID(context.Context, *AnalysisByGIDRequest) (*AnalysisByGIDReply, error)
 	GetAllGIDs(context.Context, *GetAllGIDsReq) (*GetAllGIDsReply, error)
 	GetParamsByID(context.Context, *GetParamsByIDReq) (*GetParamsByIDReply, error)
-	GetAllFunctionName(context.Context, *GetAllFunctionNameReq) (*GetAllFunctionNameReply, error)
 	GetGidsByFunctionName(context.Context, *GetGidsByFunctionNameReq) (*GetGidsByFunctionNameReply, error)
 	// 将VerifyProjectPath重定向到CheckDatabase
 	VerifyProjectPath(context.Context, *VerifyProjectPathReq) (*VerifyProjectPathReply, error)
@@ -317,22 +267,14 @@ type AnalysisServer interface {
 	GetHotFunctions(context.Context, *GetHotFunctionsReq) (*GetHotFunctionsReply, error)
 	// GetGoroutineStats 获取Goroutine统计信息
 	GetGoroutineStats(context.Context, *GetGoroutineStatsReq) (*GetGoroutineStatsReply, error)
-	// GetFunctionAnalysis 获取函数调用关系分析
-	GetFunctionAnalysis(context.Context, *GetFunctionAnalysisReq) (*GetFunctionAnalysisReply, error)
-	// InstrumentProject 对项目进行插桩
-	InstrumentProject(context.Context, *InstrumentProjectReq) (*InstrumentProjectReply, error)
-	// 获取运行时树状图数据
-	GetTreeGraph(context.Context, *GetTreeGraphReq) (*GetTreeGraphReply, error)
-	// 根据GID获取多棵树状图数据
-	GetTreeGraphByGID(context.Context, *GetTreeGraphByGIDReq) (*GetTreeGraphByGIDReply, error)
 	// GetFunctionCallStats 获取函数调用统计分析
 	GetFunctionCallStats(context.Context, *GetFunctionCallStatsReq) (*GetFunctionCallStatsReply, error)
-	// GetPerformanceAnomalies 获取性能异常检测结果
-	GetPerformanceAnomalies(context.Context, *GetPerformanceAnomaliesReq) (*GetPerformanceAnomaliesReply, error)
 	// SearchFunctions 搜索函数
 	SearchFunctions(context.Context, *SearchFunctionsReq) (*SearchFunctionsReply, error)
 	// GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
 	GetFunctionInfoInGoroutine(context.Context, *GetFunctionInfoInGoroutineReq) (*GetFunctionInfoInGoroutineReply, error)
+	// GetModuleNames 获取数据库中的模块名称列表
+	GetModuleNames(context.Context, *GetModuleNamesReq) (*GetModuleNamesReply, error)
 	mustEmbedUnimplementedAnalysisServer()
 }
 
@@ -346,6 +288,9 @@ type UnimplementedAnalysisServer struct{}
 func (UnimplementedAnalysisServer) GetAnalysis(context.Context, *AnalysisRequest) (*AnalysisReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAnalysis not implemented")
 }
+func (UnimplementedAnalysisServer) InstrumentProject(context.Context, *InstrumentProjectReq) (*InstrumentProjectReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InstrumentProject not implemented")
+}
 func (UnimplementedAnalysisServer) GetAnalysisByGID(context.Context, *AnalysisByGIDRequest) (*AnalysisByGIDReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAnalysisByGID not implemented")
 }
@@ -354,9 +299,6 @@ func (UnimplementedAnalysisServer) GetAllGIDs(context.Context, *GetAllGIDsReq) (
 }
 func (UnimplementedAnalysisServer) GetParamsByID(context.Context, *GetParamsByIDReq) (*GetParamsByIDReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetParamsByID not implemented")
-}
-func (UnimplementedAnalysisServer) GetAllFunctionName(context.Context, *GetAllFunctionNameReq) (*GetAllFunctionNameReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAllFunctionName not implemented")
 }
 func (UnimplementedAnalysisServer) GetGidsByFunctionName(context.Context, *GetGidsByFunctionNameReq) (*GetGidsByFunctionNameReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGidsByFunctionName not implemented")
@@ -379,29 +321,17 @@ func (UnimplementedAnalysisServer) GetHotFunctions(context.Context, *GetHotFunct
 func (UnimplementedAnalysisServer) GetGoroutineStats(context.Context, *GetGoroutineStatsReq) (*GetGoroutineStatsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGoroutineStats not implemented")
 }
-func (UnimplementedAnalysisServer) GetFunctionAnalysis(context.Context, *GetFunctionAnalysisReq) (*GetFunctionAnalysisReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionAnalysis not implemented")
-}
-func (UnimplementedAnalysisServer) InstrumentProject(context.Context, *InstrumentProjectReq) (*InstrumentProjectReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InstrumentProject not implemented")
-}
-func (UnimplementedAnalysisServer) GetTreeGraph(context.Context, *GetTreeGraphReq) (*GetTreeGraphReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTreeGraph not implemented")
-}
-func (UnimplementedAnalysisServer) GetTreeGraphByGID(context.Context, *GetTreeGraphByGIDReq) (*GetTreeGraphByGIDReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTreeGraphByGID not implemented")
-}
 func (UnimplementedAnalysisServer) GetFunctionCallStats(context.Context, *GetFunctionCallStatsReq) (*GetFunctionCallStatsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionCallStats not implemented")
-}
-func (UnimplementedAnalysisServer) GetPerformanceAnomalies(context.Context, *GetPerformanceAnomaliesReq) (*GetPerformanceAnomaliesReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPerformanceAnomalies not implemented")
 }
 func (UnimplementedAnalysisServer) SearchFunctions(context.Context, *SearchFunctionsReq) (*SearchFunctionsReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchFunctions not implemented")
 }
 func (UnimplementedAnalysisServer) GetFunctionInfoInGoroutine(context.Context, *GetFunctionInfoInGoroutineReq) (*GetFunctionInfoInGoroutineReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionInfoInGoroutine not implemented")
+}
+func (UnimplementedAnalysisServer) GetModuleNames(context.Context, *GetModuleNamesReq) (*GetModuleNamesReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetModuleNames not implemented")
 }
 func (UnimplementedAnalysisServer) mustEmbedUnimplementedAnalysisServer() {}
 func (UnimplementedAnalysisServer) testEmbeddedByValue()                  {}
@@ -438,6 +368,24 @@ func _Analysis_GetAnalysis_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AnalysisServer).GetAnalysis(ctx, req.(*AnalysisRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_InstrumentProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InstrumentProjectReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).InstrumentProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_InstrumentProject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).InstrumentProject(ctx, req.(*InstrumentProjectReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -492,24 +440,6 @@ func _Analysis_GetParamsByID_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AnalysisServer).GetParamsByID(ctx, req.(*GetParamsByIDReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Analysis_GetAllFunctionName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAllFunctionNameReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AnalysisServer).GetAllFunctionName(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Analysis_GetAllFunctionName_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalysisServer).GetAllFunctionName(ctx, req.(*GetAllFunctionNameReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -640,78 +570,6 @@ func _Analysis_GetGoroutineStats_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Analysis_GetFunctionAnalysis_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetFunctionAnalysisReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AnalysisServer).GetFunctionAnalysis(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Analysis_GetFunctionAnalysis_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalysisServer).GetFunctionAnalysis(ctx, req.(*GetFunctionAnalysisReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Analysis_InstrumentProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InstrumentProjectReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AnalysisServer).InstrumentProject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Analysis_InstrumentProject_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalysisServer).InstrumentProject(ctx, req.(*InstrumentProjectReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Analysis_GetTreeGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTreeGraphReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AnalysisServer).GetTreeGraph(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Analysis_GetTreeGraph_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalysisServer).GetTreeGraph(ctx, req.(*GetTreeGraphReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Analysis_GetTreeGraphByGID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTreeGraphByGIDReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AnalysisServer).GetTreeGraphByGID(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Analysis_GetTreeGraphByGID_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalysisServer).GetTreeGraphByGID(ctx, req.(*GetTreeGraphByGIDReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Analysis_GetFunctionCallStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetFunctionCallStatsReq)
 	if err := dec(in); err != nil {
@@ -726,24 +584,6 @@ func _Analysis_GetFunctionCallStats_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AnalysisServer).GetFunctionCallStats(ctx, req.(*GetFunctionCallStatsReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Analysis_GetPerformanceAnomalies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPerformanceAnomaliesReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AnalysisServer).GetPerformanceAnomalies(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Analysis_GetPerformanceAnomalies_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AnalysisServer).GetPerformanceAnomalies(ctx, req.(*GetPerformanceAnomaliesReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -784,6 +624,24 @@ func _Analysis_GetFunctionInfoInGoroutine_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Analysis_GetModuleNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetModuleNamesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetModuleNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetModuleNames_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetModuleNames(ctx, req.(*GetModuleNamesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Analysis_ServiceDesc is the grpc.ServiceDesc for Analysis service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -796,6 +654,10 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Analysis_GetAnalysis_Handler,
 		},
 		{
+			MethodName: "InstrumentProject",
+			Handler:    _Analysis_InstrumentProject_Handler,
+		},
+		{
 			MethodName: "GetAnalysisByGID",
 			Handler:    _Analysis_GetAnalysisByGID_Handler,
 		},
@@ -806,10 +668,6 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetParamsByID",
 			Handler:    _Analysis_GetParamsByID_Handler,
-		},
-		{
-			MethodName: "GetAllFunctionName",
-			Handler:    _Analysis_GetAllFunctionName_Handler,
 		},
 		{
 			MethodName: "GetGidsByFunctionName",
@@ -840,28 +698,8 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Analysis_GetGoroutineStats_Handler,
 		},
 		{
-			MethodName: "GetFunctionAnalysis",
-			Handler:    _Analysis_GetFunctionAnalysis_Handler,
-		},
-		{
-			MethodName: "InstrumentProject",
-			Handler:    _Analysis_InstrumentProject_Handler,
-		},
-		{
-			MethodName: "GetTreeGraph",
-			Handler:    _Analysis_GetTreeGraph_Handler,
-		},
-		{
-			MethodName: "GetTreeGraphByGID",
-			Handler:    _Analysis_GetTreeGraphByGID_Handler,
-		},
-		{
 			MethodName: "GetFunctionCallStats",
 			Handler:    _Analysis_GetFunctionCallStats_Handler,
-		},
-		{
-			MethodName: "GetPerformanceAnomalies",
-			Handler:    _Analysis_GetPerformanceAnomalies_Handler,
 		},
 		{
 			MethodName: "SearchFunctions",
@@ -870,6 +708,10 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFunctionInfoInGoroutine",
 			Handler:    _Analysis_GetFunctionInfoInGoroutine_Handler,
+		},
+		{
+			MethodName: "GetModuleNames",
+			Handler:    _Analysis_GetModuleNames_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

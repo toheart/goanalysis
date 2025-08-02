@@ -1,12 +1,6 @@
-package entity
+package dos
 
-// GoroutineFunctionInfo 存储Goroutine和函数信息的结构体
-type GoroutineFunctionInfo struct {
-	GID         uint64 `json:"gid"`         // Goroutine ID
-	ParentId    uint64 `json:"parentId"`    // 父函数ID
-	InitialFunc string `json:"initialFunc"` // 初始函数名
-	IsFinished  bool   `json:"isFinished"`  // 是否完成
-}
+import "strings"
 
 // TraceData 存储跟踪数据的结构体
 type TraceData struct {
@@ -21,24 +15,6 @@ type TraceData struct {
 	Seq        string `json:"seq"`        // 序列号
 }
 
-// GoroutineTrace 存储goroutine信息的结构体
-type GoroutineTrace struct {
-	ID           int64  `json:"id"`           // 自增ID
-	GID          uint64 `json:"gid"`          // Goroutine ID
-	TimeCost     string `json:"timeCost"`     // 执行时间
-	CreateTime   string `json:"createTime"`   // 创建时间
-	IsFinished   int    `json:"isFinished"`   // 是否完成
-	InitFuncName string `json:"initFuncName"` // 初始函数名
-	Depth        int    `json:"depth"`        // 调用深度
-}
-
-// GoroutineStats Goroutine统计信息
-type GoroutineStats struct {
-	Active   int    // 活跃Goroutine数量
-	AvgTime  string // 平均执行时间
-	MaxDepth int    // 最大调用深度
-}
-
 // FunctionNode 函数调用节点
 type FunctionNode struct {
 	ID        string         // 节点ID
@@ -47,25 +23,6 @@ type FunctionNode struct {
 	CallCount int            // 调用次数
 	AvgTime   string         // 平均耗时
 	Children  []FunctionNode // 子节点
-}
-
-// FunctionGraphNode 函数调用关系图节点
-type FunctionGraphNode struct {
-	ID        string // 节点ID
-	Name      string // 函数名称
-	Package   string // 包名
-	CallCount int    // 调用次数
-	AvgTime   string // 平均耗时
-	NodeType  string // 节点类型: "root", "caller", "callee"
-}
-
-// FunctionGraphEdge 函数调用关系图边
-type FunctionGraphEdge struct {
-	Source   string // 源节点ID
-	Target   string // 目标节点ID
-	Value    int    // 调用次数
-	Label    string // 边标签
-	EdgeType string // 边类型: "caller_to_root", "root_to_callee"
 }
 
 // FunctionInfo 函数在Goroutine中的信息
@@ -82,4 +39,68 @@ type ParentInfo struct {
 	ParentId int64  `json:"parentId"` // 父函数ID
 	Depth    int    `json:"depth"`    // 深度
 	Name     string `json:"name"`     // 父函数名称
+}
+
+// 按频率排序，取前5个
+type ModuleStat struct {
+	Name  string
+	Count int
+}
+
+type TraceParams struct {
+	ID         int64  `json:"id"`         // 唯一标识符
+	TraceID    int64  `json:"traceId"`    // 关联的TraceData ID
+	Position   int    `json:"position"`   // 参数位置
+	Data       string `json:"data"`       // 参数JSON数据
+	IsReceiver bool   `json:"isReceiver"` // 是否为接收者参数
+	BaseID     int64  `json:"baseId"`     // 基础参数ID（自关联，当参数为增量存储时使用）
+}
+
+type Function struct {
+	Id         int64  // 函数ID
+	Name       string // 函数名称
+	Package    string // 包名
+	ParentId   int64  // 父函数ID
+	CallCount  int    // 调用次数
+	TotalTime  string // 总耗时
+	AvgTime    string // 平均耗时
+	ParamCount int    // 参数数量
+	Depth      int    // 深度
+	Seq        string // 序列号
+}
+
+func NewFunction(id int64, name string, callCount int, totalTime string, avgTime string) *Function {
+	f := &Function{
+		Id:        id,
+		Name:      name,
+		CallCount: callCount,
+		TotalTime: totalTime,
+		AvgTime:   avgTime,
+	}
+	f.SetPackage()
+	return f
+}
+
+func (f *Function) SetPackage() {
+	parts := strings.Split(f.Name, "/")
+	packageName := "main"
+	if len(parts) > 1 {
+		lastPart := parts[len(parts)-1] // 取最后一个部分作为函数名
+		packageNames := strings.Split(lastPart, ".")
+		packageName = packageNames[0]
+	}
+	f.Package = packageName
+}
+
+// FunctionCallStats 函数调用统计信息
+type FunctionCallStats struct {
+	Name        string  // 函数名称
+	Package     string  // 包名
+	CallCount   int     // 调用次数
+	CallerCount int     // 调用方数量
+	CalleeCount int     // 被调用方数量
+	AvgTime     string  // 平均执行时间
+	MaxTime     string  // 最大执行时间
+	MinTime     string  // 最小执行时间
+	TimeStdDev  float64 // 执行时间标准差
 }

@@ -32,16 +32,8 @@ func (psdc *ParamStoreDataCreate) SetPosition(i int) *ParamStoreDataCreate {
 }
 
 // SetData sets the "data" field.
-func (psdc *ParamStoreDataCreate) SetData(s string) *ParamStoreDataCreate {
-	psdc.mutation.SetData(s)
-	return psdc
-}
-
-// SetNillableData sets the "data" field if the given value is not nil.
-func (psdc *ParamStoreDataCreate) SetNillableData(s *string) *ParamStoreDataCreate {
-	if s != nil {
-		psdc.SetData(*s)
-	}
+func (psdc *ParamStoreDataCreate) SetData(b []byte) *ParamStoreDataCreate {
+	psdc.mutation.SetData(b)
 	return psdc
 }
 
@@ -179,7 +171,7 @@ func (psdc *ParamStoreDataCreate) createSpec() (*ParamStoreData, *sqlgraph.Creat
 		_node.Position = value
 	}
 	if value, ok := psdc.mutation.Data(); ok {
-		_spec.SetField(paramstoredata.FieldData, field.TypeString, value)
+		_spec.SetField(paramstoredata.FieldData, field.TypeBytes, value)
 		_node.Data = value
 	}
 	if value, ok := psdc.mutation.IsReceiver(); ok {

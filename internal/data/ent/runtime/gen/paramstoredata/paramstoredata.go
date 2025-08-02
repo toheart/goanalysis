@@ -47,7 +47,7 @@ func ValidColumn(column string) bool {
 
 var (
 	// DefaultData holds the default value on creation for the "data" field.
-	DefaultData string
+	DefaultData []byte
 	// DefaultIsReceiver holds the default value on creation for the "isReceiver" field.
 	DefaultIsReceiver bool
 )
@@ -68,11 +68,6 @@ func ByTraceId(opts ...sql.OrderTermOption) OrderOption {
 // ByPosition orders the results by the position field.
 func ByPosition(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPosition, opts...).ToFunc()
-}
-
-// ByData orders the results by the data field.
-func ByData(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldData, opts...).ToFunc()
 }
 
 // ByIsReceiver orders the results by the isReceiver field.

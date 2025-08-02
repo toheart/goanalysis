@@ -39,13 +39,13 @@
 1. 从 [GitHub Releases](https://github.com/toheart/goanalysis/releases) 下载
 2. 解压并运行:
    ```bash
-   # Linux
+   # Linux - 使用默认配置启动
    ./goanalysis-linux-v* server
    
-   # Windows
+   # Windows - 使用默认配置启动
    goanalysis-windows-v*.exe server
    ```
-3. 打开 http://localhost:8000
+3. 打开 http://localhost:8001
 
 ### 从源码构建
 
@@ -60,117 +60,147 @@ make build
 
 ## ⚙️ 配置说明
 
-编辑 `configs/config.yaml`:
+### 🎯 推荐方式：命令行参数（无需配置文件）
+
+GoAnalysis 现在支持通过命令行参数直接配置，无需创建配置文件：
+
+```bash
+# 使用默认配置启动
+./goanalysis server
+
+# 自定义端口和日志级别
+./goanalysis server --http-addr=0.0.0.0:8080 --log-level=info
+
+# 自定义数据库路径
+./goanalysis server --db-path=./my-database.db
+
+# 设置GitLab配置
+./goanalysis server --gitlab-token="your-token" --gitlab-url="https://gitlab.com/api/v4"
+```
+
+### 📋 所有可用参数
+
+```bash
+# 查看所有可用参数
+./goanalysis server --help
+```
+
+**服务器配置：**
+- `--http-addr` - HTTP服务地址 (默认: 0.0.0.0:8001)
+- `--grpc-addr` - gRPC服务地址 (默认: 0.0.0.0:9000)
+- `--http-timeout` - HTTP超时时间 (默认: 1s)
+- `--grpc-timeout` - gRPC超时时间 (默认: 1s)
+
+**日志配置：**
+- `--log-level` - 日志级别 (默认: debug)
+- `--log-file` - 日志文件路径 (默认: ./logs/app.log)
+- `--log-console` - 是否输出到控制台 (默认: true)
+
+**GitLab配置：**
+- `--gitlab-token` - GitLab访问令牌
+- `--gitlab-url` - GitLab API地址
+- `--gitlab-clone-dir` - 克隆目录 (默认: ./data)
+
+**OpenAI配置：**
+- `--openai-api-key` - OpenAI API密钥
+- `--openai-api-base` - OpenAI API地址
+- `--openai-model` - OpenAI模型名称
+
+**存储路径：**
+- `--static-store-path` - 静态存储路径 (默认: ./data/static)
+- `--runtime-store-path` - 运行时存储路径 (默认: ./data/runtime)
+- `--file-storage-path` - 文件存储路径 (默认: ./data/files)
+
+**数据配置：**
+- `--db-path` - 数据库路径 (默认: ./goanalysis.db)
+
+### 🔐 环境变量支持
+
+敏感信息也可以通过环境变量设置：
+
+```bash
+export GITLAB_TOKEN="your-gitlab-token"
+export GITLAB_API_URL="https://gitlab.com/api/v4"
+export OPENAI_API_KEY="your-openai-key"
+export OPENAI_API_BASE="https://api.openai.com/v1"
+export OPENAI_MODEL="gpt-3.5-turbo"
+
+./goanalysis server
+```
+
+### 📄 传统方式：配置文件
+
+仍然支持传统的配置文件方式：
+
+```bash
+# 生成默认配置文件
+./goanalysis config
+
+# 使用配置文件启动
+./goanalysis server --conf=configs/config.yaml
+```
+
+配置文件示例：
 
 ```yaml
 server:
   http:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:8001
   grpc:
     addr: 0.0.0.0:9000
 
-data:
-  dbpath: ./goanalysis.db
+logger:
+  level: debug
+  file_path: ./logs/app.log
+  console: true
 
 biz:
   gitlab:
     token: "${GITLAB_TOKEN}"
     url: "${GITLAB_API_URL}"
+    clone_dir: ./data
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    api_base: "${OPENAI_API_BASE}"
+    model: "${OPENAI_MODEL}"
+
+data:
+  dbpath: ./goanalysis.db
 ```
 
-## 📡 API接口
+### 🔄 配置优先级
 
-| 接口地址 | 方法 | 描述 |
-|----------|------|------|
-| `/api/gids` | GET | 获取goroutine ID |
-| `/api/functions` | GET | 列出追踪函数 |
-| `/api/traces/{gid}` | GET | 获取追踪详情 |
-| `/api/traces/{gid}/mermaid` | GET | 获取图表数据 |
+配置优先级从高到低：
+1. **命令行参数** - 最高优先级
+2. **环境变量** - 用于敏感信息
+3. **配置文件** - 传统方式
+4. **默认值** - 最低优先级
+
 
 ## 🔧 使用方法
 
 ### 基础追踪
 ```bash
+# 使用默认配置启动
 ./goanalysis server
+
+# 自定义配置启动
+./goanalysis server --http-addr=0.0.0.0:8080 --log-level=info
+
+# 代码重写
 ./goanalysis rewrite -d /path/to/project
 ```
 
 ### Git分析
 ```bash
+# 设置GitLab配置
 export GITLAB_TOKEN="your-token"
-./goanalysis gitanalysis --project=123 --mr=45
+export GITLAB_API_URL="https://gitlab.com/api/v4"
+
+# 启动服务
+./goanalysis server
 ```
 
 ## 📂 项目结构
 
 ```
-├── api/           # API定义
-├── cmd/           # CLI命令
-├── internal/      # 核心逻辑
-├── web/           # 前端文件
-└── configs/       # 配置文件
-```
-
-## 🏗️ 部署
-
-### Docker
-```bash
-docker run -p 8000:8000 -p 9000:9000 \
-  ghcr.io/toheart/goanalysis:latest
-```
-
-### 构建
-```bash
-make package-linux
-make package-windows
-```
-
-## 🔧 故障排除
-
-| 问题 | 解决方案 |
-|------|----------|
-| 端口被占用 | `lsof -i :8000; kill -9 <PID>` |
-| 数据库锁定 | `rm -f goanalysis.db-*` |
-| 前端缺失 | `make sync-frontend` |
-
-## 🤝 贡献指南
-
-1. Fork仓库
-2. 创建功能分支
-3. 提交更改和测试
-4. 提交Pull Request
-
-遵循 [约定式提交](https://www.conventionalcommits.org/zh-hans/)。
-
-## 📜 版本历史
-
-| 版本 | 日期 | 变更 |
-|------|------|------|
-| v1.1.4 | 2024-12-16 | GitLab集成 |
-| v1.1.0 | 2024-12-01 | Vue3升级 |
-| v1.0.0 | 2024-11-15 | 首个稳定版 |
-
-## 📄 许可证
-
-MIT许可证 - 查看 [LICENSE](LICENSE) 文件。
-
-## 📞 支持
-
-- **🐛 问题**: [GitHub Issues](https://github.com/toheart/goanalysis/issues)
-- **💬 讨论**: [GitHub Discussions](https://github.com/toheart/goanalysis/discussions)
-- **📖 文档**: [Wiki](https://github.com/toheart/goanalysis/wiki)
-- **📱 微信**: 关注"小唐的技术日志"获取更新
-
-<div align="center">
-  <h4>📱 关注微信公众号</h4>
-  <p><strong>小唐的技术日志</strong></p>
-  <img src="docs/images/wechat-qr.jpg" alt="微信公众号二维码" width="200"/>
-  <p><i>扫描获取最新资讯</i></p>
-</div>
-
----
-
-<div align="center">
-  <p><strong>GoAnalysis</strong> - 为Go开发者赋能</p>
-  <p>⭐ 在GitHub上给我们一个Star！</p>
-</div>

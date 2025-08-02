@@ -122,44 +122,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/filemanager.v1.DownloadFileReply'
-    /api/runtime/function/analysis:
-        post:
-            tags:
-                - Analysis
-            description: GetFunctionAnalysis 获取函数调用关系分析
-            operationId: Analysis_GetFunctionAnalysis
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetFunctionAnalysisReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetFunctionAnalysisReply'
-    /api/runtime/function/anomalies:
-        post:
-            tags:
-                - Analysis
-            description: GetPerformanceAnomalies 获取性能异常检测结果
-            operationId: Analysis_GetPerformanceAnomalies
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetPerformanceAnomaliesReply'
     /api/runtime/function/info:
         post:
             tags:
@@ -198,24 +160,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.GetFunctionCallStatsReply'
-    /api/runtime/functions:
-        post:
-            tags:
-                - Analysis
-            operationId: Analysis_GetAllFunctionName
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetAllFunctionNameReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetAllFunctionNameReply'
     /api/runtime/functions/children:
         post:
             tags:
@@ -366,6 +310,25 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.InstrumentProjectReply'
+    /api/runtime/modules:
+        post:
+            tags:
+                - Analysis
+            description: GetModuleNames 获取数据库中的模块名称列表
+            operationId: Analysis_GetModuleNames
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/analysis.v1.GetModuleNamesReq'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetModuleNamesReply'
     /api/runtime/params/{id}:
         post:
             tags:
@@ -440,44 +403,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.AnalysisByGIDReply'
-    /api/runtime/tree-graph:
-        post:
-            tags:
-                - Analysis
-            description: 获取运行时树状图数据
-            operationId: Analysis_GetTreeGraph
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetTreeGraphReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetTreeGraphReply'
-    /api/runtime/tree-graph/gid:
-        post:
-            tags:
-                - Analysis
-            description: 根据GID获取多棵树状图数据
-            operationId: Analysis_GetTreeGraphByGID
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/analysis.v1.GetTreeGraphByGIDReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/analysis.v1.GetTreeGraphByGIDReply'
     /api/runtime/verify/path:
         post:
             tags:
@@ -917,18 +842,6 @@ components:
                     format: int32
                 seq:
                     type: string
-        analysis.v1.GetAllFunctionNameReply:
-            type: object
-            properties:
-                functionNames:
-                    type: array
-                    items:
-                        type: string
-        analysis.v1.GetAllFunctionNameReq:
-            type: object
-            properties:
-                dbpath:
-                    type: string
         analysis.v1.GetAllGIDsReply:
             type: object
             properties:
@@ -982,42 +895,6 @@ components:
                 dbpath:
                     type: string
             description: GetChildFunctionsReq 获取函数的子函数的请求
-        analysis.v1.GetFunctionAnalysisReply:
-            type: object
-            properties:
-                callData:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.GetFunctionAnalysisReply_FunctionNode'
-            description: GetFunctionAnalysisReply 获取函数调用关系分析的响应
-        analysis.v1.GetFunctionAnalysisReply_FunctionNode:
-            type: object
-            properties:
-                id:
-                    type: string
-                name:
-                    type: string
-                package:
-                    type: string
-                callCount:
-                    type: integer
-                    format: int32
-                avgTime:
-                    type: string
-                children:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.GetFunctionAnalysisReply_FunctionNode'
-        analysis.v1.GetFunctionAnalysisReq:
-            type: object
-            properties:
-                functionName:
-                    type: string
-                type:
-                    type: string
-                dbpath:
-                    type: string
-            description: GetFunctionAnalysisReq 获取函数调用关系分析的请求
         analysis.v1.GetFunctionCallStatsReply:
             type: object
             properties:
@@ -1150,6 +1027,23 @@ components:
                 dbpath:
                     type: string
             description: GetHotFunctionsReq 获取热点函数的请求
+        analysis.v1.GetModuleNamesReply:
+            type: object
+            properties:
+                moduleNames:
+                    type: array
+                    items:
+                        type: string
+            description: GetModuleNamesReply 获取模块名称响应
+        analysis.v1.GetModuleNamesReq:
+            type: object
+            properties:
+                dbpath:
+                    type: string
+                maxSamples:
+                    type: integer
+                    format: int32
+            description: GetModuleNamesReq 获取模块名称请求
         analysis.v1.GetParamsByIDReply:
             type: object
             properties:
@@ -1179,25 +1073,6 @@ components:
                     type: string
                 functionName:
                     type: string
-        analysis.v1.GetPerformanceAnomaliesReply:
-            type: object
-            properties:
-                anomalies:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.PerformanceAnomaly'
-            description: 获取性能异常检测响应
-        analysis.v1.GetPerformanceAnomaliesReq:
-            type: object
-            properties:
-                dbPath:
-                    type: string
-                functionName:
-                    type: string
-                threshold:
-                    type: number
-                    format: double
-            description: 获取性能异常检测请求
         analysis.v1.GetTracesByParentFuncReply:
             type: object
             properties:
@@ -1241,43 +1116,6 @@ components:
                 dbpath:
                     type: string
             description: GetTracesByParentFuncReq 根据父函数ID获取函数调用的请求
-        analysis.v1.GetTreeGraphByGIDReply:
-            type: object
-            properties:
-                trees:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.TreeNode'
-            description: 根据GID获取树状图响应 - 返回多棵树
-        analysis.v1.GetTreeGraphByGIDReq:
-            type: object
-            properties:
-                dbPath:
-                    type: string
-                gid:
-                    type: string
-            description: 根据GID获取树状图请求
-        analysis.v1.GetTreeGraphReply:
-            type: object
-            properties:
-                trees:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.TreeNode'
-            description: 获取树状图响应
-        analysis.v1.GetTreeGraphReq:
-            type: object
-            properties:
-                dbPath:
-                    type: string
-                functionName:
-                    type: string
-                chainType:
-                    type: string
-                depth:
-                    type: integer
-                    format: int32
-            description: 获取树状图请求
         analysis.v1.InstrumentProjectReply:
             type: object
             properties:
@@ -1303,25 +1141,6 @@ components:
                     type: integer
                     format: int32
             description: ParentInfo 父函数信息
-        analysis.v1.PerformanceAnomaly:
-            type: object
-            properties:
-                name:
-                    type: string
-                package:
-                    type: string
-                anomalyType:
-                    type: string
-                description:
-                    type: string
-                severity:
-                    type: number
-                    format: double
-                details:
-                    type: object
-                    additionalProperties:
-                        type: string
-            description: 性能异常信息
         analysis.v1.SearchFunctionsReply:
             type: object
             properties:
@@ -1359,20 +1178,6 @@ components:
                     format: int32
                 param:
                     type: string
-        analysis.v1.TreeNode:
-            type: object
-            properties:
-                name:
-                    type: string
-                value:
-                    type: string
-                collapsed:
-                    type: boolean
-                children:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/analysis.v1.TreeNode'
-            description: 树状图节点
         analysis.v1.VerifyProjectPathReply:
             type: object
             properties:
