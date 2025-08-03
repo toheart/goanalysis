@@ -1026,7 +1026,7 @@ func (d *TraceEntDB) SearchFunctions(ctx context.Context, dbPath string, query s
 func (d *TraceEntDB) GetFunctionInfoInGoroutine(gid uint64, targetFunctionId int64) (*dos.FunctionInfo, error) {
 	ctx := context.Background()
 
-	// 1. 先查询目标函数信息
+	// 1. 查询目标函数信息
 	targetTrace, err := d.client.TraceData.Query().Where(
 		tracedata.ID(int(targetFunctionId)),
 		tracedata.Gid(uint64(gid)),
@@ -1044,8 +1044,8 @@ func (d *TraceEntDB) GetFunctionInfoInGoroutine(gid uint64, targetFunctionId int
 		Indent: targetTrace.Indent,
 	}
 
-	// 2. 获取从当前函数到深度为0的所有父函数
-	parentInfos, err := d.getParentFunctionInfos(targetTrace.Gid, targetFunctionId)
+	// 2. 递归获取所有父函数信息
+	parentInfos, err := d.getParentFunctionInfosRecursive(ctx, gid, targetTrace.ParentId)
 	if err != nil {
 		return nil, fmt.Errorf("get parent function infos failed: %w", err)
 	}
@@ -1054,38 +1054,42 @@ func (d *TraceEntDB) GetFunctionInfoInGoroutine(gid uint64, targetFunctionId int
 	return functionInfo, nil
 }
 
-// getParentFunctionInfos 获取从当前函数到深度为0的所有父函数信息列表（去重）
-func (d *TraceEntDB) getParentFunctionInfos(gid uint64, targetFunctionId int64) ([]dos.ParentInfo, error) {
-	ctx := context.Background()
-
-	// 查询目标函数的所有父函数
-	query := d.client.TraceData.Query().
-		Where(tracedata.Gid(gid)).
-		Where(tracedata.IDLTE(int(targetFunctionId)))
-
-	traces, err := query.All(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("query parent functions failed: %w", err)
-	}
-
-	// 构建父函数信息
-	parentMap := make(map[int64]dos.ParentInfo)
-	for _, trace := range traces {
-		if trace.ID < int(targetFunctionId) {
-			parentInfo := dos.ParentInfo{
-				ParentId: int64(trace.ID),
-				Name:     trace.Name,
-				Depth:    trace.Indent,
-			}
-			parentMap[int64(trace.ID)] = parentInfo
-		}
-	}
-
-	// 转换为切片
+// getParentFunctionInfosRecursive 递归获取从当前parentId到深度为0的所有父函数信息列表（按调用链顺序）
+func (d *TraceEntDB) getParentFunctionInfosRecursive(ctx context.Context, gid uint64, parentId int64) ([]dos.ParentInfo, error) {
 	var result []dos.ParentInfo
-	for _, parent := range parentMap {
-		result = append(result, parent)
+
+	// 递归终止条件：parentId为0或小于等于0
+	if parentId <= 0 {
+		return result, nil
 	}
+
+	// 查询当前parentId对应的TraceData
+	parentTrace, err := d.client.TraceData.Query().Where(
+		tracedata.ID(int(parentId)),
+		tracedata.Gid(uint64(gid)),
+	).First(ctx)
+	if err != nil {
+		if gen.IsNotFound(err) {
+			// 如果找不到父节点，直接返回当前已获取的结果
+			return result, nil
+		}
+		return nil, fmt.Errorf("query parent function failed: %w", err)
+	}
+
+	// 先递归获取更高层的父节点
+	upperParents, err := d.getParentFunctionInfosRecursive(ctx, gid, parentTrace.ParentId)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, upperParents...)
+
+	// 再添加当前父节点信息
+	parentInfo := dos.ParentInfo{
+		ParentId: int64(parentTrace.ID),
+		Name:     parentTrace.Name,
+		Depth:    parentTrace.Indent,
+	}
+	result = append(result, parentInfo)
 
 	return result, nil
 }
