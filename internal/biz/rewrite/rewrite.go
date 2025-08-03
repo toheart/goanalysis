@@ -37,6 +37,10 @@ func RewriteDir(dir string) {
 			return nil
 		}
 		if info.IsDir() {
+			// 跳过vendor目录
+			if info.Name() == "vendor" {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		// 排除
@@ -173,6 +177,11 @@ func (r *Rewrite) ImportFunctrace() {
 }
 
 func (r *Rewrite) HasSameDefer(decl *ast.FuncDecl) bool {
+	// 检查函数是否有函数体
+	if decl.Body == nil {
+		return false
+	}
+
 	for _, stmt := range decl.Body.List {
 		// 判断是否为defer 函数
 		ds, ok := stmt.(*ast.DeferStmt)
@@ -201,6 +210,185 @@ func (r *Rewrite) HasSameDefer(decl *ast.FuncDecl) bool {
 	return false
 }
 
+// hasSameDeferInBody 通用的defer检查函数，用于检查任何函数体中是否已有相同的defer语句
+func (r *Rewrite) hasSameDeferInBody(body *ast.BlockStmt) bool {
+	if body == nil {
+		return false
+	}
+
+	for _, stmt := range body.List {
+		ds, ok := stmt.(*ast.DeferStmt)
+		if !ok {
+			continue
+		}
+
+		ce, ok := ds.Call.Fun.(*ast.CallExpr)
+		if !ok {
+			continue
+		}
+		se, ok := ce.Fun.(*ast.SelectorExpr)
+		if !ok {
+			continue
+		}
+
+		x, ok := se.X.(*ast.Ident)
+		if !ok {
+			continue
+		}
+		if (x.Name == "functrace") && (se.Sel.Name == "Trace") {
+			return true
+		}
+	}
+	return false
+}
+
+// addDeferToBody 通用的添加defer语句函数
+func (r *Rewrite) addDeferToBody(body *ast.BlockStmt, funcType *ast.FuncType, recv *ast.FieldList) bool {
+	if body == nil {
+		return false
+	}
+
+	// 检查是否已经有相同的defer语句
+	if r.hasSameDeferInBody(body) {
+		return false
+	}
+
+	// 生成defer语句
+	elts := r.genTraceParams(funcType, recv)
+	deferStmt := r.genDefer(elts)
+
+	// 将defer语句添加到函数体的开头
+	body.List = append([]ast.Stmt{deferStmt}, body.List...)
+	return true
+}
+
+// processFuncLit 处理函数字面量，添加defer语句
+func (r *Rewrite) processFuncLit(funcLit *ast.FuncLit) bool {
+	return r.addDeferToBody(funcLit.Body, funcLit.Type, nil)
+}
+
+// processGoStmt 处理go语句
+func (r *Rewrite) processGoStmt(goStmt *ast.GoStmt) bool {
+	// 检查go语句中的函数是否为函数字面量
+	if funcLit, ok := goStmt.Call.Fun.(*ast.FuncLit); ok {
+		return r.processFuncLit(funcLit)
+	}
+
+	// 处理go语句中的函数调用参数，查找其中的函数字面量
+	return r.processCallExpr(goStmt.Call)
+}
+
+// processCallExpr 处理函数调用表达式，查找其中的函数字面量参数
+func (r *Rewrite) processCallExpr(callExpr *ast.CallExpr) bool {
+	modified := false
+
+	// 检查函数调用的参数中是否有函数字面量
+	for _, arg := range callExpr.Args {
+		if funcLit, ok := arg.(*ast.FuncLit); ok {
+			if r.processFuncLit(funcLit) {
+				modified = true
+			}
+		} else if nestedCall, ok := arg.(*ast.CallExpr); ok {
+			// 递归处理嵌套的函数调用
+			if r.processCallExpr(nestedCall) {
+				modified = true
+			}
+		}
+	}
+
+	// 递归处理函数调用本身（如果它也是一个函数字面量）
+	if funcLit, ok := callExpr.Fun.(*ast.FuncLit); ok {
+		if r.processFuncLit(funcLit) {
+			modified = true
+		}
+	}
+
+	return modified
+}
+
+// processStmtList 递归处理语句列表
+func (r *Rewrite) processStmtList(stmts []ast.Stmt) bool {
+	modified := false
+	for _, stmt := range stmts {
+		if r.processStmt(stmt) {
+			modified = true
+		}
+	}
+	return modified
+}
+
+// processStmt 递归处理语句，查找go语句和函数字面量
+func (r *Rewrite) processStmt(stmt ast.Stmt) bool {
+	modified := false
+
+	switch s := stmt.(type) {
+	case *ast.GoStmt:
+		if r.processGoStmt(s) {
+			modified = true
+		}
+	case *ast.ExprStmt:
+		// 处理表达式语句中的函数调用
+		if callExpr, ok := s.X.(*ast.CallExpr); ok {
+			modified = r.processCallExpr(callExpr)
+		}
+	case *ast.BlockStmt:
+		modified = r.processStmtList(s.List)
+	case *ast.IfStmt:
+		if s.Init != nil {
+			modified = r.processStmt(s.Init) || modified
+		}
+		if s.Body != nil {
+			modified = r.processStmtList(s.Body.List) || modified
+		}
+		if s.Else != nil {
+			modified = r.processStmt(s.Else) || modified
+		}
+	case *ast.ForStmt:
+		if s.Init != nil {
+			modified = r.processStmt(s.Init) || modified
+		}
+		if s.Body != nil {
+			modified = r.processStmtList(s.Body.List) || modified
+		}
+	case *ast.RangeStmt:
+		if s.Body != nil {
+			modified = r.processStmtList(s.Body.List) || modified
+		}
+	case *ast.SwitchStmt:
+		if s.Init != nil {
+			modified = r.processStmt(s.Init) || modified
+		}
+		if s.Body != nil {
+			for _, caseClause := range s.Body.List {
+				if cc, ok := caseClause.(*ast.CaseClause); ok {
+					modified = r.processStmtList(cc.Body) || modified
+				}
+			}
+		}
+	case *ast.TypeSwitchStmt:
+		if s.Init != nil {
+			modified = r.processStmt(s.Init) || modified
+		}
+		if s.Body != nil {
+			for _, caseClause := range s.Body.List {
+				if cc, ok := caseClause.(*ast.CaseClause); ok {
+					modified = r.processStmtList(cc.Body) || modified
+				}
+			}
+		}
+	case *ast.SelectStmt:
+		if s.Body != nil {
+			for _, commClause := range s.Body.List {
+				if cc, ok := commClause.(*ast.CommClause); ok {
+					modified = r.processStmtList(cc.Body) || modified
+				}
+			}
+		}
+	}
+
+	return modified
+}
+
 func (r *Rewrite) RewriteFile() {
 	flag := false
 	// 插入defer函数
@@ -213,15 +401,20 @@ func (r *Rewrite) RewriteFile() {
 			continue
 		}
 
-		// 判断是否需要插入defer函数
-		if r.HasSameDefer(funcDel) {
+		// 检查函数是否有函数体，没有函数体的函数（如接口方法声明）跳过
+		if funcDel.Body == nil {
 			continue
 		}
-		elts := r.genTraceParams(funcDel.Type, funcDel.Recv)
-		deferStmt := r.genDefer(elts)
-		// 将defer语句添加到函数体的开头
-		funcDel.Body.List = append([]ast.Stmt{deferStmt}, funcDel.Body.List...)
-		flag = true
+
+		// 为函数声明添加defer语句
+		if r.addDeferToBody(funcDel.Body, funcDel.Type, funcDel.Recv) {
+			flag = true
+		}
+
+		// 递归处理函数体中的所有语句，查找go语句
+		if r.processStmtList(funcDel.Body.List) {
+			flag = true
+		}
 	}
 	if flag {
 		// 插入import

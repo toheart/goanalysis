@@ -16,6 +16,14 @@ service Analysis {
     };
   }
 
+  // InstrumentProject 对项目进行插桩
+  rpc InstrumentProject(InstrumentProjectReq) returns (InstrumentProjectReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/instrument"
+      body: "*"
+    };
+  }
+
   rpc GetAnalysisByGID (AnalysisByGIDRequest) returns (AnalysisByGIDReply) {
     option (google.api.http) = {
       post: "/api/runtime/traces/{gid}"
@@ -36,12 +44,6 @@ service Analysis {
     };
   }
 
-  rpc GetAllFunctionName (GetAllFunctionNameReq) returns (GetAllFunctionNameReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/functions"
-      body: "*"
-    };
-  }
   rpc GetGidsByFunctionName (GetGidsByFunctionNameReq) returns (GetGidsByFunctionNameReply) {
     option (google.api.http) = {
       post: "/api/runtime/gids/function"
@@ -96,42 +98,6 @@ service Analysis {
     };
   }
 
-  // GetFunctionAnalysis 获取函数调用关系分析
-  rpc GetFunctionAnalysis(GetFunctionAnalysisReq) returns (GetFunctionAnalysisReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/function/analysis"
-      body: "*"
-    };
-  }
-
-
-  // InstrumentProject 对项目进行插桩
-  rpc InstrumentProject(InstrumentProjectReq) returns (InstrumentProjectReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/instrument"
-      body: "*"
-    };
-  }
-  
-
-
-  
-  // 获取运行时树状图数据
-  rpc GetTreeGraph (GetTreeGraphReq) returns (GetTreeGraphReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/tree-graph"
-      body: "*"
-    };
-  }
-
-  // 根据GID获取多棵树状图数据
-  rpc GetTreeGraphByGID (GetTreeGraphByGIDReq) returns (GetTreeGraphByGIDReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/tree-graph/gid"
-      body: "*"
-    };
-  }
-  
   
   // GetFunctionCallStats 获取函数调用统计分析
   rpc GetFunctionCallStats(GetFunctionCallStatsReq) returns (GetFunctionCallStatsReply) {
@@ -141,18 +107,27 @@ service Analysis {
     };
   }
   
-  // GetPerformanceAnomalies 获取性能异常检测结果
-  rpc GetPerformanceAnomalies(GetPerformanceAnomaliesReq) returns (GetPerformanceAnomaliesReply) {
-    option (google.api.http) = {
-      post: "/api/runtime/function/anomalies"
-      body: "*"
-    };
-  }
 
   // SearchFunctions 搜索函数
   rpc SearchFunctions(SearchFunctionsReq) returns (SearchFunctionsReply) {
     option (google.api.http) = {
       post: "/api/runtime/functions/search"
+      body: "*"
+    };
+  }
+
+  // GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
+  rpc GetFunctionInfoInGoroutine(GetFunctionInfoInGoroutineReq) returns (GetFunctionInfoInGoroutineReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/function/info"
+      body: "*"
+    };
+  }
+
+  // GetModuleNames 获取数据库中的模块名称列表
+  rpc GetModuleNames(GetModuleNamesReq) returns (GetModuleNamesReply) {
+    option (google.api.http) = {
+      post: "/api/runtime/modules"
       body: "*"
     };
   }
@@ -180,6 +155,7 @@ message GetGidsByFunctionNameReply {
     int32 depth = 3; // 调用深度
     string executionTime = 4; // 执行时间
     bool isFinished = 5; // 是否完成
+    int64 functionId = 6; // 函数ID
   }
   repeated Body body = 1;
   int32 total = 2; // 总的 GID 数量
@@ -542,9 +518,44 @@ message SearchFunctionsReply {
   message FunctionInfo {
     string name = 1;      // 函数名称
     string package = 2;   // 包名
-    int32 callCount = 3; // 调用次数
-    string avgTime = 4;  // 平均执行时间
   }
   repeated FunctionInfo functions = 1; // 搜索到的函数列表
   int32 total = 2;                    // 总匹配数量
+}
+
+// GetFunctionInfoInGoroutineReq 获取函数在指定Goroutine中的信息请求
+message GetFunctionInfoInGoroutineReq {
+  string dbpath = 1; // 数据库路径
+  uint64 gid = 2; // Goroutine ID
+  int64 functionId = 3; // 目标函数ID
+  int32 currentDepth = 4; // 当前显示深度
+}
+
+// ParentInfo 父函数信息
+message ParentInfo {
+  int64 parentId = 1; // 父函数ID
+  string name = 2; // 父函数名称
+  int32 depth = 3; // 深度
+}
+
+// GetFunctionInfoInGoroutineReply 获取函数在指定Goroutine中的信息响应
+message GetFunctionInfoInGoroutineReply {
+  message FunctionInfo {
+    int64 id = 1; // 函数ID
+    string name = 2; // 函数名称
+    int32 depth = 3; // 函数在调用链中的实际深度
+    repeated ParentInfo parentIds = 4; // 父函数ID+深度列表（去重）
+  }
+  FunctionInfo functionInfo = 1;
+}
+
+// GetModuleNamesReq 获取模块名称请求
+message GetModuleNamesReq {
+  string dbpath = 1; // 数据库路径
+  int32 maxSamples = 2; // 最大采样数量，默认5000
+}
+
+// GetModuleNamesReply 获取模块名称响应
+message GetModuleNamesReply {
+  repeated string moduleNames = 1; // 前5个最频繁的模块名称（按频率排序）
 }

@@ -29,7 +29,7 @@ var (
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "traceId", Type: field.TypeInt64},
 		{Name: "position", Type: field.TypeInt},
-		{Name: "data", Type: field.TypeString, Default: ""},
+		{Name: "data", Type: field.TypeBytes},
 		{Name: "isReceiver", Type: field.TypeBool, Default: false},
 		{Name: "baseId", Type: field.TypeInt64, Nullable: true},
 	}

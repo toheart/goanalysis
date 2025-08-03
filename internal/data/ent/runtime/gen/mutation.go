@@ -737,7 +737,7 @@ type ParamStoreDataMutation struct {
 	addtraceId    *int64
 	position      *int
 	addposition   *int
-	data          *string
+	data          *[]byte
 	isReceiver    *bool
 	baseId        *int64
 	addbaseId     *int64
@@ -964,12 +964,12 @@ func (m *ParamStoreDataMutation) ResetPosition() {
 }
 
 // SetData sets the "data" field.
-func (m *ParamStoreDataMutation) SetData(s string) {
-	m.data = &s
+func (m *ParamStoreDataMutation) SetData(b []byte) {
+	m.data = &b
 }
 
 // Data returns the value of the "data" field in the mutation.
-func (m *ParamStoreDataMutation) Data() (r string, exists bool) {
+func (m *ParamStoreDataMutation) Data() (r []byte, exists bool) {
 	v := m.data
 	if v == nil {
 		return
@@ -980,7 +980,7 @@ func (m *ParamStoreDataMutation) Data() (r string, exists bool) {
 // OldData returns the old "data" field's value of the ParamStoreData entity.
 // If the ParamStoreData object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ParamStoreDataMutation) OldData(ctx context.Context) (v string, err error) {
+func (m *ParamStoreDataMutation) OldData(ctx context.Context) (v []byte, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldData is only allowed on UpdateOne operations")
 	}
@@ -1216,7 +1216,7 @@ func (m *ParamStoreDataMutation) SetField(name string, value ent.Value) error {
 		m.SetPosition(v)
 		return nil
 	case paramstoredata.FieldData:
-		v, ok := value.(string)
+		v, ok := value.([]byte)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

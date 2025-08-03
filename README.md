@@ -39,13 +39,13 @@ Professional Go function tracing analysis tool with advanced visualization. Buil
 1. Download from [GitHub Releases](https://github.com/toheart/goanalysis/releases)
 2. Extract and run:
    ```bash
-   # Linux
+   # Linux - Start with default configuration
    ./goanalysis-linux-v* server
    
-   # Windows  
+   # Windows - Start with default configuration
    goanalysis-windows-v*.exe server
    ```
-3. Open http://localhost:8000
+3. Open http://localhost:8001
 
 ### Building from Source
 
@@ -60,45 +60,146 @@ make build
 
 ## ⚙️ Configuration
 
-Edit `configs/config.yaml`:
+### 🎯 Recommended: Command Line Arguments (No Config File Required)
+
+GoAnalysis now supports direct configuration via command line arguments without creating config files:
+
+```bash
+# Start with default configuration
+./goanalysis server
+
+# Customize port and log level
+./goanalysis server --http-addr=0.0.0.0:8080 --log-level=info
+
+# Customize database path
+./goanalysis server --db-path=./my-database.db
+
+# Set GitLab configuration
+./goanalysis server --gitlab-token="your-token" --gitlab-url="https://gitlab.com/api/v4"
+```
+
+### 📋 All Available Parameters
+
+```bash
+# View all available parameters
+./goanalysis server --help
+```
+
+**Server Configuration:**
+- `--http-addr` - HTTP server address (default: 0.0.0.0:8001)
+- `--grpc-addr` - gRPC server address (default: 0.0.0.0:9000)
+- `--http-timeout` - HTTP timeout (default: 1s)
+- `--grpc-timeout` - gRPC timeout (default: 1s)
+
+**Logging Configuration:**
+- `--log-level` - Log level (default: debug)
+- `--log-file` - Log file path (default: ./logs/app.log)
+- `--log-console` - Output to console (default: true)
+
+**GitLab Configuration:**
+- `--gitlab-token` - GitLab access token
+- `--gitlab-url` - GitLab API URL
+- `--gitlab-clone-dir` - Clone directory (default: ./data)
+
+**OpenAI Configuration:**
+- `--openai-api-key` - OpenAI API key
+- `--openai-api-base` - OpenAI API base URL
+- `--openai-model` - OpenAI model name
+
+**Storage Paths:**
+- `--static-store-path` - Static storage path (default: ./data/static)
+- `--runtime-store-path` - Runtime storage path (default: ./data/runtime)
+- `--file-storage-path` - File storage path (default: ./data/files)
+
+**Data Configuration:**
+- `--db-path` - Database path (default: ./goanalysis.db)
+
+### 🔐 Environment Variables Support
+
+Sensitive information can also be set via environment variables:
+
+```bash
+export GITLAB_TOKEN="your-gitlab-token"
+export GITLAB_API_URL="https://gitlab.com/api/v4"
+export OPENAI_API_KEY="your-openai-key"
+export OPENAI_API_BASE="https://api.openai.com/v1"
+export OPENAI_MODEL="gpt-3.5-turbo"
+
+./goanalysis server
+```
+
+### 📄 Traditional: Configuration File
+
+Still supports traditional configuration file approach:
+
+```bash
+# Generate default configuration file
+./goanalysis config
+
+# Start with configuration file
+./goanalysis server --conf=configs/config.yaml
+```
+
+Configuration file example:
 
 ```yaml
 server:
   http:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:8001
   grpc:
     addr: 0.0.0.0:9000
 
-data:
-  dbpath: ./goanalysis.db
+logger:
+  level: debug
+  file_path: ./logs/app.log
+  console: true
 
 biz:
   gitlab:
     token: "${GITLAB_TOKEN}"
     url: "${GITLAB_API_URL}"
+    clone_dir: ./data
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    api_base: "${OPENAI_API_BASE}"
+    model: "${OPENAI_MODEL}"
+
+data:
+  dbpath: ./goanalysis.db
 ```
 
-## 📡 API Endpoints
+### 🔄 Configuration Priority
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/gids` | GET | Get goroutine IDs |
-| `/api/functions` | GET | List traced functions |
-| `/api/traces/{gid}` | GET | Get trace details |
-| `/api/traces/{gid}/mermaid` | GET | Get diagram data |
+Configuration priority from high to low:
+1. **Command Line Arguments** - Highest priority
+2. **Environment Variables** - For sensitive information
+3. **Configuration File** - Traditional approach
+4. **Default Values** - Lowest priority
+
+
 
 ## 🔧 Usage
 
 ### Basic Tracing
 ```bash
+# Start with default configuration
 ./goanalysis server
+
+# Start with custom configuration
+./goanalysis server --http-addr=0.0.0.0:8080 --log-level=info
+
+# Code rewriting
 ./goanalysis rewrite -d /path/to/project
 ```
 
 ### Git Analysis  
 ```bash
+# Set GitLab configuration
 export GITLAB_TOKEN="your-token"
-./goanalysis gitanalysis --project=123 --mr=45
+export GITLAB_API_URL="https://gitlab.com/api/v4"
+
+# Start server
+./goanalysis server
 ```
 
 ## 📂 Project Structure

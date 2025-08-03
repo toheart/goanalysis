@@ -28,7 +28,7 @@ func init() {
 	// paramstoredataDescData is the schema descriptor for data field.
 	paramstoredataDescData := paramstoredataFields[3].Descriptor()
 	// paramstoredata.DefaultData holds the default value on creation for the data field.
-	paramstoredata.DefaultData = paramstoredataDescData.Default.(string)
+	paramstoredata.DefaultData = paramstoredataDescData.Default.([]byte)
 	// paramstoredataDescIsReceiver is the schema descriptor for isReceiver field.
 	paramstoredataDescIsReceiver := paramstoredataFields[4].Descriptor()
 	// paramstoredata.DefaultIsReceiver holds the default value on creation for the isReceiver field.

@@ -27,9 +27,9 @@ func (ParamStoreData) Fields() []ent.Field {
 			StorageKey("position").
 			Comment("参数位置"),
 
-		field.String("data").
+		field.Bytes("data").
 			Comment("参数JSON数据").
-			Default(""),
+			Default([]byte{}),
 
 		field.Bool("isReceiver").
 			StorageKey("isReceiver").

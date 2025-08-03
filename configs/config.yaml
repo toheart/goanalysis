@@ -1,6 +1,6 @@
 server:
   http:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:8001
     timeout: 1s
   grpc:
     addr: 0.0.0.0:9000

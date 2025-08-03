@@ -22,7 +22,7 @@ type ParamStoreData struct {
 	// 参数位置
 	Position int `json:"position,omitempty"`
 	// 参数JSON数据
-	Data string `json:"data,omitempty"`
+	Data []byte `json:"data,omitempty"`
 	// 是否为接收者参数
 	IsReceiver bool `json:"isReceiver,omitempty"`
 	// 基础参数ID（自关联，当参数为增量存储时使用）
@@ -35,12 +35,12 @@ func (*ParamStoreData) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case paramstoredata.FieldData:
+			values[i] = new([]byte)
 		case paramstoredata.FieldIsReceiver:
 			values[i] = new(sql.NullBool)
 		case paramstoredata.FieldID, paramstoredata.FieldTraceId, paramstoredata.FieldPosition, paramstoredata.FieldBaseId:
 			values[i] = new(sql.NullInt64)
-		case paramstoredata.FieldData:
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -75,10 +75,10 @@ func (psd *ParamStoreData) assignValues(columns []string, values []any) error {
 				psd.Position = int(value.Int64)
 			}
 		case paramstoredata.FieldData:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field data", values[i])
-			} else if value.Valid {
-				psd.Data = value.String
+			} else if value != nil {
+				psd.Data = *value
 			}
 		case paramstoredata.FieldIsReceiver:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -136,7 +136,7 @@ func (psd *ParamStoreData) String() string {
 	builder.WriteString(fmt.Sprintf("%v", psd.Position))
 	builder.WriteString(", ")
 	builder.WriteString("data=")
-	builder.WriteString(psd.Data)
+	builder.WriteString(fmt.Sprintf("%v", psd.Data))
 	builder.WriteString(", ")
 	builder.WriteString("isReceiver=")
 	builder.WriteString(fmt.Sprintf("%v", psd.IsReceiver))

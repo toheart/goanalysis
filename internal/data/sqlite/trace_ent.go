@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -12,7 +13,8 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	jsonpatch "github.com/evanphx/json-patch/v5"
-	"github.com/toheart/goanalysis/internal/biz/entity"
+	"github.com/klauspost/compress/zstd"
+	"github.com/toheart/goanalysis/internal/biz/analysis/dos"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/goroutinetrace"
 	"github.com/toheart/goanalysis/internal/data/ent/runtime/gen/paramstoredata"
@@ -40,7 +42,7 @@ func NewTraceEntDB(dbPath string) (*TraceEntDB, error) {
 }
 
 // GetTracesByGID 根据 GID 获取跟踪数据
-func (d *TraceEntDB) GetTracesByGID(gid uint64, depth int, createTime string) ([]entity.TraceData, error) {
+func (d *TraceEntDB) GetTracesByGID(gid uint64, depth int, createTime string) ([]dos.TraceData, error) {
 	ctx := context.Background()
 
 	// 查询跟踪数据
@@ -55,14 +57,15 @@ func (d *TraceEntDB) GetTracesByGID(gid uint64, depth int, createTime string) ([
 	}
 
 	// 转换为业务实体
-	var result []entity.TraceData
+	var result []dos.TraceData
 	for _, trace := range traces {
 		createdAt, err := time.Parse(time.RFC3339Nano, trace.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("parse createdAt failed: %w", err)
 		}
+
 		// 创建业务实体
-		traceData := entity.TraceData{
+		traceData := dos.TraceData{
 			ID:         int64(trace.ID),
 			Name:       trace.Name,
 			GID:        uint64(trace.Gid),
@@ -81,7 +84,7 @@ func (d *TraceEntDB) GetTracesByGID(gid uint64, depth int, createTime string) ([
 }
 
 // GetTraceByID 根据 ID 获取跟踪数据
-func (d *TraceEntDB) GetTraceByID(id int) (*entity.TraceData, error) {
+func (d *TraceEntDB) GetTraceByID(id int) (*dos.TraceData, error) {
 	ctx := context.Background()
 
 	// 查询跟踪数据
@@ -99,7 +102,7 @@ func (d *TraceEntDB) GetTraceByID(id int) (*entity.TraceData, error) {
 	}
 
 	// 创建业务实体
-	traceData := &entity.TraceData{
+	traceData := &dos.TraceData{
 		ID:         int64(trace.ID),
 		Name:       trace.Name,
 		GID:        trace.Gid,
@@ -115,7 +118,7 @@ func (d *TraceEntDB) GetTraceByID(id int) (*entity.TraceData, error) {
 }
 
 // GetTraceChildren 获取跟踪数据的子节点
-func (d *TraceEntDB) GetTraceChildren(parentID int64) ([]entity.TraceData, error) {
+func (d *TraceEntDB) GetTraceChildren(parentID int64) ([]dos.TraceData, error) {
 	ctx := context.Background()
 
 	// 查询子节点
@@ -128,14 +131,14 @@ func (d *TraceEntDB) GetTraceChildren(parentID int64) ([]entity.TraceData, error
 	}
 
 	// 转换为业务实体
-	var result []entity.TraceData
+	var result []dos.TraceData
 	for _, trace := range traces {
 		createdAt, err := time.Parse(time.RFC3339Nano, trace.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("parse createdAt failed: %w", err)
 		}
 		// 创建业务实体
-		traceData := entity.TraceData{
+		traceData := dos.TraceData{
 			ID:         int64(trace.ID),
 			Name:       trace.Name,
 			GID:        trace.Gid,
@@ -159,12 +162,12 @@ func (d *TraceEntDB) Close() error {
 }
 
 // GetAllGIDs 获取所有的 GID，支持分页
-func (d *TraceEntDB) GetAllGIDs(page int, limit int) ([]entity.GoroutineTrace, error) {
+func (d *TraceEntDB) GetAllGIDs(page int, limit int) ([]dos.GoroutineTrace, error) {
 	ctx := context.Background()
 	offset := (page - 1) * limit // 计算偏移量
 
 	// 查询所有不同的 GID
-	var gids []entity.GoroutineTrace
+	var gids []dos.GoroutineTrace
 	result, err := d.client.GoroutineTrace.Query().Order(gen.Asc(goroutinetrace.FieldIsFinished)).Offset(offset).Limit(limit).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get all gids failed: %w", err)
@@ -172,7 +175,7 @@ func (d *TraceEntDB) GetAllGIDs(page int, limit int) ([]entity.GoroutineTrace, e
 
 	// 转换为 uint64 类型
 	for _, gid := range result {
-		gids = append(gids, entity.GoroutineTrace{
+		gids = append(gids, dos.GoroutineTrace{
 			ID:           int64(gid.ID),
 			GID:          gid.OriginGid,
 			TimeCost:     gid.TimeCost,
@@ -202,7 +205,7 @@ func (d *TraceEntDB) GetAllFunctionName() ([]string, error) {
 }
 
 // GetParamsByID 根据 ID 获取参数
-func (d *TraceEntDB) GetParamsByID(id int32) ([]entity.TraceParams, error) {
+func (d *TraceEntDB) GetParamsByID(id int32) ([]dos.TraceParams, error) {
 	ctx := context.Background()
 
 	// 查询跟踪数据
@@ -213,30 +216,33 @@ func (d *TraceEntDB) GetParamsByID(id int32) ([]entity.TraceParams, error) {
 		}
 		return nil, fmt.Errorf("found params failed: %w", err)
 	}
-	var result []entity.TraceParams
+	var result []dos.TraceParams
 	// 获取receiver参数
-	for key, param := range params {
+	for _, param := range params {
+		item := dos.TraceParams{
+			ID:         param.ID,
+			TraceID:    param.TraceId,
+			Position:   param.Position,
+			IsReceiver: param.IsReceiver,
+			BaseID:     *param.BaseId,
+		}
+		data := decompress(param.Data)
 		if param.IsReceiver && param.BaseId != nil && *param.BaseId != 0 {
 			// 通过BaseId 获取数据
 			parentParam, err := d.client.ParamStoreData.Query().Where(paramstoredata.ID(int64(*param.BaseId))).First(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("found parent param failed: %w", err)
 			}
+			parentParamData := decompress(parentParam.Data)
 			// 使用jsonPath 恢复数据
-			data, err := jsonpatch.MergePatch([]byte(parentParam.Data), []byte(param.Data))
+			deData, err := jsonpatch.MergePatch([]byte(parentParamData), []byte(data))
 			if err != nil {
 				return nil, fmt.Errorf("create merge patch failed: %w", err)
 			}
-			params[key].Data = string(data)
+			data = string(deData)
 		}
-		result = append(result, entity.TraceParams{
-			ID:         param.ID,
-			TraceID:    param.TraceId,
-			Position:   param.Position,
-			Data:       param.Data,
-			IsReceiver: param.IsReceiver,
-			BaseID:     *param.BaseId,
-		})
+		item.Data = data
+		result = append(result, item)
 	}
 
 	return result, nil
@@ -246,17 +252,65 @@ func (d *TraceEntDB) GetParamsByID(id int32) ([]entity.TraceParams, error) {
 func (d *TraceEntDB) GetGidsByFunctionName(functionName string) ([]string, error) {
 	ctx := context.Background()
 
-	// 查询具有指定函数名的所有 GID
-	gids, err := d.client.TraceData.
+	// 查询具有指定函数名的所有跟踪数据，不按GID分组
+	traces, err := d.client.TraceData.
 		Query().
 		Where(tracedata.Name(functionName)).
-		GroupBy(tracedata.FieldGid).
-		Strings(ctx)
+		All(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("查询函数名对应的 GID 失败: %w", err)
+		return nil, fmt.Errorf("查询函数名对应的跟踪数据失败: %w", err)
 	}
 
-	return gids, nil
+	// 用于去重的map，key为"gid:parentId"
+	processedGIDParentID := make(map[string]bool)
+	var result []string
+
+	for _, trace := range traces {
+		// 创建唯一键：gid:parentId
+		uniqueKey := fmt.Sprintf("%d:%d", trace.Gid, trace.ParentId)
+
+		// 如果已经处理过相同的gid:parentId组合，跳过
+		if processedGIDParentID[uniqueKey] {
+			continue
+		}
+
+		// 标记为已处理
+		processedGIDParentID[uniqueKey] = true
+
+		// 将GID添加到结果中
+		result = append(result, fmt.Sprintf("%d", trace.Gid))
+	}
+
+	return result, nil
+}
+
+// GetGoroutineByGID 根据 GID 获取单个 Goroutine 信息
+func (d *TraceEntDB) GetGoroutineByGID(gid int64) (*dos.GoroutineTrace, error) {
+	ctx := context.Background()
+
+	// 查询指定 GID 的 Goroutine 信息
+	goroutine, err := d.client.GoroutineTrace.
+		Query().
+		Where(goroutinetrace.ID(gid)).
+		First(ctx)
+	if err != nil {
+		if gen.IsNotFound(err) {
+			return nil, fmt.Errorf("Goroutine with GID %d not found", gid)
+		}
+		return nil, fmt.Errorf("查询 Goroutine 信息失败: %w", err)
+	}
+
+	// 转换为业务实体
+	result := &dos.GoroutineTrace{
+		ID:           int64(goroutine.ID),
+		GID:          goroutine.OriginGid,
+		TimeCost:     goroutine.TimeCost,
+		CreateTime:   goroutine.CreateTime,
+		IsFinished:   goroutine.IsFinished,
+		InitFuncName: goroutine.InitFuncName,
+	}
+
+	return result, nil
 }
 
 // GetTotalGIDs 获取 GID 总数
@@ -296,7 +350,7 @@ func (d *TraceEntDB) GetInitialFunc(gid uint64) (string, error) {
 }
 
 // GetTracesByParentId 根据父函数 ID 查询函数调用
-func (d *TraceEntDB) GetTracesByParentId(parentId int64) ([]entity.TraceData, error) {
+func (d *TraceEntDB) GetTracesByParentId(parentId int64) ([]dos.TraceData, error) {
 	ctx := context.Background()
 
 	// 查询具有指定父 ID 的所有跟踪数据
@@ -314,14 +368,14 @@ func (d *TraceEntDB) GetTracesByParentId(parentId int64) ([]entity.TraceData, er
 	}
 
 	// 转换为业务实体
-	var result []entity.TraceData
+	var result []dos.TraceData
 	for _, trace := range traces {
 		createdAt, err := time.Parse(time.RFC3339Nano, trace.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("parse createdAt failed: %w", err)
 		}
 		// 创建业务实体
-		traceData := entity.TraceData{
+		traceData := dos.TraceData{
 			ID:         int64(trace.ID),
 			Name:       trace.Name,
 			GID:        uint64(trace.Gid),
@@ -340,7 +394,7 @@ func (d *TraceEntDB) GetTracesByParentId(parentId int64) ([]entity.TraceData, er
 }
 
 // GetAllParentIds 获取所有的父函数 ID
-func (d *TraceEntDB) GetAllParentFunctions(functionName string) ([]*entity.Function, error) {
+func (d *TraceEntDB) GetAllParentFunctions(functionName string) ([]*dos.Function, error) {
 	ctx := context.Background()
 
 	// 查询所有不为空的父 ID
@@ -372,9 +426,9 @@ func (d *TraceEntDB) GetAllParentFunctions(functionName string) ([]*entity.Funct
 	}
 
 	// 转换为 int64 类型
-	var result []*entity.Function
+	var result []*dos.Function
 	for _, item := range parentFunctions {
-		f := entity.NewFunction(int64(item.ID), item.Name, 0, "0ms", "0ms")
+		f := dos.NewFunction(int64(item.ID), item.Name, 0, "0ms", "0ms")
 		f.SetPackage()
 		result = append(result, f)
 	}
@@ -383,7 +437,7 @@ func (d *TraceEntDB) GetAllParentFunctions(functionName string) ([]*entity.Funct
 }
 
 // GetChildFunctions 获取函数的子函数
-func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]*entity.Function, error) {
+func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]*dos.Function, error) {
 	ctx := context.Background()
 
 	// 查询具有指定父 ID 的所有不同函数名
@@ -399,9 +453,9 @@ func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]*entity.Function, erro
 	if err != nil {
 		return nil, fmt.Errorf("查询子函数失败: %w", err)
 	}
-	result := make([]*entity.Function, 0)
+	result := make([]*dos.Function, 0)
 	for _, item := range childFunctions {
-		f := entity.NewFunction(int64(item.ID), item.Name, 0, item.TimeCost, "0ms")
+		f := dos.NewFunction(int64(item.ID), item.Name, 0, item.TimeCost, "0ms")
 		f.ParamCount = item.ParamsCount
 		f.Depth = item.Indent + 1
 		f.Seq = item.Seq // 添加seq字段
@@ -412,7 +466,7 @@ func (d *TraceEntDB) GetChildFunctions(parentId int64) ([]*entity.Function, erro
 }
 
 // GetHotFunctions 获取热点函数分析数据
-func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]entity.Function, error) {
+func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]dos.Function, error) {
 	ctx := context.Background()
 
 	// 查询所有跟踪数据
@@ -444,7 +498,7 @@ func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]entity.Function, error) {
 	}
 
 	// 转换为热点函数列表
-	var hotFunctions []entity.Function
+	var hotFunctions []dos.Function
 	for name, stats := range funcStats {
 		// 提取包名
 		parts := strings.Split(name, ".")
@@ -475,7 +529,7 @@ func (d *TraceEntDB) GetHotFunctions(sortBy string) ([]entity.Function, error) {
 			avgTimeStr = fmt.Sprintf("%.2fms", avgTime)
 		}
 
-		hotFunctions = append(hotFunctions, entity.Function{
+		hotFunctions = append(hotFunctions, dos.Function{
 			Name:      name,
 			Package:   pkg,
 			CallCount: stats.CallCount,
@@ -519,10 +573,9 @@ func parseTimeString(timeStr string) float64 {
 	return value
 }
 
-// GetGoroutineStats 获取 Goroutine 统计信息
-func (d *TraceEntDB) GetGoroutineStats() (*entity.GoroutineStats, error) {
+// GetActiveGoroutineCount 获取活跃Goroutine数量
+func (d *TraceEntDB) GetActiveGoroutineCount() (int, error) {
 	ctx := context.Background()
-	stats := &entity.GoroutineStats{}
 
 	// 使用GoroutineTrace表获取活跃Goroutine数量
 	gids, err := d.client.GoroutineTrace.
@@ -530,9 +583,15 @@ func (d *TraceEntDB) GetGoroutineStats() (*entity.GoroutineStats, error) {
 		Where(goroutinetrace.IsFinished(0)).
 		All(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("found active goroutines failed: %w", err)
+		return 0, fmt.Errorf("found active goroutines failed: %w", err)
 	}
-	stats.Active = len(gids)
+
+	return len(gids), nil
+}
+
+// GetMaxCallDepth 获取最大调用深度
+func (d *TraceEntDB) GetMaxCallDepth() (int, error) {
+	ctx := context.Background()
 
 	// 通过TraceData表获取最大调用深度
 	maxDepth, err := d.client.TraceData.
@@ -540,50 +599,40 @@ func (d *TraceEntDB) GetGoroutineStats() (*entity.GoroutineStats, error) {
 		Aggregate(gen.Max(tracedata.FieldIndent)).
 		Int(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("found max call depth failed: %w", err)
+		return 0, fmt.Errorf("found max call depth failed: %w", err)
 	}
-	stats.MaxDepth = maxDepth + 1 // 调用深度为最大缩进级别 + 1
 
-	// 计算平均执行时间
+	return maxDepth + 1, nil // 调用深度为最大缩进级别 + 1
+}
+
+// GetAllTraceTimeCosts 获取所有跟踪数据的时间消耗
+func (d *TraceEntDB) GetAllTraceTimeCosts() ([]string, error) {
+	ctx := context.Background()
+
+	// 查询所有跟踪数据的时间消耗
 	traces, err := d.client.TraceData.
 		Query().
+		Select(tracedata.FieldTimeCost).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("found traces failed: %w", err)
 	}
 
-	var totalTime float64
-	var count int
+	// 提取时间消耗字符串
+	var timeCosts []string
 	for _, trace := range traces {
 		if trace.TimeCost != "" {
-			timeCost := parseTimeString(trace.TimeCost)
-			if timeCost > 0 {
-				totalTime += timeCost
-				count++
-			}
+			timeCosts = append(timeCosts, trace.TimeCost)
 		}
 	}
 
-	// 计算平均时间
-	var avgTime float64
-	if count > 0 {
-		avgTime = totalTime / float64(count)
-	}
-
-	// 格式化平均时间
-	if avgTime > 1000 {
-		stats.AvgTime = fmt.Sprintf("%.2fs", avgTime/1000)
-	} else {
-		stats.AvgTime = fmt.Sprintf("%.2fms", avgTime)
-	}
-
-	return stats, nil
+	return timeCosts, nil
 }
 
 // GetFunctionAnalysis 获取函数调用关系分析
-func (d *TraceEntDB) GetFunctionAnalysis(functionName string, queryType string) ([]entity.FunctionNode, error) {
+func (d *TraceEntDB) GetFunctionAnalysis(functionName string, queryType string) ([]dos.FunctionNode, error) {
 	// 不需要ctx变量
-	var result []entity.FunctionNode
+	var result []dos.FunctionNode
 
 	// 生成唯一ID
 	nextID := 1
@@ -594,7 +643,7 @@ func (d *TraceEntDB) GetFunctionAnalysis(functionName string, queryType string) 
 	}
 
 	// 创建根节点
-	rootNode := entity.FunctionNode{
+	rootNode := dos.FunctionNode{
 		ID:        generateID(),
 		Name:      functionName,
 		CallCount: 0,
@@ -626,7 +675,7 @@ func (d *TraceEntDB) GetFunctionAnalysis(functionName string, queryType string) 
 
 		// 添加调用者作为子节点
 		for _, caller := range callers {
-			callerNode := entity.FunctionNode{
+			callerNode := dos.FunctionNode{
 				ID:   generateID(),
 				Name: caller,
 			}
@@ -657,7 +706,7 @@ func (d *TraceEntDB) GetFunctionAnalysis(functionName string, queryType string) 
 
 		// 添加被调用者作为子节点
 		for _, callee := range callees {
-			calleeNode := entity.FunctionNode{
+			calleeNode := dos.FunctionNode{
 				ID:   generateID(),
 				Name: callee,
 			}
@@ -758,7 +807,7 @@ func (d *TraceEntDB) GetCalleeFunctions(functionName string) ([]string, error) {
 }
 
 // GetTracesByFuncName 获取指定函数名的所有跟踪数据
-func (d *TraceEntDB) GetTracesByFuncName(functionName string) ([]entity.TraceData, error) {
+func (d *TraceEntDB) GetTracesByFuncName(functionName string) ([]dos.TraceData, error) {
 	ctx := context.Background()
 
 	// 查询跟踪数据
@@ -771,14 +820,14 @@ func (d *TraceEntDB) GetTracesByFuncName(functionName string) ([]entity.TraceDat
 	}
 
 	// 转换为业务实体
-	var result []entity.TraceData
+	var result []dos.TraceData
 	for _, trace := range traces {
 		createdAt, err := time.Parse(time.RFC3339Nano, trace.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("parse createdAt failed: %w", err)
 		}
 		// 创建业务实体
-		traceData := entity.TraceData{
+		traceData := dos.TraceData{
 			ID:         int64(trace.ID),
 			Name:       trace.Name,
 			GID:        trace.Gid,
@@ -884,7 +933,7 @@ func (d *TraceEntDB) GetGoroutineCallDepth(gid uint64) (int, error) {
 	return maxIndent + 1, nil
 }
 
-func (d *TraceEntDB) GetLastFunction() (*entity.TraceData, error) {
+func (d *TraceEntDB) GetLastFunction() (*dos.TraceData, error) {
 	ctx := context.Background()
 	trace, err := d.client.TraceData.
 		Query().
@@ -894,7 +943,7 @@ func (d *TraceEntDB) GetLastFunction() (*entity.TraceData, error) {
 		return nil, fmt.Errorf("get last function failed: %w", err)
 	}
 
-	return &entity.TraceData{
+	return &dos.TraceData{
 		ID:         int64(trace.ID),
 		Name:       trace.Name,
 		ParamCount: trace.ParamsCount,
@@ -952,7 +1001,7 @@ func (d *TraceEntDB) IsGoroutineFinished(gid uint64) (bool, error) {
 	return goroutine.IsFinished == 1, nil
 }
 
-func (d *TraceEntDB) SearchFunctions(ctx context.Context, dbPath string, query string, limit int32) ([]*entity.Function, int32, error) {
+func (d *TraceEntDB) SearchFunctions(ctx context.Context, dbPath string, query string, limit int32) ([]*dos.Function, int32, error) {
 	traces, err := d.client.TraceData.Query().
 		Where(tracedata.NameContains(query)).
 		Limit(int(limit)).
@@ -960,19 +1009,169 @@ func (d *TraceEntDB) SearchFunctions(ctx context.Context, dbPath string, query s
 	if err != nil {
 		return nil, 0, fmt.Errorf("search functions failed: %w", err)
 	}
-	var functions []*entity.Function
+	var functions []*dos.Function
 	for _, trace := range traces {
 		stats, err := d.getFunctionStats(trace.Name)
 		if err != nil {
 			return nil, 0, fmt.Errorf("get function stats failed: %w", err)
 		}
-		f := entity.NewFunction(int64(trace.ID), trace.Name, stats.CallCount, stats.AvgTime, stats.AvgTime)
+		f := dos.NewFunction(int64(trace.ID), trace.Name, stats.CallCount, stats.AvgTime, stats.AvgTime)
 		f.SetPackage()
 		functions = append(functions, f)
 	}
 	return functions, int32(len(functions)), nil
 }
 
-func formatTime(totalTime int64) string {
-	return fmt.Sprintf("%d ms", totalTime) // 返回总时间的字符串格式
+// GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
+func (d *TraceEntDB) GetFunctionInfoInGoroutine(gid uint64, targetFunctionId int64) (*dos.FunctionInfo, error) {
+	ctx := context.Background()
+
+	// 1. 查询目标函数信息
+	targetTrace, err := d.client.TraceData.Query().Where(
+		tracedata.ID(int(targetFunctionId)),
+		tracedata.Gid(uint64(gid)),
+	).First(ctx)
+	if err != nil {
+		if gen.IsNotFound(err) {
+			return nil, fmt.Errorf("function not found")
+		}
+		return nil, fmt.Errorf("query target function failed: %w", err)
+	}
+
+	functionInfo := &dos.FunctionInfo{
+		ID:     targetFunctionId,
+		Name:   targetTrace.Name,
+		Indent: targetTrace.Indent,
+	}
+
+	// 2. 递归获取所有父函数信息
+	parentInfos, err := d.getParentFunctionInfosRecursive(ctx, gid, targetTrace.ParentId)
+	if err != nil {
+		return nil, fmt.Errorf("get parent function infos failed: %w", err)
+	}
+	functionInfo.ParentIds = parentInfos
+
+	return functionInfo, nil
+}
+
+// getParentFunctionInfosRecursive 递归获取从当前parentId到深度为0的所有父函数信息列表（按调用链顺序）
+func (d *TraceEntDB) getParentFunctionInfosRecursive(ctx context.Context, gid uint64, parentId int64) ([]dos.ParentInfo, error) {
+	var result []dos.ParentInfo
+
+	// 递归终止条件：parentId为0或小于等于0
+	if parentId <= 0 {
+		return result, nil
+	}
+
+	// 查询当前parentId对应的TraceData
+	parentTrace, err := d.client.TraceData.Query().Where(
+		tracedata.ID(int(parentId)),
+		tracedata.Gid(uint64(gid)),
+	).First(ctx)
+	if err != nil {
+		if gen.IsNotFound(err) {
+			// 如果找不到父节点，直接返回当前已获取的结果
+			return result, nil
+		}
+		return nil, fmt.Errorf("query parent function failed: %w", err)
+	}
+
+	// 先递归获取更高层的父节点
+	upperParents, err := d.getParentFunctionInfosRecursive(ctx, gid, parentTrace.ParentId)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, upperParents...)
+
+	// 再添加当前父节点信息
+	parentInfo := dos.ParentInfo{
+		ParentId: int64(parentTrace.ID),
+		Name:     parentTrace.Name,
+		Depth:    parentTrace.Indent,
+	}
+	result = append(result, parentInfo)
+
+	return result, nil
+}
+
+// GetSampledFunctionNames 获取采样后的函数名称列表
+func (d *TraceEntDB) GetSampledFunctionNames(maxSamples int32) ([]string, error) {
+	ctx := context.Background()
+
+	// 首先获取总记录数
+	totalCount, err := d.client.TraceData.Query().Count(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get total count failed: %w", err)
+	}
+
+	var functionNames []string
+
+	// 如果总记录数小于等于maxSamples，全量查询
+	if int32(totalCount) <= maxSamples {
+		traces, err := d.client.TraceData.Query().
+			Select(tracedata.FieldName).
+			All(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("query all function names failed: %w", err)
+		}
+
+		for _, trace := range traces {
+			functionNames = append(functionNames, trace.Name)
+		}
+	} else {
+		// 如果总记录数大于maxSamples，使用分页采样
+		// 计算采样间隔
+		sampleInterval := totalCount / int(maxSamples)
+		if sampleInterval < 1 {
+			sampleInterval = 1
+		}
+
+		// 分页查询进行采样
+		for offset := 0; offset < totalCount && len(functionNames) < int(maxSamples); offset += sampleInterval {
+			traces, err := d.client.TraceData.Query().
+				Select(tracedata.FieldName).
+				Limit(1).
+				Offset(offset).
+				All(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("query sampled function names failed: %w", err)
+			}
+
+			if len(traces) > 0 {
+				functionNames = append(functionNames, traces[0].Name)
+			}
+		}
+	}
+
+	return functionNames, nil
+}
+
+var (
+	zstdEncoder, _ = zstd.NewWriter(nil)
+	zstdDecoder, _ = zstd.NewReader(nil)
+	magicNumber    = []byte{'F', 'T', 'Z', '$'} // Fun-Trace-Zstd Magic Number
+)
+
+// compress uses zstd to compress a string and returns the compressed data prefixed with a magic number.
+func compress(s string) []byte {
+	compressed := zstdEncoder.EncodeAll([]byte(s), nil)
+	return append(magicNumber, compressed...)
+}
+
+// decompress uses zstd to decompress data. It checks for a magic number to identify
+// compressed data and includes a fallback for uncompressed or corrupted data.
+func decompress(data []byte) string {
+	if len(data) < len(magicNumber) || !bytes.Equal(data[:len(magicNumber)], magicNumber) {
+		// Data doesn't have the magic number, so it's legacy uncompressed data.
+		return string(data)
+	}
+
+	// Data has the magic number, so it should be decompressed.
+	decompressed, err := zstdDecoder.DecodeAll(data[len(magicNumber):], nil)
+	if err != nil {
+		// Data is corrupted. The calling function will fail to unmarshal it,
+		// which will be logged as a high-level error.
+		return string(data)
+	}
+	return string(decompressed)
 }

@@ -70,16 +70,8 @@ func (psdu *ParamStoreDataUpdate) AddPosition(i int) *ParamStoreDataUpdate {
 }
 
 // SetData sets the "data" field.
-func (psdu *ParamStoreDataUpdate) SetData(s string) *ParamStoreDataUpdate {
-	psdu.mutation.SetData(s)
-	return psdu
-}
-
-// SetNillableData sets the "data" field if the given value is not nil.
-func (psdu *ParamStoreDataUpdate) SetNillableData(s *string) *ParamStoreDataUpdate {
-	if s != nil {
-		psdu.SetData(*s)
-	}
+func (psdu *ParamStoreDataUpdate) SetData(b []byte) *ParamStoreDataUpdate {
+	psdu.mutation.SetData(b)
 	return psdu
 }
 
@@ -178,7 +170,7 @@ func (psdu *ParamStoreDataUpdate) sqlSave(ctx context.Context) (n int, err error
 		_spec.AddField(paramstoredata.FieldPosition, field.TypeInt, value)
 	}
 	if value, ok := psdu.mutation.Data(); ok {
-		_spec.SetField(paramstoredata.FieldData, field.TypeString, value)
+		_spec.SetField(paramstoredata.FieldData, field.TypeBytes, value)
 	}
 	if value, ok := psdu.mutation.IsReceiver(); ok {
 		_spec.SetField(paramstoredata.FieldIsReceiver, field.TypeBool, value)
@@ -255,16 +247,8 @@ func (psduo *ParamStoreDataUpdateOne) AddPosition(i int) *ParamStoreDataUpdateOn
 }
 
 // SetData sets the "data" field.
-func (psduo *ParamStoreDataUpdateOne) SetData(s string) *ParamStoreDataUpdateOne {
-	psduo.mutation.SetData(s)
-	return psduo
-}
-
-// SetNillableData sets the "data" field if the given value is not nil.
-func (psduo *ParamStoreDataUpdateOne) SetNillableData(s *string) *ParamStoreDataUpdateOne {
-	if s != nil {
-		psduo.SetData(*s)
-	}
+func (psduo *ParamStoreDataUpdateOne) SetData(b []byte) *ParamStoreDataUpdateOne {
+	psduo.mutation.SetData(b)
 	return psduo
 }
 
@@ -393,7 +377,7 @@ func (psduo *ParamStoreDataUpdateOne) sqlSave(ctx context.Context) (_node *Param
 		_spec.AddField(paramstoredata.FieldPosition, field.TypeInt, value)
 	}
 	if value, ok := psduo.mutation.Data(); ok {
-		_spec.SetField(paramstoredata.FieldData, field.TypeString, value)
+		_spec.SetField(paramstoredata.FieldData, field.TypeBytes, value)
 	}
 	if value, ok := psduo.mutation.IsReceiver(); ok {
 		_spec.SetField(paramstoredata.FieldIsReceiver, field.TypeBool, value)
