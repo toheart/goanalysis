@@ -23,17 +23,14 @@ const (
 	StaticAnalysis_GetAnalysisTaskStatus_FullMethodName  = "/staticanalysis.v1.StaticAnalysis/GetAnalysisTaskStatus"
 	StaticAnalysis_AnalyzeProjectPath_FullMethodName     = "/staticanalysis.v1.StaticAnalysis/AnalyzeProjectPath"
 	StaticAnalysis_AnalyzeDbFile_FullMethodName          = "/staticanalysis.v1.StaticAnalysis/AnalyzeDbFile"
-	StaticAnalysis_GetFunctionAnalysis_FullMethodName    = "/staticanalysis.v1.StaticAnalysis/GetFunctionAnalysis"
-	StaticAnalysis_GetFunctionCallGraph_FullMethodName   = "/staticanalysis.v1.StaticAnalysis/GetFunctionCallGraph"
-	StaticAnalysis_ListGitLabRepositories_FullMethodName = "/staticanalysis.v1.StaticAnalysis/ListGitLabRepositories"
-	StaticAnalysis_CloneGitLabRepository_FullMethodName  = "/staticanalysis.v1.StaticAnalysis/CloneGitLabRepository"
+	StaticAnalysis_SearchFunctions_FullMethodName        = "/staticanalysis.v1.StaticAnalysis/SearchFunctions"
+	StaticAnalysis_GetGlobalStatistics_FullMethodName    = "/staticanalysis.v1.StaticAnalysis/GetGlobalStatistics"
+	StaticAnalysis_GetCallGraph_FullMethodName           = "/staticanalysis.v1.StaticAnalysis/GetCallGraph"
 	StaticAnalysis_GetPackageDependencies_FullMethodName = "/staticanalysis.v1.StaticAnalysis/GetPackageDependencies"
 	StaticAnalysis_GetHotFunctions_FullMethodName        = "/staticanalysis.v1.StaticAnalysis/GetHotFunctions"
-	StaticAnalysis_SearchFunctions_FullMethodName        = "/staticanalysis.v1.StaticAnalysis/SearchFunctions"
-	StaticAnalysis_GetFunctionUpstream_FullMethodName    = "/staticanalysis.v1.StaticAnalysis/GetFunctionUpstream"
-	StaticAnalysis_GetFunctionDownstream_FullMethodName  = "/staticanalysis.v1.StaticAnalysis/GetFunctionDownstream"
-	StaticAnalysis_GetFunctionFullChain_FullMethodName   = "/staticanalysis.v1.StaticAnalysis/GetFunctionFullChain"
-	StaticAnalysis_GetTreeGraph_FullMethodName           = "/staticanalysis.v1.StaticAnalysis/GetTreeGraph"
+	StaticAnalysis_GetFunctionDetails_FullMethodName     = "/staticanalysis.v1.StaticAnalysis/GetFunctionDetails"
+	StaticAnalysis_GetFunctionCallPaths_FullMethodName   = "/staticanalysis.v1.StaticAnalysis/GetFunctionCallPaths"
+	StaticAnalysis_GetInitFunctions_FullMethodName       = "/staticanalysis.v1.StaticAnalysis/GetInitFunctions"
 )
 
 // StaticAnalysisClient is the client API for StaticAnalysis service.
@@ -50,28 +47,22 @@ type StaticAnalysisClient interface {
 	AnalyzeProjectPath(ctx context.Context, in *AnalyzeProjectPathRequest, opts ...grpc.CallOption) (*AnalyzeProjectPathResponse, error)
 	// 分析数据库文件
 	AnalyzeDbFile(ctx context.Context, in *AnalyzeDbFileRequest, opts ...grpc.CallOption) (*AnalyzeDbFileResponse, error)
-	// 获取函数调用关系分析
-	GetFunctionAnalysis(ctx context.Context, in *GetFunctionAnalysisReq, opts ...grpc.CallOption) (*GetFunctionAnalysisReply, error)
-	// 获取函数调用关系图
-	GetFunctionCallGraph(ctx context.Context, in *GetFunctionCallGraphReq, opts ...grpc.CallOption) (*GetFunctionCallGraphReply, error)
-	// 获取GitLab仓库列表
-	ListGitLabRepositories(ctx context.Context, in *ListGitLabRepositoriesRequest, opts ...grpc.CallOption) (*ListGitLabRepositoriesResponse, error)
-	// 克隆GitLab仓库
-	CloneGitLabRepository(ctx context.Context, in *CloneGitLabRepositoryRequest, opts ...grpc.CallOption) (*CloneGitLabRepositoryResponse, error)
-	// 分页获取包依赖关系
-	GetPackageDependencies(ctx context.Context, in *GetPackageDependenciesRequest, opts ...grpc.CallOption) (*GetPackageDependenciesResponse, error)
-	// 分页获取热点函数
-	GetHotFunctions(ctx context.Context, in *GetHotFunctionsRequest, opts ...grpc.CallOption) (*GetHotFunctionsResponse, error)
 	// 模糊搜索函数
 	SearchFunctions(ctx context.Context, in *SearchFunctionsRequest, opts ...grpc.CallOption) (*SearchFunctionsResponse, error)
-	// 获取函数上游调用关系
-	GetFunctionUpstream(ctx context.Context, in *GetFunctionUpstreamRequest, opts ...grpc.CallOption) (*GetFunctionUpstreamResponse, error)
-	// 获取函数下游调用关系
-	GetFunctionDownstream(ctx context.Context, in *GetFunctionDownstreamRequest, opts ...grpc.CallOption) (*GetFunctionDownstreamResponse, error)
-	// 获取函数全链路调用关系
-	GetFunctionFullChain(ctx context.Context, in *GetFunctionFullChainRequest, opts ...grpc.CallOption) (*GetFunctionFullChainResponse, error)
-	// 获取静态分析树状图数据
-	GetTreeGraph(ctx context.Context, in *GetTreeGraphReq, opts ...grpc.CallOption) (*GetTreeGraphReply, error)
+	// 获取全局统计信息
+	GetGlobalStatistics(ctx context.Context, in *GetGlobalStatisticsRequest, opts ...grpc.CallOption) (*GetGlobalStatisticsResponse, error)
+	// 获取调用图数据
+	GetCallGraph(ctx context.Context, in *GetCallGraphRequest, opts ...grpc.CallOption) (*GetCallGraphResponse, error)
+	// 获取包依赖关系
+	GetPackageDependencies(ctx context.Context, in *GetPackageDependenciesRequest, opts ...grpc.CallOption) (*GetPackageDependenciesResponse, error)
+	// 获取热点函数分析
+	GetHotFunctions(ctx context.Context, in *GetHotFunctionsRequest, opts ...grpc.CallOption) (*GetHotFunctionsResponse, error)
+	// 获取函数详细信息
+	GetFunctionDetails(ctx context.Context, in *GetFunctionDetailsRequest, opts ...grpc.CallOption) (*GetFunctionDetailsResponse, error)
+	// 获取函数调用路径
+	GetFunctionCallPaths(ctx context.Context, in *GetFunctionCallPathsRequest, opts ...grpc.CallOption) (*GetFunctionCallPathsResponse, error)
+	// 获取Init函数列表
+	GetInitFunctions(ctx context.Context, in *GetInitFunctionsRequest, opts ...grpc.CallOption) (*GetInitFunctionsResponse, error)
 }
 
 type staticAnalysisClient struct {
@@ -122,40 +113,30 @@ func (c *staticAnalysisClient) AnalyzeDbFile(ctx context.Context, in *AnalyzeDbF
 	return out, nil
 }
 
-func (c *staticAnalysisClient) GetFunctionAnalysis(ctx context.Context, in *GetFunctionAnalysisReq, opts ...grpc.CallOption) (*GetFunctionAnalysisReply, error) {
+func (c *staticAnalysisClient) SearchFunctions(ctx context.Context, in *SearchFunctionsRequest, opts ...grpc.CallOption) (*SearchFunctionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetFunctionAnalysisReply)
-	err := c.cc.Invoke(ctx, StaticAnalysis_GetFunctionAnalysis_FullMethodName, in, out, cOpts...)
+	out := new(SearchFunctionsResponse)
+	err := c.cc.Invoke(ctx, StaticAnalysis_SearchFunctions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *staticAnalysisClient) GetFunctionCallGraph(ctx context.Context, in *GetFunctionCallGraphReq, opts ...grpc.CallOption) (*GetFunctionCallGraphReply, error) {
+func (c *staticAnalysisClient) GetGlobalStatistics(ctx context.Context, in *GetGlobalStatisticsRequest, opts ...grpc.CallOption) (*GetGlobalStatisticsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetFunctionCallGraphReply)
-	err := c.cc.Invoke(ctx, StaticAnalysis_GetFunctionCallGraph_FullMethodName, in, out, cOpts...)
+	out := new(GetGlobalStatisticsResponse)
+	err := c.cc.Invoke(ctx, StaticAnalysis_GetGlobalStatistics_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *staticAnalysisClient) ListGitLabRepositories(ctx context.Context, in *ListGitLabRepositoriesRequest, opts ...grpc.CallOption) (*ListGitLabRepositoriesResponse, error) {
+func (c *staticAnalysisClient) GetCallGraph(ctx context.Context, in *GetCallGraphRequest, opts ...grpc.CallOption) (*GetCallGraphResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListGitLabRepositoriesResponse)
-	err := c.cc.Invoke(ctx, StaticAnalysis_ListGitLabRepositories_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *staticAnalysisClient) CloneGitLabRepository(ctx context.Context, in *CloneGitLabRepositoryRequest, opts ...grpc.CallOption) (*CloneGitLabRepositoryResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CloneGitLabRepositoryResponse)
-	err := c.cc.Invoke(ctx, StaticAnalysis_CloneGitLabRepository_FullMethodName, in, out, cOpts...)
+	out := new(GetCallGraphResponse)
+	err := c.cc.Invoke(ctx, StaticAnalysis_GetCallGraph_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -182,50 +163,30 @@ func (c *staticAnalysisClient) GetHotFunctions(ctx context.Context, in *GetHotFu
 	return out, nil
 }
 
-func (c *staticAnalysisClient) SearchFunctions(ctx context.Context, in *SearchFunctionsRequest, opts ...grpc.CallOption) (*SearchFunctionsResponse, error) {
+func (c *staticAnalysisClient) GetFunctionDetails(ctx context.Context, in *GetFunctionDetailsRequest, opts ...grpc.CallOption) (*GetFunctionDetailsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SearchFunctionsResponse)
-	err := c.cc.Invoke(ctx, StaticAnalysis_SearchFunctions_FullMethodName, in, out, cOpts...)
+	out := new(GetFunctionDetailsResponse)
+	err := c.cc.Invoke(ctx, StaticAnalysis_GetFunctionDetails_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *staticAnalysisClient) GetFunctionUpstream(ctx context.Context, in *GetFunctionUpstreamRequest, opts ...grpc.CallOption) (*GetFunctionUpstreamResponse, error) {
+func (c *staticAnalysisClient) GetFunctionCallPaths(ctx context.Context, in *GetFunctionCallPathsRequest, opts ...grpc.CallOption) (*GetFunctionCallPathsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetFunctionUpstreamResponse)
-	err := c.cc.Invoke(ctx, StaticAnalysis_GetFunctionUpstream_FullMethodName, in, out, cOpts...)
+	out := new(GetFunctionCallPathsResponse)
+	err := c.cc.Invoke(ctx, StaticAnalysis_GetFunctionCallPaths_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *staticAnalysisClient) GetFunctionDownstream(ctx context.Context, in *GetFunctionDownstreamRequest, opts ...grpc.CallOption) (*GetFunctionDownstreamResponse, error) {
+func (c *staticAnalysisClient) GetInitFunctions(ctx context.Context, in *GetInitFunctionsRequest, opts ...grpc.CallOption) (*GetInitFunctionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetFunctionDownstreamResponse)
-	err := c.cc.Invoke(ctx, StaticAnalysis_GetFunctionDownstream_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *staticAnalysisClient) GetFunctionFullChain(ctx context.Context, in *GetFunctionFullChainRequest, opts ...grpc.CallOption) (*GetFunctionFullChainResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetFunctionFullChainResponse)
-	err := c.cc.Invoke(ctx, StaticAnalysis_GetFunctionFullChain_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *staticAnalysisClient) GetTreeGraph(ctx context.Context, in *GetTreeGraphReq, opts ...grpc.CallOption) (*GetTreeGraphReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTreeGraphReply)
-	err := c.cc.Invoke(ctx, StaticAnalysis_GetTreeGraph_FullMethodName, in, out, cOpts...)
+	out := new(GetInitFunctionsResponse)
+	err := c.cc.Invoke(ctx, StaticAnalysis_GetInitFunctions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -246,28 +207,22 @@ type StaticAnalysisServer interface {
 	AnalyzeProjectPath(context.Context, *AnalyzeProjectPathRequest) (*AnalyzeProjectPathResponse, error)
 	// 分析数据库文件
 	AnalyzeDbFile(context.Context, *AnalyzeDbFileRequest) (*AnalyzeDbFileResponse, error)
-	// 获取函数调用关系分析
-	GetFunctionAnalysis(context.Context, *GetFunctionAnalysisReq) (*GetFunctionAnalysisReply, error)
-	// 获取函数调用关系图
-	GetFunctionCallGraph(context.Context, *GetFunctionCallGraphReq) (*GetFunctionCallGraphReply, error)
-	// 获取GitLab仓库列表
-	ListGitLabRepositories(context.Context, *ListGitLabRepositoriesRequest) (*ListGitLabRepositoriesResponse, error)
-	// 克隆GitLab仓库
-	CloneGitLabRepository(context.Context, *CloneGitLabRepositoryRequest) (*CloneGitLabRepositoryResponse, error)
-	// 分页获取包依赖关系
-	GetPackageDependencies(context.Context, *GetPackageDependenciesRequest) (*GetPackageDependenciesResponse, error)
-	// 分页获取热点函数
-	GetHotFunctions(context.Context, *GetHotFunctionsRequest) (*GetHotFunctionsResponse, error)
 	// 模糊搜索函数
 	SearchFunctions(context.Context, *SearchFunctionsRequest) (*SearchFunctionsResponse, error)
-	// 获取函数上游调用关系
-	GetFunctionUpstream(context.Context, *GetFunctionUpstreamRequest) (*GetFunctionUpstreamResponse, error)
-	// 获取函数下游调用关系
-	GetFunctionDownstream(context.Context, *GetFunctionDownstreamRequest) (*GetFunctionDownstreamResponse, error)
-	// 获取函数全链路调用关系
-	GetFunctionFullChain(context.Context, *GetFunctionFullChainRequest) (*GetFunctionFullChainResponse, error)
-	// 获取静态分析树状图数据
-	GetTreeGraph(context.Context, *GetTreeGraphReq) (*GetTreeGraphReply, error)
+	// 获取全局统计信息
+	GetGlobalStatistics(context.Context, *GetGlobalStatisticsRequest) (*GetGlobalStatisticsResponse, error)
+	// 获取调用图数据
+	GetCallGraph(context.Context, *GetCallGraphRequest) (*GetCallGraphResponse, error)
+	// 获取包依赖关系
+	GetPackageDependencies(context.Context, *GetPackageDependenciesRequest) (*GetPackageDependenciesResponse, error)
+	// 获取热点函数分析
+	GetHotFunctions(context.Context, *GetHotFunctionsRequest) (*GetHotFunctionsResponse, error)
+	// 获取函数详细信息
+	GetFunctionDetails(context.Context, *GetFunctionDetailsRequest) (*GetFunctionDetailsResponse, error)
+	// 获取函数调用路径
+	GetFunctionCallPaths(context.Context, *GetFunctionCallPathsRequest) (*GetFunctionCallPathsResponse, error)
+	// 获取Init函数列表
+	GetInitFunctions(context.Context, *GetInitFunctionsRequest) (*GetInitFunctionsResponse, error)
 	mustEmbedUnimplementedStaticAnalysisServer()
 }
 
@@ -290,17 +245,14 @@ func (UnimplementedStaticAnalysisServer) AnalyzeProjectPath(context.Context, *An
 func (UnimplementedStaticAnalysisServer) AnalyzeDbFile(context.Context, *AnalyzeDbFileRequest) (*AnalyzeDbFileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AnalyzeDbFile not implemented")
 }
-func (UnimplementedStaticAnalysisServer) GetFunctionAnalysis(context.Context, *GetFunctionAnalysisReq) (*GetFunctionAnalysisReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionAnalysis not implemented")
+func (UnimplementedStaticAnalysisServer) SearchFunctions(context.Context, *SearchFunctionsRequest) (*SearchFunctionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchFunctions not implemented")
 }
-func (UnimplementedStaticAnalysisServer) GetFunctionCallGraph(context.Context, *GetFunctionCallGraphReq) (*GetFunctionCallGraphReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionCallGraph not implemented")
+func (UnimplementedStaticAnalysisServer) GetGlobalStatistics(context.Context, *GetGlobalStatisticsRequest) (*GetGlobalStatisticsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGlobalStatistics not implemented")
 }
-func (UnimplementedStaticAnalysisServer) ListGitLabRepositories(context.Context, *ListGitLabRepositoriesRequest) (*ListGitLabRepositoriesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListGitLabRepositories not implemented")
-}
-func (UnimplementedStaticAnalysisServer) CloneGitLabRepository(context.Context, *CloneGitLabRepositoryRequest) (*CloneGitLabRepositoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CloneGitLabRepository not implemented")
+func (UnimplementedStaticAnalysisServer) GetCallGraph(context.Context, *GetCallGraphRequest) (*GetCallGraphResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCallGraph not implemented")
 }
 func (UnimplementedStaticAnalysisServer) GetPackageDependencies(context.Context, *GetPackageDependenciesRequest) (*GetPackageDependenciesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackageDependencies not implemented")
@@ -308,20 +260,14 @@ func (UnimplementedStaticAnalysisServer) GetPackageDependencies(context.Context,
 func (UnimplementedStaticAnalysisServer) GetHotFunctions(context.Context, *GetHotFunctionsRequest) (*GetHotFunctionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetHotFunctions not implemented")
 }
-func (UnimplementedStaticAnalysisServer) SearchFunctions(context.Context, *SearchFunctionsRequest) (*SearchFunctionsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchFunctions not implemented")
+func (UnimplementedStaticAnalysisServer) GetFunctionDetails(context.Context, *GetFunctionDetailsRequest) (*GetFunctionDetailsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionDetails not implemented")
 }
-func (UnimplementedStaticAnalysisServer) GetFunctionUpstream(context.Context, *GetFunctionUpstreamRequest) (*GetFunctionUpstreamResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionUpstream not implemented")
+func (UnimplementedStaticAnalysisServer) GetFunctionCallPaths(context.Context, *GetFunctionCallPathsRequest) (*GetFunctionCallPathsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionCallPaths not implemented")
 }
-func (UnimplementedStaticAnalysisServer) GetFunctionDownstream(context.Context, *GetFunctionDownstreamRequest) (*GetFunctionDownstreamResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionDownstream not implemented")
-}
-func (UnimplementedStaticAnalysisServer) GetFunctionFullChain(context.Context, *GetFunctionFullChainRequest) (*GetFunctionFullChainResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionFullChain not implemented")
-}
-func (UnimplementedStaticAnalysisServer) GetTreeGraph(context.Context, *GetTreeGraphReq) (*GetTreeGraphReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTreeGraph not implemented")
+func (UnimplementedStaticAnalysisServer) GetInitFunctions(context.Context, *GetInitFunctionsRequest) (*GetInitFunctionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInitFunctions not implemented")
 }
 func (UnimplementedStaticAnalysisServer) mustEmbedUnimplementedStaticAnalysisServer() {}
 func (UnimplementedStaticAnalysisServer) testEmbeddedByValue()                        {}
@@ -416,74 +362,56 @@ func _StaticAnalysis_AnalyzeDbFile_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StaticAnalysis_GetFunctionAnalysis_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetFunctionAnalysisReq)
+func _StaticAnalysis_SearchFunctions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchFunctionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StaticAnalysisServer).GetFunctionAnalysis(ctx, in)
+		return srv.(StaticAnalysisServer).SearchFunctions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StaticAnalysis_GetFunctionAnalysis_FullMethodName,
+		FullMethod: StaticAnalysis_SearchFunctions_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).GetFunctionAnalysis(ctx, req.(*GetFunctionAnalysisReq))
+		return srv.(StaticAnalysisServer).SearchFunctions(ctx, req.(*SearchFunctionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StaticAnalysis_GetFunctionCallGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetFunctionCallGraphReq)
+func _StaticAnalysis_GetGlobalStatistics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGlobalStatisticsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StaticAnalysisServer).GetFunctionCallGraph(ctx, in)
+		return srv.(StaticAnalysisServer).GetGlobalStatistics(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StaticAnalysis_GetFunctionCallGraph_FullMethodName,
+		FullMethod: StaticAnalysis_GetGlobalStatistics_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).GetFunctionCallGraph(ctx, req.(*GetFunctionCallGraphReq))
+		return srv.(StaticAnalysisServer).GetGlobalStatistics(ctx, req.(*GetGlobalStatisticsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StaticAnalysis_ListGitLabRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListGitLabRepositoriesRequest)
+func _StaticAnalysis_GetCallGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCallGraphRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StaticAnalysisServer).ListGitLabRepositories(ctx, in)
+		return srv.(StaticAnalysisServer).GetCallGraph(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StaticAnalysis_ListGitLabRepositories_FullMethodName,
+		FullMethod: StaticAnalysis_GetCallGraph_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).ListGitLabRepositories(ctx, req.(*ListGitLabRepositoriesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _StaticAnalysis_CloneGitLabRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CloneGitLabRepositoryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StaticAnalysisServer).CloneGitLabRepository(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: StaticAnalysis_CloneGitLabRepository_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).CloneGitLabRepository(ctx, req.(*CloneGitLabRepositoryRequest))
+		return srv.(StaticAnalysisServer).GetCallGraph(ctx, req.(*GetCallGraphRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -524,92 +452,56 @@ func _StaticAnalysis_GetHotFunctions_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StaticAnalysis_SearchFunctions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchFunctionsRequest)
+func _StaticAnalysis_GetFunctionDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFunctionDetailsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StaticAnalysisServer).SearchFunctions(ctx, in)
+		return srv.(StaticAnalysisServer).GetFunctionDetails(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StaticAnalysis_SearchFunctions_FullMethodName,
+		FullMethod: StaticAnalysis_GetFunctionDetails_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).SearchFunctions(ctx, req.(*SearchFunctionsRequest))
+		return srv.(StaticAnalysisServer).GetFunctionDetails(ctx, req.(*GetFunctionDetailsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StaticAnalysis_GetFunctionUpstream_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetFunctionUpstreamRequest)
+func _StaticAnalysis_GetFunctionCallPaths_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFunctionCallPathsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StaticAnalysisServer).GetFunctionUpstream(ctx, in)
+		return srv.(StaticAnalysisServer).GetFunctionCallPaths(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StaticAnalysis_GetFunctionUpstream_FullMethodName,
+		FullMethod: StaticAnalysis_GetFunctionCallPaths_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).GetFunctionUpstream(ctx, req.(*GetFunctionUpstreamRequest))
+		return srv.(StaticAnalysisServer).GetFunctionCallPaths(ctx, req.(*GetFunctionCallPathsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _StaticAnalysis_GetFunctionDownstream_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetFunctionDownstreamRequest)
+func _StaticAnalysis_GetInitFunctions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInitFunctionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(StaticAnalysisServer).GetFunctionDownstream(ctx, in)
+		return srv.(StaticAnalysisServer).GetInitFunctions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: StaticAnalysis_GetFunctionDownstream_FullMethodName,
+		FullMethod: StaticAnalysis_GetInitFunctions_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).GetFunctionDownstream(ctx, req.(*GetFunctionDownstreamRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _StaticAnalysis_GetFunctionFullChain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetFunctionFullChainRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StaticAnalysisServer).GetFunctionFullChain(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: StaticAnalysis_GetFunctionFullChain_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).GetFunctionFullChain(ctx, req.(*GetFunctionFullChainRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _StaticAnalysis_GetTreeGraph_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTreeGraphReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StaticAnalysisServer).GetTreeGraph(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: StaticAnalysis_GetTreeGraph_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StaticAnalysisServer).GetTreeGraph(ctx, req.(*GetTreeGraphReq))
+		return srv.(StaticAnalysisServer).GetInitFunctions(ctx, req.(*GetInitFunctionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -638,20 +530,16 @@ var StaticAnalysis_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _StaticAnalysis_AnalyzeDbFile_Handler,
 		},
 		{
-			MethodName: "GetFunctionAnalysis",
-			Handler:    _StaticAnalysis_GetFunctionAnalysis_Handler,
+			MethodName: "SearchFunctions",
+			Handler:    _StaticAnalysis_SearchFunctions_Handler,
 		},
 		{
-			MethodName: "GetFunctionCallGraph",
-			Handler:    _StaticAnalysis_GetFunctionCallGraph_Handler,
+			MethodName: "GetGlobalStatistics",
+			Handler:    _StaticAnalysis_GetGlobalStatistics_Handler,
 		},
 		{
-			MethodName: "ListGitLabRepositories",
-			Handler:    _StaticAnalysis_ListGitLabRepositories_Handler,
-		},
-		{
-			MethodName: "CloneGitLabRepository",
-			Handler:    _StaticAnalysis_CloneGitLabRepository_Handler,
+			MethodName: "GetCallGraph",
+			Handler:    _StaticAnalysis_GetCallGraph_Handler,
 		},
 		{
 			MethodName: "GetPackageDependencies",
@@ -662,24 +550,16 @@ var StaticAnalysis_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _StaticAnalysis_GetHotFunctions_Handler,
 		},
 		{
-			MethodName: "SearchFunctions",
-			Handler:    _StaticAnalysis_SearchFunctions_Handler,
+			MethodName: "GetFunctionDetails",
+			Handler:    _StaticAnalysis_GetFunctionDetails_Handler,
 		},
 		{
-			MethodName: "GetFunctionUpstream",
-			Handler:    _StaticAnalysis_GetFunctionUpstream_Handler,
+			MethodName: "GetFunctionCallPaths",
+			Handler:    _StaticAnalysis_GetFunctionCallPaths_Handler,
 		},
 		{
-			MethodName: "GetFunctionDownstream",
-			Handler:    _StaticAnalysis_GetFunctionDownstream_Handler,
-		},
-		{
-			MethodName: "GetFunctionFullChain",
-			Handler:    _StaticAnalysis_GetFunctionFullChain_Handler,
-		},
-		{
-			MethodName: "GetTreeGraph",
-			Handler:    _StaticAnalysis_GetTreeGraph_Handler,
+			MethodName: "GetInitFunctions",
+			Handler:    _StaticAnalysis_GetInitFunctions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

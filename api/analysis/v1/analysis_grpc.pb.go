@@ -35,6 +35,8 @@ const (
 	Analysis_SearchFunctions_FullMethodName            = "/analysis.v1.Analysis/SearchFunctions"
 	Analysis_GetFunctionInfoInGoroutine_FullMethodName = "/analysis.v1.Analysis/GetFunctionInfoInGoroutine"
 	Analysis_GetModuleNames_FullMethodName             = "/analysis.v1.Analysis/GetModuleNames"
+	Analysis_GetAnalysisPath_FullMethodName            = "/analysis.v1.Analysis/GetAnalysisPath"
+	Analysis_ClearSession_FullMethodName               = "/analysis.v1.Analysis/ClearSession"
 )
 
 // AnalysisClient is the client API for Analysis service.
@@ -71,6 +73,11 @@ type AnalysisClient interface {
 	GetFunctionInfoInGoroutine(ctx context.Context, in *GetFunctionInfoInGoroutineReq, opts ...grpc.CallOption) (*GetFunctionInfoInGoroutineReply, error)
 	// GetModuleNames 获取数据库中的模块名称列表
 	GetModuleNames(ctx context.Context, in *GetModuleNamesReq, opts ...grpc.CallOption) (*GetModuleNamesReply, error)
+	// Session管理相关API
+	// GetAnalysisPath 从session中获取分析路径
+	GetAnalysisPath(ctx context.Context, in *GetAnalysisPathReq, opts ...grpc.CallOption) (*GetAnalysisPathReply, error)
+	// ClearSession 清除session
+	ClearSession(ctx context.Context, in *ClearSessionReq, opts ...grpc.CallOption) (*ClearSessionReply, error)
 }
 
 type analysisClient struct {
@@ -241,6 +248,26 @@ func (c *analysisClient) GetModuleNames(ctx context.Context, in *GetModuleNamesR
 	return out, nil
 }
 
+func (c *analysisClient) GetAnalysisPath(ctx context.Context, in *GetAnalysisPathReq, opts ...grpc.CallOption) (*GetAnalysisPathReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAnalysisPathReply)
+	err := c.cc.Invoke(ctx, Analysis_GetAnalysisPath_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *analysisClient) ClearSession(ctx context.Context, in *ClearSessionReq, opts ...grpc.CallOption) (*ClearSessionReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClearSessionReply)
+	err := c.cc.Invoke(ctx, Analysis_ClearSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnalysisServer is the server API for Analysis service.
 // All implementations must embed UnimplementedAnalysisServer
 // for forward compatibility.
@@ -275,6 +302,11 @@ type AnalysisServer interface {
 	GetFunctionInfoInGoroutine(context.Context, *GetFunctionInfoInGoroutineReq) (*GetFunctionInfoInGoroutineReply, error)
 	// GetModuleNames 获取数据库中的模块名称列表
 	GetModuleNames(context.Context, *GetModuleNamesReq) (*GetModuleNamesReply, error)
+	// Session管理相关API
+	// GetAnalysisPath 从session中获取分析路径
+	GetAnalysisPath(context.Context, *GetAnalysisPathReq) (*GetAnalysisPathReply, error)
+	// ClearSession 清除session
+	ClearSession(context.Context, *ClearSessionReq) (*ClearSessionReply, error)
 	mustEmbedUnimplementedAnalysisServer()
 }
 
@@ -332,6 +364,12 @@ func (UnimplementedAnalysisServer) GetFunctionInfoInGoroutine(context.Context, *
 }
 func (UnimplementedAnalysisServer) GetModuleNames(context.Context, *GetModuleNamesReq) (*GetModuleNamesReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetModuleNames not implemented")
+}
+func (UnimplementedAnalysisServer) GetAnalysisPath(context.Context, *GetAnalysisPathReq) (*GetAnalysisPathReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAnalysisPath not implemented")
+}
+func (UnimplementedAnalysisServer) ClearSession(context.Context, *ClearSessionReq) (*ClearSessionReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClearSession not implemented")
 }
 func (UnimplementedAnalysisServer) mustEmbedUnimplementedAnalysisServer() {}
 func (UnimplementedAnalysisServer) testEmbeddedByValue()                  {}
@@ -642,6 +680,42 @@ func _Analysis_GetModuleNames_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Analysis_GetAnalysisPath_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAnalysisPathReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).GetAnalysisPath(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_GetAnalysisPath_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).GetAnalysisPath(ctx, req.(*GetAnalysisPathReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Analysis_ClearSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClearSessionReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnalysisServer).ClearSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Analysis_ClearSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnalysisServer).ClearSession(ctx, req.(*ClearSessionReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Analysis_ServiceDesc is the grpc.ServiceDesc for Analysis service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -712,6 +786,14 @@ var Analysis_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetModuleNames",
 			Handler:    _Analysis_GetModuleNames_Handler,
+		},
+		{
+			MethodName: "GetAnalysisPath",
+			Handler:    _Analysis_GetAnalysisPath_Handler,
+		},
+		{
+			MethodName: "ClearSession",
+			Handler:    _Analysis_ClearSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

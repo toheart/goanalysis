@@ -42,6 +42,8 @@ message Biz {
   string file_storage_path = 1; // 文件存储路径
   GitLab gitlab = 2;           // GitLab配置
   OpenAI openai = 3;          // OpenAI配置
+  string static_store_path = 4; // 静态存储路径
+  string runtime_store_path = 5; // 运行时存储路径
 }
 
 

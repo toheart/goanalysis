@@ -106,6 +106,13 @@ func (r *MrAnalysisResult) GetAffectedFilesMd() string {
 				if f.Suggestion != "" {
 					sb.WriteString(fmt.Sprintf("    - 建议: %s\n", f.Suggestion))
 				}
+				// 新增逻辑：展示上游调用者
+				if len(f.UpstreamCallers) > 0 {
+					sb.WriteString("    - **上游调用者**:\n")
+					for _, caller := range f.UpstreamCallers {
+						sb.WriteString(fmt.Sprintf("      - `%s`\n", caller))
+					}
+				}
 			}
 		}
 	}

@@ -15,6 +15,9 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "caller_key", Type: field.TypeString},
 		{Name: "callee_key", Type: field.TypeString},
+		{Name: "call_site_file", Type: field.TypeString, Nullable: true},
+		{Name: "call_site_line", Type: field.TypeInt, Nullable: true},
+		{Name: "call_type", Type: field.TypeString, Default: "static"},
 	}
 	// FuncEdgesTable holds the schema information for the "func_edges" table.
 	FuncEdgesTable = &schema.Table{
@@ -40,7 +43,13 @@ var (
 		{Name: "key", Type: field.TypeString, Unique: true},
 		{Name: "full_name", Type: field.TypeString},
 		{Name: "pkg", Type: field.TypeString},
+		{Name: "pkg_path", Type: field.TypeString, Nullable: true},
 		{Name: "name", Type: field.TypeString},
+		{Name: "filename", Type: field.TypeString, Nullable: true},
+		{Name: "start_line", Type: field.TypeInt, Nullable: true},
+		{Name: "end_line", Type: field.TypeInt, Nullable: true},
+		{Name: "signature", Type: field.TypeString, Nullable: true},
+		{Name: "source_code", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -65,12 +74,78 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{FuncNodesColumns[2]},
 			},
+			{
+				Name:    "funcnode_filename",
+				Unique:  false,
+				Columns: []*schema.Column{FuncNodesColumns[6]},
+			},
+			{
+				Name:    "funcnode_filename_start_line",
+				Unique:  false,
+				Columns: []*schema.Column{FuncNodesColumns[6], FuncNodesColumns[7]},
+			},
+			{
+				Name:    "funcnode_pkg_path",
+				Unique:  false,
+				Columns: []*schema.Column{FuncNodesColumns[4]},
+			},
+		},
+	}
+	// PackageDepsColumns holds the columns for the "package_deps" table.
+	PackageDepsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "importer_pkg", Type: field.TypeString},
+		{Name: "imported_pkg", Type: field.TypeString},
+		{Name: "import_count", Type: field.TypeInt, Default: 1},
+	}
+	// PackageDepsTable holds the schema information for the "package_deps" table.
+	PackageDepsTable = &schema.Table{
+		Name:       "package_deps",
+		Columns:    PackageDepsColumns,
+		PrimaryKey: []*schema.Column{PackageDepsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "packagedep_importer_pkg_imported_pkg",
+				Unique:  true,
+				Columns: []*schema.Column{PackageDepsColumns[1], PackageDepsColumns[2]},
+			},
+			{
+				Name:    "packagedep_importer_pkg",
+				Unique:  false,
+				Columns: []*schema.Column{PackageDepsColumns[1]},
+			},
+			{
+				Name:    "packagedep_imported_pkg",
+				Unique:  false,
+				Columns: []*schema.Column{PackageDepsColumns[2]},
+			},
+		},
+	}
+	// PkgsColumns holds the columns for the "pkgs" table.
+	PkgsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "pkg_path", Type: field.TypeString, Unique: true},
+		{Name: "is_internal", Type: field.TypeBool, Default: false},
+	}
+	// PkgsTable holds the schema information for the "pkgs" table.
+	PkgsTable = &schema.Table{
+		Name:       "pkgs",
+		Columns:    PkgsColumns,
+		PrimaryKey: []*schema.Column{PkgsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pkg_is_internal",
+				Unique:  false,
+				Columns: []*schema.Column{PkgsColumns[2]},
+			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		FuncEdgesTable,
 		FuncNodesTable,
+		PackageDepsTable,
+		PkgsTable,
 	}
 )
 

@@ -58,8 +58,8 @@ func (g *GitAnalysis) MRAnalyzer(projectID, mrID int, autoNotes bool) (*dos.MrAn
 		return nil, err
 	}
 
-	// 克隆仓库
-	_, err = g.CloneRepository(project, mergeRequest.TargetBranch)
+	// 克隆仓库，确保使用 MR 的源分支进行静态分析
+	_, err = g.CloneRepository(project, mergeRequest.SourceBranch)
 	if err != nil {
 		return nil, err
 	}
@@ -127,12 +127,12 @@ func (g *GitAnalysis) RepoCallGraph(project *gitapi.Project, rootDir string) (st
 	}
 	defer dbStore.Close()
 
-	// 创建程序分析实例，使用默认的 RTA 算法
+	// 创建程序分析实例，使用 VTA 算法以获得更高精度
 	pa := callgraph.NewProgramAnalysis(
 		rootDir,
 		g.logger,
 		dbStore,
-		callgraph.WithAlgo(callgraph.CallGraphTypeRta),
+		callgraph.WithAlgo(callgraph.CallGraphTypeVta),
 		callgraph.WithIgnorePaths("vendor,third_party"),
 	)
 	err = pa.Execute(context.Background(), statusChan)
@@ -268,13 +268,8 @@ func (g *GitAnalysis) AnalyzeFunctionCallRelations(dbPath string, result *dos.Mr
 			}
 
 			if len(callers) > 0 {
-				// 将调用者信息添加到建议中
-				callersInfo := fmt.Sprintf("此函数被以下%d个函数调用: %v", len(callers), callers)
-				if function.Suggestion != "" {
-					result.AffectedFunctions[i].Functions[j].Suggestion += "; " + callersInfo
-				} else {
-					result.AffectedFunctions[i].Functions[j].Suggestion = callersInfo
-				}
+				// 将找到的调用者填充到新字段
+				result.AffectedFunctions[i].Functions[j].UpstreamCallers = callers
 				g.logger.Infof("function %s has %d callers: %v", function.FunctionName, len(callers), callers)
 			} else {
 				// 如果没有找到调用者，可能是入口函数

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
@@ -57,7 +56,7 @@ func (c *CallGraphCommand) Init() {
 // Run 执行调用图命令
 func (c *CallGraphCommand) Run(cmd *cobra.Command, args []string) {
 	if c.codeDir == "" {
-		fmt.Println("请提供代码目录")
+		fmt.Println("Please provide code directory")
 		return
 	}
 
@@ -96,64 +95,40 @@ func (c *CallGraphCommand) Run(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 
-	cg := callgraph.NewProgramAnalysis(c.codeDir, log.NewHelper(log.With(logger, "module", "callgraph")), funcNodeDB, callgraph.WithOutputDir(c.outputPath),
-		callgraph.WithCacheDir(c.cachePath), callgraph.WithOnlyPkg(c.onlyMethod), callgraph.WithAlgo(c.algo), callgraph.WithCacheFlag(c.isCache))
+	fmt.Printf("Starting to generate call graph for %s...\n", c.codeDir)
+	fmt.Println("Using legacy ProgramAnalysis (更可靠的业务分析器)")
+	fmt.Printf("Algorithm: %s\n", c.algo)
+	fmt.Println("Note: Large projects may take several minutes to analyze...")
 
-	// 创建一个命令行状态通道，用于接收状态更新
+	// 使用旧的业务分析器而不是标准分析器
+	options := []callgraph.ProgramOption{
+		callgraph.WithAlgo(c.algo),
+		callgraph.WithOutputDir(c.outputPath),
+		callgraph.WithCacheDir(c.cachePath),
+		callgraph.WithCacheFlag(c.isCache),
+	}
+	if c.onlyMethod != "" {
+		options = append(options, callgraph.WithOnlyPkg(c.onlyMethod))
+	}
+
+	// 创建程序分析实例
+	pa := callgraph.NewProgramAnalysis(c.codeDir, log.NewHelper(logger), funcNodeDB, options...)
+
+	// 执行完整的分析流程
 	statusChan := make(chan []byte, 100)
-
-	// 创建一个goroutine来处理状态更新
 	go func() {
-		for msg := range statusChan {
-			fmt.Println(string(msg))
+		for status := range statusChan {
+			fmt.Printf("Status: %s\n", string(status))
 		}
 	}()
 
-	// 这里可以添加生成调用图的逻辑
-	fmt.Printf("开始为 %s 生成调用图...\n", c.codeDir)
-
-	// 使用 WaitGroup 等待所有任务完成
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	// 设置完成标志
-	var completed bool
-	var mu sync.Mutex
-
-	// 启动调用图生成
-	go func() {
-		defer wg.Done()
-		if err := cg.SetTree(statusChan); err != nil {
-			errMsg := fmt.Sprintf("调用图生成失败: %v", err)
-			fmt.Println(errMsg)
-			return
-		}
-
-		// 保存数据
-		if err := cg.SaveData(context.Background(), statusChan); err != nil {
-			errMsg := fmt.Sprintf("保存数据失败: %v", err)
-			fmt.Println(errMsg)
-			return
-		}
-
-		// 标记为完成
-		mu.Lock()
-		completed = true
-		mu.Unlock()
-
-		fmt.Println("分析任务完成")
-	}()
-
-	// 等待任务完成
-	wg.Wait()
-
-	// 检查是否成功完成
-	mu.Lock()
-	defer mu.Unlock()
-	if !completed {
-		fmt.Println("分析任务未成功完成")
+	ctx := context.Background()
+	err = pa.Execute(ctx, statusChan)
+	if err != nil {
+		fmt.Printf("Analysis failed: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("调用图生成完成")
+	close(statusChan)
+	fmt.Println("Call graph generation completed using legacy ProgramAnalysis")
 }

@@ -16,6 +16,10 @@ type Tx struct {
 	FuncEdge *FuncEdgeClient
 	// FuncNode is the client for interacting with the FuncNode builders.
 	FuncNode *FuncNodeClient
+	// PackageDep is the client for interacting with the PackageDep builders.
+	PackageDep *PackageDepClient
+	// Pkg is the client for interacting with the Pkg builders.
+	Pkg *PkgClient
 
 	// lazily loaded.
 	client     *Client
@@ -149,6 +153,8 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.FuncEdge = NewFuncEdgeClient(tx.config)
 	tx.FuncNode = NewFuncNodeClient(tx.config)
+	tx.PackageDep = NewPackageDepClient(tx.config)
+	tx.Pkg = NewPkgClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

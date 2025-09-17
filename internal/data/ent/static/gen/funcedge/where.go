@@ -74,6 +74,21 @@ func CalleeKey(v string) predicate.FuncEdge {
 	return predicate.FuncEdge(sql.FieldEQ(FieldCalleeKey, v))
 }
 
+// CallSiteFile applies equality check predicate on the "call_site_file" field. It's identical to CallSiteFileEQ.
+func CallSiteFile(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldEQ(FieldCallSiteFile, v))
+}
+
+// CallSiteLine applies equality check predicate on the "call_site_line" field. It's identical to CallSiteLineEQ.
+func CallSiteLine(v int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldEQ(FieldCallSiteLine, v))
+}
+
+// CallType applies equality check predicate on the "call_type" field. It's identical to CallTypeEQ.
+func CallType(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldEQ(FieldCallType, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "CreatedAt" field.
 func CreatedAtEQ(v time.Time) predicate.FuncEdge {
 	return predicate.FuncEdge(sql.FieldEQ(FieldCreatedAt, v))
@@ -282,6 +297,196 @@ func CalleeKeyEqualFold(v string) predicate.FuncEdge {
 // CalleeKeyContainsFold applies the ContainsFold predicate on the "CalleeKey" field.
 func CalleeKeyContainsFold(v string) predicate.FuncEdge {
 	return predicate.FuncEdge(sql.FieldContainsFold(FieldCalleeKey, v))
+}
+
+// CallSiteFileEQ applies the EQ predicate on the "call_site_file" field.
+func CallSiteFileEQ(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldEQ(FieldCallSiteFile, v))
+}
+
+// CallSiteFileNEQ applies the NEQ predicate on the "call_site_file" field.
+func CallSiteFileNEQ(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldNEQ(FieldCallSiteFile, v))
+}
+
+// CallSiteFileIn applies the In predicate on the "call_site_file" field.
+func CallSiteFileIn(vs ...string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldIn(FieldCallSiteFile, vs...))
+}
+
+// CallSiteFileNotIn applies the NotIn predicate on the "call_site_file" field.
+func CallSiteFileNotIn(vs ...string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldNotIn(FieldCallSiteFile, vs...))
+}
+
+// CallSiteFileGT applies the GT predicate on the "call_site_file" field.
+func CallSiteFileGT(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldGT(FieldCallSiteFile, v))
+}
+
+// CallSiteFileGTE applies the GTE predicate on the "call_site_file" field.
+func CallSiteFileGTE(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldGTE(FieldCallSiteFile, v))
+}
+
+// CallSiteFileLT applies the LT predicate on the "call_site_file" field.
+func CallSiteFileLT(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldLT(FieldCallSiteFile, v))
+}
+
+// CallSiteFileLTE applies the LTE predicate on the "call_site_file" field.
+func CallSiteFileLTE(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldLTE(FieldCallSiteFile, v))
+}
+
+// CallSiteFileContains applies the Contains predicate on the "call_site_file" field.
+func CallSiteFileContains(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldContains(FieldCallSiteFile, v))
+}
+
+// CallSiteFileHasPrefix applies the HasPrefix predicate on the "call_site_file" field.
+func CallSiteFileHasPrefix(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldHasPrefix(FieldCallSiteFile, v))
+}
+
+// CallSiteFileHasSuffix applies the HasSuffix predicate on the "call_site_file" field.
+func CallSiteFileHasSuffix(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldHasSuffix(FieldCallSiteFile, v))
+}
+
+// CallSiteFileIsNil applies the IsNil predicate on the "call_site_file" field.
+func CallSiteFileIsNil() predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldIsNull(FieldCallSiteFile))
+}
+
+// CallSiteFileNotNil applies the NotNil predicate on the "call_site_file" field.
+func CallSiteFileNotNil() predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldNotNull(FieldCallSiteFile))
+}
+
+// CallSiteFileEqualFold applies the EqualFold predicate on the "call_site_file" field.
+func CallSiteFileEqualFold(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldEqualFold(FieldCallSiteFile, v))
+}
+
+// CallSiteFileContainsFold applies the ContainsFold predicate on the "call_site_file" field.
+func CallSiteFileContainsFold(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldContainsFold(FieldCallSiteFile, v))
+}
+
+// CallSiteLineEQ applies the EQ predicate on the "call_site_line" field.
+func CallSiteLineEQ(v int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldEQ(FieldCallSiteLine, v))
+}
+
+// CallSiteLineNEQ applies the NEQ predicate on the "call_site_line" field.
+func CallSiteLineNEQ(v int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldNEQ(FieldCallSiteLine, v))
+}
+
+// CallSiteLineIn applies the In predicate on the "call_site_line" field.
+func CallSiteLineIn(vs ...int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldIn(FieldCallSiteLine, vs...))
+}
+
+// CallSiteLineNotIn applies the NotIn predicate on the "call_site_line" field.
+func CallSiteLineNotIn(vs ...int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldNotIn(FieldCallSiteLine, vs...))
+}
+
+// CallSiteLineGT applies the GT predicate on the "call_site_line" field.
+func CallSiteLineGT(v int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldGT(FieldCallSiteLine, v))
+}
+
+// CallSiteLineGTE applies the GTE predicate on the "call_site_line" field.
+func CallSiteLineGTE(v int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldGTE(FieldCallSiteLine, v))
+}
+
+// CallSiteLineLT applies the LT predicate on the "call_site_line" field.
+func CallSiteLineLT(v int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldLT(FieldCallSiteLine, v))
+}
+
+// CallSiteLineLTE applies the LTE predicate on the "call_site_line" field.
+func CallSiteLineLTE(v int) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldLTE(FieldCallSiteLine, v))
+}
+
+// CallSiteLineIsNil applies the IsNil predicate on the "call_site_line" field.
+func CallSiteLineIsNil() predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldIsNull(FieldCallSiteLine))
+}
+
+// CallSiteLineNotNil applies the NotNil predicate on the "call_site_line" field.
+func CallSiteLineNotNil() predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldNotNull(FieldCallSiteLine))
+}
+
+// CallTypeEQ applies the EQ predicate on the "call_type" field.
+func CallTypeEQ(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldEQ(FieldCallType, v))
+}
+
+// CallTypeNEQ applies the NEQ predicate on the "call_type" field.
+func CallTypeNEQ(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldNEQ(FieldCallType, v))
+}
+
+// CallTypeIn applies the In predicate on the "call_type" field.
+func CallTypeIn(vs ...string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldIn(FieldCallType, vs...))
+}
+
+// CallTypeNotIn applies the NotIn predicate on the "call_type" field.
+func CallTypeNotIn(vs ...string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldNotIn(FieldCallType, vs...))
+}
+
+// CallTypeGT applies the GT predicate on the "call_type" field.
+func CallTypeGT(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldGT(FieldCallType, v))
+}
+
+// CallTypeGTE applies the GTE predicate on the "call_type" field.
+func CallTypeGTE(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldGTE(FieldCallType, v))
+}
+
+// CallTypeLT applies the LT predicate on the "call_type" field.
+func CallTypeLT(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldLT(FieldCallType, v))
+}
+
+// CallTypeLTE applies the LTE predicate on the "call_type" field.
+func CallTypeLTE(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldLTE(FieldCallType, v))
+}
+
+// CallTypeContains applies the Contains predicate on the "call_type" field.
+func CallTypeContains(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldContains(FieldCallType, v))
+}
+
+// CallTypeHasPrefix applies the HasPrefix predicate on the "call_type" field.
+func CallTypeHasPrefix(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldHasPrefix(FieldCallType, v))
+}
+
+// CallTypeHasSuffix applies the HasSuffix predicate on the "call_type" field.
+func CallTypeHasSuffix(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldHasSuffix(FieldCallType, v))
+}
+
+// CallTypeEqualFold applies the EqualFold predicate on the "call_type" field.
+func CallTypeEqualFold(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldEqualFold(FieldCallType, v))
+}
+
+// CallTypeContainsFold applies the ContainsFold predicate on the "call_type" field.
+func CallTypeContainsFold(v string) predicate.FuncEdge {
+	return predicate.FuncEdge(sql.FieldContainsFold(FieldCallType, v))
 }
 
 // And groups predicates with the AND operator between them.

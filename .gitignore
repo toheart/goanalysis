@@ -46,7 +46,7 @@ bin/
 *.log
 *.log.*
 *git_repos/
-data
+data/files
 web/
 
 *.db

@@ -2,13 +2,14 @@ package service
 
 import (
 	"context"
-	"strings"
+	"errors"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/toheart/goanalysis/api/analysis/v1"
 	"github.com/toheart/goanalysis/internal/biz/analysis"
 	"github.com/toheart/goanalysis/internal/biz/rewrite"
+	"github.com/toheart/goanalysis/internal/biz/session"
 	"google.golang.org/grpc"
 )
 
@@ -16,13 +17,23 @@ import (
 type AnalysisService struct {
 	v1.UnimplementedAnalysisServer
 
-	uc  *analysis.AnalysisBiz
-	log *log.Helper
+	uc         *analysis.AnalysisBiz
+	sessionMgr *session.Manager
+	log        *log.Helper
 }
 
 // NewGreeterService new a greeter service.
-func NewAnalysisService(uc *analysis.AnalysisBiz, logger log.Logger) *AnalysisService {
-	return &AnalysisService{uc: uc, log: log.NewHelper(logger)}
+func NewAnalysisService(uc *analysis.AnalysisBiz, sessionMgr *session.Manager, logger log.Logger) *AnalysisService {
+	return &AnalysisService{uc: uc, sessionMgr: sessionMgr, log: log.NewHelper(logger)}
+}
+
+// getDBPathFromContext 从context中获取数据库路径的辅助函数
+func (a *AnalysisService) getDBPathFromContext(ctx context.Context) (string, error) {
+	dbPath, exists := session.GetDBPathFromGRPCContext(ctx)
+	if !exists {
+		return "", errors.New("database path not found in session, please set analysis path first")
+	}
+	return dbPath, nil
 }
 
 func (a *AnalysisService) RegisterGrpc(svr *grpc.Server) {
@@ -39,7 +50,13 @@ func (a *AnalysisService) GetAnalysis(ctx context.Context, in *v1.AnalysisReques
 }
 
 func (a *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisByGIDRequest) (*v1.AnalysisByGIDReply, error) {
-	traces, err := a.uc.GetTracesByGID(in)
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	traces, err := a.uc.GetTracesByGID(dbPath, in)
 	if err != nil {
 		return nil, err
 	}
@@ -63,10 +80,15 @@ func (a *AnalysisService) GetAnalysisByGID(ctx context.Context, in *v1.AnalysisB
 }
 
 func (a *AnalysisService) GetAllGIDs(ctx context.Context, in *v1.GetAllGIDsReq) (*v1.GetAllGIDsReply, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	page := in.Page
 	limit := in.Limit
 	includeMetrics := in.IncludeMetrics
-	dbpath := in.Dbpath
 	reply := &v1.GetAllGIDsReply{}
 	groutines, err := a.uc.GetAllGIDs(dbpath, int(page), int(limit))
 	if err != nil {
@@ -114,7 +136,13 @@ func (a *AnalysisService) GetAllGIDs(ctx context.Context, in *v1.GetAllGIDsReq) 
 }
 
 func (a *AnalysisService) GetParamsByID(ctx context.Context, in *v1.GetParamsByIDReq) (*v1.GetParamsByIDReply, error) {
-	params, err := a.uc.GetParamsByID(in.Dbpath, in.Id)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	params, err := a.uc.GetParamsByID(dbpath, in.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -130,10 +158,15 @@ func (a *AnalysisService) GetParamsByID(ctx context.Context, in *v1.GetParamsByI
 }
 
 func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetGidsByFunctionNameReq) (*v1.GetGidsByFunctionNameReply, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// 获取函数名称
 	functionName := in.FunctionName
 	includeMetrics := in.IncludeMetrics
-	dbpath := in.Path // 使用 Path 字段作为 dbpath
 
 	a.log.Infof("find %s in which goroutines, dbpath: %s", functionName, dbpath)
 
@@ -195,27 +228,26 @@ func (a *AnalysisService) GetGidsByFunctionName(ctx context.Context, in *v1.GetG
 	return reply, nil
 }
 
-func getLastSegment(name string) string {
-	parts := strings.Split(name, ".")
-	return parts[len(parts)-1]
-}
-
-func removeParentheses(name string) string {
-	idx := strings.Index(name, "(")
-	if idx > 0 {
-		return name[:idx]
-	}
-	return name
-}
-
 func (s *AnalysisService) VerifyProjectPath(ctx context.Context, in *v1.VerifyProjectPathReq) (*v1.VerifyProjectPathReply, error) {
 	verified := s.uc.VerifyProjectPath(in.Path)
+
+	// 如果验证成功，尝试将路径保存到session中
+	if verified {
+		s.log.Infof("Path verified successfully, will be cached to session: %s", in.Path)
+	}
+
 	return &v1.VerifyProjectPathReply{Verified: verified}, nil
 }
 
 // GetTracesByParentFunc 根据父函数ID获取函数调用
 func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetTracesByParentFuncReq) (*v1.GetTracesByParentFuncReply, error) {
-	traces, err := a.uc.GetTracesByParentFunc(in.Dbpath, in.ParentId)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	traces, err := a.uc.GetTracesByParentFunc(dbpath, in.ParentId)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +271,13 @@ func (a *AnalysisService) GetTracesByParentFunc(ctx context.Context, in *v1.GetT
 
 // GetAllParentIds 获取所有的父函数ID
 func (a *AnalysisService) GetParentFunctions(ctx context.Context, in *v1.GetParentFunctionsReq) (*v1.GetParentFunctionsReply, error) {
-	parentFunctions, err := a.uc.GetParentFunctions(in.Dbpath, in.FunctionName)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	parentFunctions, err := a.uc.GetParentFunctions(dbpath, in.FunctionName)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +297,13 @@ func (a *AnalysisService) GetParentFunctions(ctx context.Context, in *v1.GetPare
 
 // GetChildFunctions 获取函数的子函数
 func (a *AnalysisService) GetChildFunctions(ctx context.Context, in *v1.GetChildFunctionsReq) (*v1.GetChildFunctionsReply, error) {
-	childFunctions, err := a.uc.GetChildFunctions(in.Dbpath, in.ParentId)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	childFunctions, err := a.uc.GetChildFunctions(dbpath, in.ParentId)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +327,13 @@ func (a *AnalysisService) GetChildFunctions(ctx context.Context, in *v1.GetChild
 
 // GetHotFunctions 获取热点函数分析数据
 func (a *AnalysisService) GetHotFunctions(ctx context.Context, in *v1.GetHotFunctionsReq) (*v1.GetHotFunctionsReply, error) {
-	hotFunctions, err := a.uc.GetHotFunctions(in.Dbpath, in.SortBy)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	hotFunctions, err := a.uc.GetHotFunctions(dbpath, in.SortBy)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +354,13 @@ func (a *AnalysisService) GetHotFunctions(ctx context.Context, in *v1.GetHotFunc
 
 // GetGoroutineStats 获取Goroutine统计信息
 func (a *AnalysisService) GetGoroutineStats(ctx context.Context, in *v1.GetGoroutineStatsReq) (*v1.GetGoroutineStatsReply, error) {
-	stats, err := a.uc.GetGoroutineStats(in.Dbpath)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	stats, err := a.uc.GetGoroutineStats(dbpath)
 	if err != nil {
 		return nil, err
 	}
@@ -344,10 +400,16 @@ func (a *AnalysisService) InstrumentProject(ctx context.Context, in *v1.Instrume
 
 // GetFunctionCallStats 获取函数调用统计分析
 func (a *AnalysisService) GetFunctionCallStats(ctx context.Context, req *v1.GetFunctionCallStatsReq) (*v1.GetFunctionCallStatsReply, error) {
-	a.log.Infof("get function call stats, function: %s, dbpath: %s", req.FunctionName, req.DbPath)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	a.log.Infof("get function call stats, function: %s, dbpath: %s", req.FunctionName, dbpath)
 
 	// 调用业务逻辑获取函数调用统计数据
-	stats, err := a.uc.GetFunctionCallStats(req.DbPath, req.FunctionName)
+	stats, err := a.uc.GetFunctionCallStats(dbpath, req.FunctionName)
 	if err != nil {
 		a.log.Errorf("get function call stats failed: %v", err)
 		return nil, err
@@ -378,7 +440,13 @@ func (a *AnalysisService) GetFunctionCallStats(ctx context.Context, req *v1.GetF
 
 // SearchFunctions 实现函数搜索服务
 func (s *AnalysisService) SearchFunctions(ctx context.Context, req *v1.SearchFunctionsReq) (*v1.SearchFunctionsReply, error) {
-	functions, total, err := s.uc.SearchFunctions(ctx, req.Dbpath, req.Query, req.Limit)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := s.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	functions, total, err := s.uc.SearchFunctions(ctx, dbpath, req.Query, req.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -400,9 +468,15 @@ func (s *AnalysisService) SearchFunctions(ctx context.Context, req *v1.SearchFun
 
 // GetFunctionInfoInGoroutine 获取函数在指定Goroutine中的信息
 func (a *AnalysisService) GetFunctionInfoInGoroutine(ctx context.Context, in *v1.GetFunctionInfoInGoroutineReq) (*v1.GetFunctionInfoInGoroutineReply, error) {
-	a.log.Infof("get function info in goroutine, gid: %d, functionId: %d from db: %s", in.Gid, in.FunctionId, in.Dbpath)
+	// 从gRPC metadata中获取数据库路径
+	dbpath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	functionInfo, err := a.uc.GetFunctionInfoInGoroutine(in.Dbpath, in.Gid, in.FunctionId)
+	a.log.Infof("get function info in goroutine, gid: %d, functionId: %d from db: %s", in.Gid, in.FunctionId, dbpath)
+
+	functionInfo, err := a.uc.GetFunctionInfoInGoroutine(dbpath, in.Gid, in.FunctionId)
 	if err != nil {
 		return nil, err
 	}
@@ -429,18 +503,41 @@ func (a *AnalysisService) GetFunctionInfoInGoroutine(ctx context.Context, in *v1
 }
 
 func (a *AnalysisService) GetModuleNames(ctx context.Context, in *v1.GetModuleNamesReq) (*v1.GetModuleNamesReply, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := a.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// 设置默认采样数量
 	maxSamples := in.MaxSamples
 	if maxSamples <= 0 {
 		maxSamples = 5000 // 默认采样5000条记录
 	}
 
-	moduleNames, err := a.uc.GetModuleNames(in.Dbpath, maxSamples)
+	moduleNames, err := a.uc.GetModuleNames(dbPath, maxSamples)
 	if err != nil {
 		return nil, err
 	}
 
 	return &v1.GetModuleNamesReply{
 		ModuleNames: moduleNames,
+	}, nil
+}
+
+// Session管理相关方法
+func (a *AnalysisService) GetAnalysisPath(ctx context.Context, in *v1.GetAnalysisPathReq) (*v1.GetAnalysisPathReply, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, exists := session.GetDBPathFromGRPCContext(ctx)
+	return &v1.GetAnalysisPathReply{
+		Dbpath: dbPath,
+		Exists: exists,
+	}, nil
+}
+
+func (a *AnalysisService) ClearSession(ctx context.Context, in *v1.ClearSessionReq) (*v1.ClearSessionReply, error) {
+	// 这个方法通过grpc-gateway调用时，实际的session清除由HTTP处理器完成
+	return &v1.ClearSessionReply{
+		Success: true,
 	}, nil
 }

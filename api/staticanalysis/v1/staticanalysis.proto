@@ -37,58 +37,8 @@ service StaticAnalysis {
       body: "*"
     };
   }
-  
-  
-  // 获取函数调用关系分析
-  rpc GetFunctionAnalysis(GetFunctionAnalysisReq) returns (GetFunctionAnalysisReply) {
-    option (google.api.http) = {
-      post: "/api/static/function/analysis"
-      body: "*"
-    };
-  }
 
-  // 获取函数调用关系图
-  rpc GetFunctionCallGraph(GetFunctionCallGraphReq) returns (GetFunctionCallGraphReply) {
-    option (google.api.http) = {
-      get: "/api/static/function/{function_key}/graph"
-      additional_bindings {
-        get: "/api/static/function/graph"
-        response_body: "*"
-      }
-    };
-  }
 
-  // 获取GitLab仓库列表
-  rpc ListGitLabRepositories(ListGitLabRepositoriesRequest) returns (ListGitLabRepositoriesResponse) {
-    option (google.api.http) = {
-      get: "/api/static/gitlab/repositories"
-    };
-  }
-
-  // 克隆GitLab仓库
-  rpc CloneGitLabRepository(CloneGitLabRepositoryRequest) returns (CloneGitLabRepositoryResponse) {
-    option (google.api.http) = {
-      post: "/api/static/gitlab/clone"
-      body: "*"
-    };
-  }
-  
-  // 分页获取包依赖关系
-  rpc GetPackageDependencies(GetPackageDependenciesRequest) returns (GetPackageDependenciesResponse) {
-    option (google.api.http) = {
-      post: "/api/static/package-dependencies"
-      body: "*"
-    };
-  }
-  
-  // 分页获取热点函数
-  rpc GetHotFunctions(GetHotFunctionsRequest) returns (GetHotFunctionsResponse) {
-    option (google.api.http) = {
-      post: "/api/static/hot-functions"
-      body: "*"
-    };
-  }
-  
   // 模糊搜索函数
   rpc SearchFunctions(SearchFunctionsRequest) returns (SearchFunctionsResponse) {
     option (google.api.http) = {
@@ -96,41 +46,59 @@ service StaticAnalysis {
       body: "*"
     };
   }
-  
-  // 获取函数上游调用关系
-  rpc GetFunctionUpstream(GetFunctionUpstreamRequest) returns (GetFunctionUpstreamResponse) {
+
+  // ================ 可视化分析接口 ================
+
+  // 获取全局统计信息
+  rpc GetGlobalStatistics(GetGlobalStatisticsRequest) returns (GetGlobalStatisticsResponse) {
     option (google.api.http) = {
-      post: "/api/static/function-upstream"
-      body: "*"
+      get: "/api/static/viz/statistics"
     };
   }
-  
-  // 获取函数下游调用关系
-  rpc GetFunctionDownstream(GetFunctionDownstreamRequest) returns (GetFunctionDownstreamResponse) {
+
+  // 获取调用图数据
+  rpc GetCallGraph(GetCallGraphRequest) returns (GetCallGraphResponse) {
     option (google.api.http) = {
-      post: "/api/static/function-downstream"
-      body: "*"
-    };
-  }
-  
-  // 获取函数全链路调用关系
-  rpc GetFunctionFullChain(GetFunctionFullChainRequest) returns (GetFunctionFullChainResponse) {
-    option (google.api.http) = {
-      post: "/api/static/function-fullchain"
+      post: "/api/static/viz/callgraph"
       body: "*"
     };
   }
 
-  
-  // 获取静态分析树状图数据
-  rpc GetTreeGraph (GetTreeGraphReq) returns (GetTreeGraphReply) {
+  // 获取包依赖关系
+  rpc GetPackageDependencies(GetPackageDependenciesRequest) returns (GetPackageDependenciesResponse) {
     option (google.api.http) = {
-      post: "/api/static/tree-graph"
+      get: "/api/static/viz/packages"
+    };
+  }
+
+  // 获取热点函数分析
+  rpc GetHotFunctions(GetHotFunctionsRequest) returns (GetHotFunctionsResponse) {
+    option (google.api.http) = {
+      get: "/api/static/viz/hotfunctions"
+    };
+  }
+
+  // 获取函数详细信息
+  rpc GetFunctionDetails(GetFunctionDetailsRequest) returns (GetFunctionDetailsResponse) {
+    option (google.api.http) = {
+      get: "/api/static/viz/function/{function_key}"
+    };
+  }
+
+  // 获取函数调用路径
+  rpc GetFunctionCallPaths(GetFunctionCallPathsRequest) returns (GetFunctionCallPathsResponse) {
+    option (google.api.http) = {
+      post: "/api/static/viz/callpaths"
       body: "*"
     };
   }
-  
-  // GetFunctionMindMap API 已删除 - 已替换为树形表格功能
+
+  // 获取Init函数列表
+  rpc GetInitFunctions(GetInitFunctionsRequest) returns (GetInitFunctionsResponse) {
+    option (google.api.http) = {
+      get: "/api/static/viz/initfunctions"
+    };
+  }
 }
 
 // 获取静态分析数据库文件列表请求
@@ -181,164 +149,15 @@ message AnalyzeDbFileRequest {
   string db_path = 1;
 }
 
-// 包依赖关系
-message PackageDependency {
-  string source = 1;
-  string target = 2;
-  int32 count = 3;
-}
-
-// 热点函数
-message HotFunction {
-  string key = 1;         // 函数唯一标识
-  string name = 2;        // 函数名称
-  string package = 3;     // 包名
-  int32 call_count = 4;   // 调用次数
-}
 
 // 分析数据库文件响应
 message AnalyzeDbFileResponse {
   int32 total_functions = 1;
   int32 total_calls = 2;
   int32 total_packages = 3;
-  repeated PackageDependency package_dependencies = 4;
-  repeated HotFunction hot_functions = 5;
 }
 
-// 获取热点函数的请求
-message GetHotFunctionsReq {
-  string sort_by = 1; // 排序方式: "calls" 或 "time"
-}
 
-// 获取热点函数的响应
-message GetHotFunctionsReply {
-  message HotFunction {
-    string name = 1;     // 函数名称
-    string package = 2;  // 包名
-    int32 call_count = 3; // 调用次数
-    string total_time = 4; // 总耗时
-    string avg_time = 5;   // 平均耗时
-  }
-  repeated HotFunction functions = 1; // 热点函数列表
-}
-
-// 获取函数调用关系分析的请求
-message GetFunctionAnalysisReq {
-  string functionName = 1; // 函数名称
-  string type = 2;         // 查询类型: "caller" 或 "callee"
-  string path = 3;         // 项目路径
-}
-
-// 获取函数调用关系分析的响应
-message GetFunctionAnalysisReply {
-  message FunctionNode {
-    string id = 1;           // 节点ID
-    string name = 2;         // 函数名称
-    string package = 3;      // 包名
-    int32 call_count = 4;    // 调用次数
-    string avg_time = 5;     // 平均耗时
-    repeated FunctionNode children = 6; // 子节点
-  }
-  
-  repeated FunctionNode callData = 1; // 调用关系数据
-}
-
-// 获取函数调用关系图的请求
-message GetFunctionCallGraphReq {
-  string function_key = 1; // 函数唯一标识符(短格式key)
-  int32 depth = 2;          // 调用深度，默认为2
-  string direction = 3;     // 方向: "caller"(调用者), "callee"(被调用), "both"(双向)
-}
-
-// 获取函数调用关系图的响应
-message GetFunctionCallGraphReply {
-  message GraphNode {
-    string key = 1;          // 函数唯一标识符(短格式key)
-    string name = 2;         // 函数名称
-    string package = 3;      // 包名
-    int32 call_count = 4;    // 调用次数
-    string avg_time = 5;     // 平均耗时
-    string node_type = 6;    // 节点类型: "root", "caller", "callee"
-  }
-  
-  message GraphEdge {
-    string source = 1;       // 源节点Key
-    string target = 2;       // 目标节点Key
-    string label = 3;        // 边标签
-    string edge_type = 4;    // 边类型: "caller_to_root", "root_to_callee"
-  }
-  
-  repeated GraphNode nodes = 1; // 图节点
-  repeated GraphEdge edges = 2; // 图边
-}
-
-// GitLab仓库信息
-message GitLabRepository {
-  int32 id = 1;                // 仓库ID
-  string name = 2;             // 仓库名称
-  string full_name = 3;        // 完整名称
-  string description = 4;      // 描述
-  string default_branch = 5;   // 默认分支
-  string web_url = 6;          // Web URL
-  string ssh_url = 7;          // SSH URL
-  string http_url = 8;         // HTTP URL
-  string visibility = 9;       // 可见性
-  string last_activity = 10;   // 最后活动时间
-}
-
-// 获取GitLab仓库列表请求
-message ListGitLabRepositoriesRequest {
-}
-
-// 获取GitLab仓库列表响应
-message ListGitLabRepositoriesResponse {
-  repeated GitLabRepository repositories = 1;
-}
-
-// 克隆GitLab仓库请求
-message CloneGitLabRepositoryRequest {
-  string repo_url = 1;  // 仓库URL
-  string branch = 2;    // 分支名称
-}
-
-// 克隆GitLab仓库响应
-message CloneGitLabRepositoryResponse {
-  bool success = 1;     // 是否成功
-  string message = 2;   // 消息
-  string target_dir = 3; // 目标目录
-}
-
-// 分页获取包依赖关系请求
-message GetPackageDependenciesRequest {
-  string db_path = 1;     // 数据库路径
-  int32 page = 2;         // 页码
-  int32 page_size = 3;    // 每页大小
-}
-
-// 分页获取包依赖关系响应
-message GetPackageDependenciesResponse {
-  repeated PackageDependency dependencies = 1; // 包依赖关系列表
-  int32 total = 2;                            // 总记录数
-  int32 page = 3;                             // 当前页码
-  int32 page_size = 4;                        // 每页大小
-  int32 page_count = 5;                       // 总页数
-}
-
-// 分页获取热点函数请求
-message GetHotFunctionsRequest {
-  string db_path = 1;     // 数据库路径
-  int32 page = 2;         // 页码
-  int32 page_size = 3;    // 每页大小
-}
-
-// 分页获取热点函数响应
-message GetHotFunctionsResponse {
-  repeated HotFunction functions = 1; // 热点函数列表
-  int32 total = 2;                   // 总记录数
-  int32 page = 3;                    // 当前页码
-  int32 page_size = 4;               // 每页大小
-  int32 page_count = 5;              // 总页数
-}
 
 // 函数信息
 message FunctionInfo {
@@ -350,8 +169,7 @@ message FunctionInfo {
 
 // 模糊搜索函数请求
 message SearchFunctionsRequest {
-  string db_path = 1;     // 数据库路径
-  string query = 2;       // 搜索关键词
+  string query = 1;       // 搜索关键词
 }
 
 // 模糊搜索函数响应
@@ -359,79 +177,230 @@ message SearchFunctionsResponse {
   repeated FunctionInfo functions = 1; // 匹配的函数列表
 }
 
-// 获取函数上游调用关系请求
-message GetFunctionUpstreamRequest {
-  string db_path = 1;         // 数据库路径
-  string function_key = 2;    // 函数唯一标识符(短格式key)
-  string function_package = 3; // 函数包名
-  int32 depth = 4;            // 查询深度，默认为2
+// ================ 可视化分析相关消息定义 ================
+
+// 获取全局统计信息请求
+message GetGlobalStatisticsRequest {
+}
+
+// 全局统计信息响应
+message GetGlobalStatisticsResponse {
+  int32 total_functions = 1;
+  int32 total_packages = 2;
+  int32 total_edges = 3;
+  float avg_call_depth = 4;
+  int32 max_call_depth = 5;
+  repeated HotFunction hot_functions = 6;
+  repeated PackageStatistic package_stats = 7;
+}
+
+// 热点函数信息
+message HotFunction {
+  string key = 1;
+  string name = 2;
+  string package = 3;
+  int32 caller_count = 4;    // 被调用次数
+  int32 callee_count = 5;    // 调用其他函数次数
+  float importance_score = 6; // 重要性评分
+}
+
+// 包统计信息
+message PackageStatistic {
+  string package_name = 1;
+  int32 function_count = 2;
+  int32 internal_calls = 3;   // 包内调用
+  int32 external_calls = 4;   // 跨包调用
+  float complexity_score = 5; // 复杂度评分
+}
+
+// 获取调用图请求
+message GetCallGraphRequest {
+  string root_function = 1;   // 根函数（可选，为空则返回全图）
+  int32 max_depth = 2;        // 最大深度（默认3）
+  bool include_external = 3;  // 是否包含外部包调用
+}
+
+// 调用图响应
+message GetCallGraphResponse {
+  repeated GraphNode nodes = 1;
+  repeated GraphEdge edges = 2;
+  int32 total_nodes = 3;
+  int32 total_edges = 4;
+  string root_node = 5;       // 根节点ID
 }
 
 // 图节点
 message GraphNode {
-  string key = 1;          // 函数唯一标识符(短格式key)
-  string name = 2;         // 函数名称
-  string package = 3;      // 包名
-  int32 call_count = 4;    // 调用次数
+  string id = 1;              // 节点唯一ID (function key)
+  string label = 2;           // 显示标签 (function name)
+  string package = 3;         // 包名
+  string full_name = 4;       // 完整函数名
+  string signature = 5;       // 函数签名
+  string doc = 6;             // 文档
+  NodePosition position = 7;   // 位置信息
+  NodeMetrics metrics = 8;     // 度量信息
+  NodeType type = 9;          // 节点类型
+}
+
+// 节点位置信息
+message NodePosition {
+  string filename = 1;
+  int32 start_line = 2;
+  int32 end_line = 3;
+}
+
+// 节点度量信息
+message NodeMetrics {
+  int32 caller_count = 1;     // 调用者数量
+  int32 callee_count = 2;     // 被调用者数量
+  int32 depth_level = 3;      // 调用深度
+  float centrality = 4;       // 中心性评分
+}
+
+// 节点类型
+enum NodeType {
+  NORMAL = 0;
+  ENTRY_POINT = 1;    // 入口函数
+  HOT_SPOT = 2;       // 热点函数
+  EXTERNAL = 3;       // 外部函数
 }
 
 // 图边
 message GraphEdge {
-  string source = 1;       // 源节点Key
-  string target = 2;       // 目标节点Key
-  int32 value = 3;         // 边权重
+  string id = 1;              // 边唯一ID
+  string source = 2;          // 源节点ID
+  string target = 3;          // 目标节点ID
+  string call_type = 4;       // 调用类型
+  int32 call_count = 5;       // 调用次数（动态分析时使用）
+  repeated CallSite call_sites = 6; // 调用点信息
 }
 
-// 获取函数上游调用关系响应
-message GetFunctionUpstreamResponse {
-  repeated GraphNode nodes = 1; // 图节点
-  repeated GraphEdge edges = 2; // 图边
+// 调用点信息
+message CallSite {
+  string file = 1;
+  int32 line = 2;
 }
 
-// 获取函数下游调用关系请求
-message GetFunctionDownstreamRequest {
-  string db_path = 1;         // 数据库路径
-  string function_key = 2;    // 函数唯一标识符(短格式key)
-  string function_package = 3; // 函数包名
-  int32 depth = 4;            // 查询深度，默认为2
+// 获取包依赖关系请求
+message GetPackageDependenciesRequest {
 }
 
-// 获取函数下游调用关系响应
-message GetFunctionDownstreamResponse {
-  repeated GraphNode nodes = 1; // 图节点
-  repeated GraphEdge edges = 2; // 图边
+// 包依赖关系响应
+message GetPackageDependenciesResponse {
+  repeated PackageNode packages = 1;
+  repeated PackageDependency dependencies = 2;
 }
 
-// 获取函数全链路调用关系请求
-message GetFunctionFullChainRequest {
-  string db_path = 1;      // 数据库路径
-  string function_key = 2; // 函数唯一标识符(短格式key)
+// 包节点
+message PackageNode {
+  string name = 1;
+  int32 function_count = 2;
+  int32 internal_call_count = 3;
+  int32 external_call_count = 4;
+  float complexity = 5;
+  repeated string sub_packages = 6;  // 子包列表
 }
 
-// 获取函数全链路调用关系响应
-message GetFunctionFullChainResponse {
-  repeated GraphNode nodes = 1; // 图节点
-  repeated GraphEdge edges = 2; // 图边
+// 包依赖关系
+message PackageDependency {
+  string source_package = 1;
+  string target_package = 2;
+  int32 call_count = 3;         // 调用次数
+  float dependency_strength = 4; // 依赖强度
+  repeated string call_functions = 5; // 涉及的调用函数
 }
 
-// 获取树状图请求
-message GetTreeGraphReq {
-  string db_path = 1; // 数据库路径
-  string function_key = 2; // 函数唯一标识符(短格式key)
+// 获取热点函数请求
+message GetHotFunctionsRequest {
+  int32 limit = 1;            // 返回数量限制（默认10）
+  string sort_by = 2;         // 排序方式：caller_count, callee_count, importance
 }
 
-
-// 树状图节点
-message TreeNode {
-  string name = 1; // 节点名称
-  int64 value = 2; // 值，只在tooltip中显示
-  bool collapsed = 3; // 是否默认折叠
-  repeated TreeNode children = 4; // 子节点
+// 热点函数响应
+message GetHotFunctionsResponse {
+  repeated DetailedHotFunction functions = 1;
 }
 
-// 获取树状图响应
-message GetTreeGraphReply {
-  TreeNode root = 1; // 根节点
+// 详细热点函数信息
+message DetailedHotFunction {
+  string key = 1;
+  string name = 2;
+  string package = 3;
+  string signature = 4;
+  string doc = 5;
+  NodePosition position = 6;
+  int32 caller_count = 7;
+  int32 callee_count = 8;
+  float importance_score = 9;
+  repeated string top_callers = 10;   // 主要调用者
+  repeated string top_callees = 11;   // 主要被调用者
 }
 
-// 思维导图相关message已删除 - 已替换为树形表格功能 
+// 获取函数详细信息请求
+message GetFunctionDetailsRequest {
+  string function_key = 1;
+}
+
+// 函数详细信息响应
+message GetFunctionDetailsResponse {
+  FunctionDetail function = 1;
+  repeated FunctionDetail callers = 2;    // 调用者列表
+  repeated FunctionDetail callees = 3;    // 被调用者列表
+}
+
+// 函数详细信息
+message FunctionDetail {
+  string key = 1;
+  string name = 2;
+  string package = 3;
+  string full_name = 4;
+  string signature = 5;
+  string doc = 6;
+  NodePosition position = 7;
+  NodeMetrics metrics = 8;
+  repeated CallSite call_sites = 9;       // 如果是调用关系，显示调用点
+}
+
+// 获取函数调用路径请求
+message GetFunctionCallPathsRequest {
+  string from_function = 1;   // 起始函数
+  string to_function = 2;     // 目标函数
+  int32 max_paths = 3;        // 最大路径数（默认5）
+  int32 max_depth = 4;        // 最大深度（默认10）
+}
+
+// 函数调用路径响应
+message GetFunctionCallPathsResponse {
+  repeated CallPath paths = 1;
+  bool has_more = 2;          // 是否还有更多路径
+}
+
+// 调用路径
+message CallPath {
+  repeated string function_keys = 1;  // 路径上的函数key序列
+  int32 path_length = 2;             // 路径长度
+  float confidence = 3;              // 路径可信度
+}
+
+// 获取Init函数列表请求
+message GetInitFunctionsRequest {
+  int32 limit = 1;            // 返回数量限制（默认50）
+  string package_filter = 2;  // 包名过滤器（可选）
+}
+
+// 获取Init函数列表响应
+message GetInitFunctionsResponse {
+  repeated InitFunction init_functions = 1;
+  int32 total_count = 2;      // 总数量
+}
+
+// Init函数信息
+message InitFunction {
+  string key = 1;             // 函数唯一标识
+  string name = 2;            // 函数名称（通常是 "init"）
+  string package = 3;         // 所属包名
+  NodePosition position = 4;   // 位置信息
+  string signature = 5;       // 函数签名
+  string doc = 6;             // 文档注释
+  string full_name = 7;       // 完整函数名
+}

@@ -70,6 +70,26 @@ func (fnu *FuncNodeUpdate) SetNillablePkg(s *string) *FuncNodeUpdate {
 	return fnu
 }
 
+// SetPkgPath sets the "pkg_path" field.
+func (fnu *FuncNodeUpdate) SetPkgPath(s string) *FuncNodeUpdate {
+	fnu.mutation.SetPkgPath(s)
+	return fnu
+}
+
+// SetNillablePkgPath sets the "pkg_path" field if the given value is not nil.
+func (fnu *FuncNodeUpdate) SetNillablePkgPath(s *string) *FuncNodeUpdate {
+	if s != nil {
+		fnu.SetPkgPath(*s)
+	}
+	return fnu
+}
+
+// ClearPkgPath clears the value of the "pkg_path" field.
+func (fnu *FuncNodeUpdate) ClearPkgPath() *FuncNodeUpdate {
+	fnu.mutation.ClearPkgPath()
+	return fnu
+}
+
 // SetName sets the "name" field.
 func (fnu *FuncNodeUpdate) SetName(s string) *FuncNodeUpdate {
 	fnu.mutation.SetName(s)
@@ -81,6 +101,120 @@ func (fnu *FuncNodeUpdate) SetNillableName(s *string) *FuncNodeUpdate {
 	if s != nil {
 		fnu.SetName(*s)
 	}
+	return fnu
+}
+
+// SetFilename sets the "filename" field.
+func (fnu *FuncNodeUpdate) SetFilename(s string) *FuncNodeUpdate {
+	fnu.mutation.SetFilename(s)
+	return fnu
+}
+
+// SetNillableFilename sets the "filename" field if the given value is not nil.
+func (fnu *FuncNodeUpdate) SetNillableFilename(s *string) *FuncNodeUpdate {
+	if s != nil {
+		fnu.SetFilename(*s)
+	}
+	return fnu
+}
+
+// ClearFilename clears the value of the "filename" field.
+func (fnu *FuncNodeUpdate) ClearFilename() *FuncNodeUpdate {
+	fnu.mutation.ClearFilename()
+	return fnu
+}
+
+// SetStartLine sets the "start_line" field.
+func (fnu *FuncNodeUpdate) SetStartLine(i int) *FuncNodeUpdate {
+	fnu.mutation.ResetStartLine()
+	fnu.mutation.SetStartLine(i)
+	return fnu
+}
+
+// SetNillableStartLine sets the "start_line" field if the given value is not nil.
+func (fnu *FuncNodeUpdate) SetNillableStartLine(i *int) *FuncNodeUpdate {
+	if i != nil {
+		fnu.SetStartLine(*i)
+	}
+	return fnu
+}
+
+// AddStartLine adds i to the "start_line" field.
+func (fnu *FuncNodeUpdate) AddStartLine(i int) *FuncNodeUpdate {
+	fnu.mutation.AddStartLine(i)
+	return fnu
+}
+
+// ClearStartLine clears the value of the "start_line" field.
+func (fnu *FuncNodeUpdate) ClearStartLine() *FuncNodeUpdate {
+	fnu.mutation.ClearStartLine()
+	return fnu
+}
+
+// SetEndLine sets the "end_line" field.
+func (fnu *FuncNodeUpdate) SetEndLine(i int) *FuncNodeUpdate {
+	fnu.mutation.ResetEndLine()
+	fnu.mutation.SetEndLine(i)
+	return fnu
+}
+
+// SetNillableEndLine sets the "end_line" field if the given value is not nil.
+func (fnu *FuncNodeUpdate) SetNillableEndLine(i *int) *FuncNodeUpdate {
+	if i != nil {
+		fnu.SetEndLine(*i)
+	}
+	return fnu
+}
+
+// AddEndLine adds i to the "end_line" field.
+func (fnu *FuncNodeUpdate) AddEndLine(i int) *FuncNodeUpdate {
+	fnu.mutation.AddEndLine(i)
+	return fnu
+}
+
+// ClearEndLine clears the value of the "end_line" field.
+func (fnu *FuncNodeUpdate) ClearEndLine() *FuncNodeUpdate {
+	fnu.mutation.ClearEndLine()
+	return fnu
+}
+
+// SetSignature sets the "signature" field.
+func (fnu *FuncNodeUpdate) SetSignature(s string) *FuncNodeUpdate {
+	fnu.mutation.SetSignature(s)
+	return fnu
+}
+
+// SetNillableSignature sets the "signature" field if the given value is not nil.
+func (fnu *FuncNodeUpdate) SetNillableSignature(s *string) *FuncNodeUpdate {
+	if s != nil {
+		fnu.SetSignature(*s)
+	}
+	return fnu
+}
+
+// ClearSignature clears the value of the "signature" field.
+func (fnu *FuncNodeUpdate) ClearSignature() *FuncNodeUpdate {
+	fnu.mutation.ClearSignature()
+	return fnu
+}
+
+// SetSourceCode sets the "source_code" field.
+func (fnu *FuncNodeUpdate) SetSourceCode(s string) *FuncNodeUpdate {
+	fnu.mutation.SetSourceCode(s)
+	return fnu
+}
+
+// SetNillableSourceCode sets the "source_code" field if the given value is not nil.
+func (fnu *FuncNodeUpdate) SetNillableSourceCode(s *string) *FuncNodeUpdate {
+	if s != nil {
+		fnu.SetSourceCode(*s)
+	}
+	return fnu
+}
+
+// ClearSourceCode clears the value of the "source_code" field.
+func (fnu *FuncNodeUpdate) ClearSourceCode() *FuncNodeUpdate {
+	fnu.mutation.ClearSourceCode()
 	return fnu
 }
 
@@ -190,8 +324,50 @@ func (fnu *FuncNodeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := fnu.mutation.Pkg(); ok {
 		_spec.SetField(funcnode.FieldPkg, field.TypeString, value)
 	}
+	if value, ok := fnu.mutation.PkgPath(); ok {
+		_spec.SetField(funcnode.FieldPkgPath, field.TypeString, value)
+	}
+	if fnu.mutation.PkgPathCleared() {
+		_spec.ClearField(funcnode.FieldPkgPath, field.TypeString)
+	}
 	if value, ok := fnu.mutation.Name(); ok {
 		_spec.SetField(funcnode.FieldName, field.TypeString, value)
+	}
+	if value, ok := fnu.mutation.Filename(); ok {
+		_spec.SetField(funcnode.FieldFilename, field.TypeString, value)
+	}
+	if fnu.mutation.FilenameCleared() {
+		_spec.ClearField(funcnode.FieldFilename, field.TypeString)
+	}
+	if value, ok := fnu.mutation.StartLine(); ok {
+		_spec.SetField(funcnode.FieldStartLine, field.TypeInt, value)
+	}
+	if value, ok := fnu.mutation.AddedStartLine(); ok {
+		_spec.AddField(funcnode.FieldStartLine, field.TypeInt, value)
+	}
+	if fnu.mutation.StartLineCleared() {
+		_spec.ClearField(funcnode.FieldStartLine, field.TypeInt)
+	}
+	if value, ok := fnu.mutation.EndLine(); ok {
+		_spec.SetField(funcnode.FieldEndLine, field.TypeInt, value)
+	}
+	if value, ok := fnu.mutation.AddedEndLine(); ok {
+		_spec.AddField(funcnode.FieldEndLine, field.TypeInt, value)
+	}
+	if fnu.mutation.EndLineCleared() {
+		_spec.ClearField(funcnode.FieldEndLine, field.TypeInt)
+	}
+	if value, ok := fnu.mutation.Signature(); ok {
+		_spec.SetField(funcnode.FieldSignature, field.TypeString, value)
+	}
+	if fnu.mutation.SignatureCleared() {
+		_spec.ClearField(funcnode.FieldSignature, field.TypeString)
+	}
+	if value, ok := fnu.mutation.SourceCode(); ok {
+		_spec.SetField(funcnode.FieldSourceCode, field.TypeString, value)
+	}
+	if fnu.mutation.SourceCodeCleared() {
+		_spec.ClearField(funcnode.FieldSourceCode, field.TypeString)
 	}
 	if value, ok := fnu.mutation.CreatedAt(); ok {
 		_spec.SetField(funcnode.FieldCreatedAt, field.TypeTime, value)
@@ -261,6 +437,26 @@ func (fnuo *FuncNodeUpdateOne) SetNillablePkg(s *string) *FuncNodeUpdateOne {
 	return fnuo
 }
 
+// SetPkgPath sets the "pkg_path" field.
+func (fnuo *FuncNodeUpdateOne) SetPkgPath(s string) *FuncNodeUpdateOne {
+	fnuo.mutation.SetPkgPath(s)
+	return fnuo
+}
+
+// SetNillablePkgPath sets the "pkg_path" field if the given value is not nil.
+func (fnuo *FuncNodeUpdateOne) SetNillablePkgPath(s *string) *FuncNodeUpdateOne {
+	if s != nil {
+		fnuo.SetPkgPath(*s)
+	}
+	return fnuo
+}
+
+// ClearPkgPath clears the value of the "pkg_path" field.
+func (fnuo *FuncNodeUpdateOne) ClearPkgPath() *FuncNodeUpdateOne {
+	fnuo.mutation.ClearPkgPath()
+	return fnuo
+}
+
 // SetName sets the "name" field.
 func (fnuo *FuncNodeUpdateOne) SetName(s string) *FuncNodeUpdateOne {
 	fnuo.mutation.SetName(s)
@@ -272,6 +468,120 @@ func (fnuo *FuncNodeUpdateOne) SetNillableName(s *string) *FuncNodeUpdateOne {
 	if s != nil {
 		fnuo.SetName(*s)
 	}
+	return fnuo
+}
+
+// SetFilename sets the "filename" field.
+func (fnuo *FuncNodeUpdateOne) SetFilename(s string) *FuncNodeUpdateOne {
+	fnuo.mutation.SetFilename(s)
+	return fnuo
+}
+
+// SetNillableFilename sets the "filename" field if the given value is not nil.
+func (fnuo *FuncNodeUpdateOne) SetNillableFilename(s *string) *FuncNodeUpdateOne {
+	if s != nil {
+		fnuo.SetFilename(*s)
+	}
+	return fnuo
+}
+
+// ClearFilename clears the value of the "filename" field.
+func (fnuo *FuncNodeUpdateOne) ClearFilename() *FuncNodeUpdateOne {
+	fnuo.mutation.ClearFilename()
+	return fnuo
+}
+
+// SetStartLine sets the "start_line" field.
+func (fnuo *FuncNodeUpdateOne) SetStartLine(i int) *FuncNodeUpdateOne {
+	fnuo.mutation.ResetStartLine()
+	fnuo.mutation.SetStartLine(i)
+	return fnuo
+}
+
+// SetNillableStartLine sets the "start_line" field if the given value is not nil.
+func (fnuo *FuncNodeUpdateOne) SetNillableStartLine(i *int) *FuncNodeUpdateOne {
+	if i != nil {
+		fnuo.SetStartLine(*i)
+	}
+	return fnuo
+}
+
+// AddStartLine adds i to the "start_line" field.
+func (fnuo *FuncNodeUpdateOne) AddStartLine(i int) *FuncNodeUpdateOne {
+	fnuo.mutation.AddStartLine(i)
+	return fnuo
+}
+
+// ClearStartLine clears the value of the "start_line" field.
+func (fnuo *FuncNodeUpdateOne) ClearStartLine() *FuncNodeUpdateOne {
+	fnuo.mutation.ClearStartLine()
+	return fnuo
+}
+
+// SetEndLine sets the "end_line" field.
+func (fnuo *FuncNodeUpdateOne) SetEndLine(i int) *FuncNodeUpdateOne {
+	fnuo.mutation.ResetEndLine()
+	fnuo.mutation.SetEndLine(i)
+	return fnuo
+}
+
+// SetNillableEndLine sets the "end_line" field if the given value is not nil.
+func (fnuo *FuncNodeUpdateOne) SetNillableEndLine(i *int) *FuncNodeUpdateOne {
+	if i != nil {
+		fnuo.SetEndLine(*i)
+	}
+	return fnuo
+}
+
+// AddEndLine adds i to the "end_line" field.
+func (fnuo *FuncNodeUpdateOne) AddEndLine(i int) *FuncNodeUpdateOne {
+	fnuo.mutation.AddEndLine(i)
+	return fnuo
+}
+
+// ClearEndLine clears the value of the "end_line" field.
+func (fnuo *FuncNodeUpdateOne) ClearEndLine() *FuncNodeUpdateOne {
+	fnuo.mutation.ClearEndLine()
+	return fnuo
+}
+
+// SetSignature sets the "signature" field.
+func (fnuo *FuncNodeUpdateOne) SetSignature(s string) *FuncNodeUpdateOne {
+	fnuo.mutation.SetSignature(s)
+	return fnuo
+}
+
+// SetNillableSignature sets the "signature" field if the given value is not nil.
+func (fnuo *FuncNodeUpdateOne) SetNillableSignature(s *string) *FuncNodeUpdateOne {
+	if s != nil {
+		fnuo.SetSignature(*s)
+	}
+	return fnuo
+}
+
+// ClearSignature clears the value of the "signature" field.
+func (fnuo *FuncNodeUpdateOne) ClearSignature() *FuncNodeUpdateOne {
+	fnuo.mutation.ClearSignature()
+	return fnuo
+}
+
+// SetSourceCode sets the "source_code" field.
+func (fnuo *FuncNodeUpdateOne) SetSourceCode(s string) *FuncNodeUpdateOne {
+	fnuo.mutation.SetSourceCode(s)
+	return fnuo
+}
+
+// SetNillableSourceCode sets the "source_code" field if the given value is not nil.
+func (fnuo *FuncNodeUpdateOne) SetNillableSourceCode(s *string) *FuncNodeUpdateOne {
+	if s != nil {
+		fnuo.SetSourceCode(*s)
+	}
+	return fnuo
+}
+
+// ClearSourceCode clears the value of the "source_code" field.
+func (fnuo *FuncNodeUpdateOne) ClearSourceCode() *FuncNodeUpdateOne {
+	fnuo.mutation.ClearSourceCode()
 	return fnuo
 }
 
@@ -411,8 +721,50 @@ func (fnuo *FuncNodeUpdateOne) sqlSave(ctx context.Context) (_node *FuncNode, er
 	if value, ok := fnuo.mutation.Pkg(); ok {
 		_spec.SetField(funcnode.FieldPkg, field.TypeString, value)
 	}
+	if value, ok := fnuo.mutation.PkgPath(); ok {
+		_spec.SetField(funcnode.FieldPkgPath, field.TypeString, value)
+	}
+	if fnuo.mutation.PkgPathCleared() {
+		_spec.ClearField(funcnode.FieldPkgPath, field.TypeString)
+	}
 	if value, ok := fnuo.mutation.Name(); ok {
 		_spec.SetField(funcnode.FieldName, field.TypeString, value)
+	}
+	if value, ok := fnuo.mutation.Filename(); ok {
+		_spec.SetField(funcnode.FieldFilename, field.TypeString, value)
+	}
+	if fnuo.mutation.FilenameCleared() {
+		_spec.ClearField(funcnode.FieldFilename, field.TypeString)
+	}
+	if value, ok := fnuo.mutation.StartLine(); ok {
+		_spec.SetField(funcnode.FieldStartLine, field.TypeInt, value)
+	}
+	if value, ok := fnuo.mutation.AddedStartLine(); ok {
+		_spec.AddField(funcnode.FieldStartLine, field.TypeInt, value)
+	}
+	if fnuo.mutation.StartLineCleared() {
+		_spec.ClearField(funcnode.FieldStartLine, field.TypeInt)
+	}
+	if value, ok := fnuo.mutation.EndLine(); ok {
+		_spec.SetField(funcnode.FieldEndLine, field.TypeInt, value)
+	}
+	if value, ok := fnuo.mutation.AddedEndLine(); ok {
+		_spec.AddField(funcnode.FieldEndLine, field.TypeInt, value)
+	}
+	if fnuo.mutation.EndLineCleared() {
+		_spec.ClearField(funcnode.FieldEndLine, field.TypeInt)
+	}
+	if value, ok := fnuo.mutation.Signature(); ok {
+		_spec.SetField(funcnode.FieldSignature, field.TypeString, value)
+	}
+	if fnuo.mutation.SignatureCleared() {
+		_spec.ClearField(funcnode.FieldSignature, field.TypeString)
+	}
+	if value, ok := fnuo.mutation.SourceCode(); ok {
+		_spec.SetField(funcnode.FieldSourceCode, field.TypeString, value)
+	}
+	if fnuo.mutation.SourceCodeCleared() {
+		_spec.ClearField(funcnode.FieldSourceCode, field.TypeString)
 	}
 	if value, ok := fnuo.mutation.CreatedAt(); ok {
 		_spec.SetField(funcnode.FieldCreatedAt, field.TypeTime, value)

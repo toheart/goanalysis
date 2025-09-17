@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,9 +12,8 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/toheart/goanalysis/api/staticanalysis/v1"
-	"github.com/toheart/goanalysis/internal/biz/callgraph/dos"
 	"github.com/toheart/goanalysis/internal/biz/entity"
-	"github.com/toheart/goanalysis/internal/biz/repo"
+	"github.com/toheart/goanalysis/internal/biz/session"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 	"google.golang.org/grpc"
 )
@@ -42,6 +42,15 @@ func NewStaticAnalysisService(uc *staticanalysis.StaticAnalysisBiz, logger log.L
 	go uc.ProcessAnalysisTasks()
 
 	return srv
+}
+
+// getDBPathFromContext 从context中获取数据库路径的辅助函数
+func (s *StaticAnalysisService) getDBPathFromContext(ctx context.Context) (string, error) {
+	dbPath, exists := session.GetDBPathFromGRPCContext(ctx)
+	if !exists {
+		return "", errors.New("database path not found in session, please set analysis path first")
+	}
+	return dbPath, nil
 }
 
 // GetStaticDbFiles 获取静态分析数据库文件列表
@@ -158,206 +167,13 @@ func (s *StaticAnalysisService) AnalyzeDbFile(ctx context.Context, req *v1.Analy
 	s.log.Infof("Database analysis completed, found %d functions, %d calls, %d packages",
 		result.TotalFunctions, result.TotalCalls, result.TotalPackages)
 
+	// 注意：数据库路径的session设置需要通过HTTP层处理，这里只是分析数据库内容
+	s.log.Infof("Analysis completed for database: %s", req.DbPath)
+
 	return &v1.AnalyzeDbFileResponse{
-		TotalFunctions:      int32(result.TotalFunctions),
-		TotalCalls:          int32(result.TotalCalls),
-		TotalPackages:       int32(result.TotalPackages),
-		PackageDependencies: nil, // 移除包依赖关系分析
-		HotFunctions:        nil, // 移除热点函数分析
-	}, nil
-}
-
-// GetHotFunctions 分页获取热点函数
-func (s *StaticAnalysisService) GetHotFunctions(ctx context.Context, req *v1.GetHotFunctionsRequest) (*v1.GetHotFunctionsResponse, error) {
-	s.log.Infof("Getting hot functions for db: %s, page: %d, pageSize: %d", req.DbPath, req.Page, req.PageSize)
-
-	// 验证文件是否存在
-	if _, err := os.Stat(req.DbPath); err != nil {
-		s.log.Errorf("Database file not found: %s", req.DbPath)
-		return nil, fmt.Errorf("database file not found: %s", req.DbPath)
-	}
-
-	// 获取数据库连接
-	funcNodeDB, err := s.uc.GetFuncNodeDB(req.DbPath)
-	if err != nil {
-		s.log.Errorf("Failed to get database connection: %v", err)
-		return nil, fmt.Errorf("Failed to get database connection: %v", err)
-	}
-
-	// 获取所有函数节点
-	nodes, err := funcNodeDB.GetAllFuncNodes()
-	if err != nil {
-		s.log.Errorf("Failed to get function nodes: %v", err)
-		return nil, fmt.Errorf("Failed to get function nodes: %v", err)
-	}
-
-	// 获取所有函数调用边
-	edges, err := funcNodeDB.GetAllFuncEdges()
-	if err != nil {
-		s.log.Errorf("Failed to get function edges: %v", err)
-		return nil, fmt.Errorf("Failed to get function edges: %v", err)
-	}
-
-	// 统计热点函数（被调用次数最多的函数）
-	funcCallCounts := make(map[string]int)
-	for _, edge := range edges {
-		funcCallCounts[edge.CalleeKey]++
-	}
-
-	// 创建一个函数键到函数节点的映射
-	funcNodeMap := make(map[string]*dos.FuncNode)
-	for _, node := range nodes {
-		funcNodeMap[node.Key] = node
-	}
-
-	// 将函数调用次数转换为热点函数列表
-	var hotFunctions []*v1.HotFunction
-	for key, count := range funcCallCounts {
-		if node, ok := funcNodeMap[key]; ok {
-			hotFunctions = append(hotFunctions, &v1.HotFunction{
-				Key:       key,
-				Name:      node.Name,
-				Package:   node.Pkg,
-				CallCount: int32(count),
-			})
-		}
-	}
-
-	// 按调用次数排序
-	sort.Slice(hotFunctions, func(i, j int) bool {
-		return hotFunctions[i].CallCount > hotFunctions[j].CallCount
-	})
-
-	// 计算总数
-	total := len(hotFunctions)
-
-	// 计算分页
-	page := int(req.Page)
-	pageSize := int(req.PageSize)
-
-	if page < 1 {
-		page = 1
-	}
-
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
-	// 计算起始和结束索引
-	startIndex := (page - 1) * pageSize
-	endIndex := startIndex + pageSize
-
-	if startIndex >= total {
-		startIndex = 0
-		endIndex = 0
-	}
-
-	if endIndex > total {
-		endIndex = total
-	}
-
-	// 获取当前页的数据
-	var pagedFunctions []*v1.HotFunction
-	if startIndex < endIndex {
-		pagedFunctions = hotFunctions[startIndex:endIndex]
-	}
-
-	s.log.Infof("Returning %d hot functions (total: %d)", len(pagedFunctions), total)
-
-	return &v1.GetHotFunctionsResponse{
-		Functions: pagedFunctions,
-		Total:     int32(total),
-		Page:      int32(page),
-		PageSize:  int32(pageSize),
-		PageCount: int32((total + pageSize - 1) / pageSize),
-	}, nil
-}
-
-// GetFunctionAnalysis 获取函数调用关系分析
-func (s *StaticAnalysisService) GetFunctionAnalysis(ctx context.Context, req *v1.GetFunctionAnalysisReq) (*v1.GetFunctionAnalysisReply, error) {
-	if req.FunctionName == "" {
-		s.log.Error("Function name cannot be empty")
-		return nil, fmt.Errorf("Function name cannot be empty")
-	}
-
-	// 验证查询类型
-	if req.Type != "" && req.Type != "caller" && req.Type != "callee" {
-		s.log.Errorf("Invalid query type: %s, should be 'caller' or 'callee'", req.Type)
-		return nil, fmt.Errorf("Invalid query type: %s, should be 'caller' or 'callee'", req.Type)
-	}
-
-	// 如果未指定类型，默认为 "callee"
-	queryType := req.Type
-	if queryType == "" {
-		queryType = "callee"
-	}
-
-	s.log.Infof("Analyzing %s relationships for function %s", queryType, req.FunctionName)
-	functionNodes, err := s.uc.GetFunctionAnalysis(req.FunctionName, queryType, req.Path)
-	if err != nil {
-		s.log.Errorf("Failed to get function relationship analysis: %v", err)
-		return nil, err
-	}
-
-	return &v1.GetFunctionAnalysisReply{
-		CallData: s.convertToProtoFunctionNodes(functionNodes),
-	}, nil
-}
-
-// GetFunctionCallGraph 获取函数调用关系图
-func (s *StaticAnalysisService) GetFunctionCallGraph(ctx context.Context, req *v1.GetFunctionCallGraphReq) (*v1.GetFunctionCallGraphReply, error) {
-	// 验证函数名称
-	if req.FunctionKey == "" {
-		s.log.Error("Function key cannot be empty")
-		return nil, fmt.Errorf("Function key cannot be empty")
-	}
-
-	// 设置默认值
-	depth := int(req.Depth)
-	if depth <= 0 {
-		depth = 2 // 默认深度为2
-	}
-
-	direction := req.Direction
-	if direction == "" {
-		direction = "both" // 默认双向
-	} else if direction != "caller" && direction != "callee" && direction != "both" {
-		s.log.Errorf("Invalid direction: %s, should be 'caller', 'callee' or 'both'", direction)
-		return nil, fmt.Errorf("Invalid direction: %s, should be 'caller', 'callee' or 'both'", direction)
-	}
-
-	s.log.Infof("Getting call graph for function %s, depth: %d, direction: %s", req.FunctionKey, depth, direction)
-	nodes, edges, err := s.uc.GetFunctionCallGraph(req.FunctionKey, depth, direction)
-	if err != nil {
-		s.log.Errorf("Failed to get function call graph: %v", err)
-		return nil, err
-	}
-
-	var protoNodes []*v1.GetFunctionCallGraphReply_GraphNode
-	for _, node := range nodes {
-		protoNodes = append(protoNodes, &v1.GetFunctionCallGraphReply_GraphNode{
-			Key:       node.ID,
-			Name:      node.Name,
-			Package:   node.Package,
-			CallCount: int32(node.CallCount),
-			AvgTime:   node.AvgTime,
-			NodeType:  node.NodeType,
-		})
-	}
-
-	var protoEdges []*v1.GetFunctionCallGraphReply_GraphEdge
-	for _, edge := range edges {
-		protoEdges = append(protoEdges, &v1.GetFunctionCallGraphReply_GraphEdge{
-			Source:   edge.Source,
-			Target:   edge.Target,
-			Label:    edge.Label,
-			EdgeType: edge.EdgeType,
-		})
-	}
-
-	return &v1.GetFunctionCallGraphReply{
-		Nodes: protoNodes,
-		Edges: protoEdges,
+		TotalFunctions: int32(result.TotalFunctions),
+		TotalCalls:     int32(result.TotalCalls),
+		TotalPackages:  int32(result.TotalPackages),
 	}, nil
 }
 
@@ -469,34 +285,6 @@ func (s *StaticAnalysisService) analyzeDbReal(dbPath string) (*staticAnalysisRes
 	return result, nil
 }
 
-// 转换为proto函数节点
-func (s *StaticAnalysisService) convertToProtoFunctionNodes(nodes []entity.FunctionNode) []*v1.GetFunctionAnalysisReply_FunctionNode {
-	var protoNodes []*v1.GetFunctionAnalysisReply_FunctionNode
-	for _, node := range nodes {
-		protoNodes = append(protoNodes, s.convertToProtoFunctionNode(node))
-	}
-	return protoNodes
-}
-
-// 转换为proto函数节点
-func (s *StaticAnalysisService) convertToProtoFunctionNode(node entity.FunctionNode) *v1.GetFunctionAnalysisReply_FunctionNode {
-	protoNode := &v1.GetFunctionAnalysisReply_FunctionNode{
-		Id:        node.ID,
-		Name:      node.Name,
-		Package:   node.Package,
-		CallCount: int32(node.CallCount),
-		AvgTime:   node.AvgTime,
-	}
-
-	if len(node.Children) > 0 {
-		for _, child := range node.Children {
-			protoNode.Children = append(protoNode.Children, s.convertToProtoFunctionNode(child))
-		}
-	}
-
-	return protoNode
-}
-
 // GetAnalysisTaskStatus 获取分析任务状态
 func (s *StaticAnalysisService) GetAnalysisTaskStatus(ctx context.Context, req *v1.GetAnalysisTaskStatusRequest) (*v1.GetAnalysisTaskStatusResponse, error) {
 	s.log.Infof("get analysis task status: %s", req.TaskId)
@@ -527,128 +315,24 @@ func (s *StaticAnalysisService) GetAnalysisTaskStatus(ctx context.Context, req *
 	return resp, nil
 }
 
-// GetPackageDependencies 分页获取包依赖关系
-func (s *StaticAnalysisService) GetPackageDependencies(ctx context.Context, req *v1.GetPackageDependenciesRequest) (*v1.GetPackageDependenciesResponse, error) {
-	s.log.Infof("Getting package dependencies for db: %s, page: %d, pageSize: %d", req.DbPath, req.Page, req.PageSize)
-
-	// 验证文件是否存在
-	if _, err := os.Stat(req.DbPath); err != nil {
-		s.log.Errorf("Database file not found: %s", req.DbPath)
-		return nil, fmt.Errorf("database file not found: %s", req.DbPath)
-	}
-
-	// 获取数据库连接
-	funcNodeDB, err := s.uc.GetFuncNodeDB(req.DbPath)
-	if err != nil {
-		s.log.Errorf("Failed to get database connection: %v", err)
-		return nil, fmt.Errorf("Failed to get database connection: %v", err)
-	}
-
-	// 获取所有函数调用边
-	edges, err := funcNodeDB.GetAllFuncEdges()
-	if err != nil {
-		s.log.Errorf("Failed to get function edges: %v", err)
-		return nil, fmt.Errorf("Failed to get function edges: %v", err)
-	}
-
-	// 统计包依赖关系
-	packageDeps := make(map[string]map[string]int)
-	for _, edge := range edges {
-		// 获取调用方和被调用方的节点
-		caller, err := funcNodeDB.GetFuncNodeByKey(edge.CallerKey)
-		if err != nil || caller == nil {
-			continue
-		}
-
-		callee, err := funcNodeDB.GetFuncNodeByKey(edge.CalleeKey)
-		if err != nil || callee == nil {
-			continue
-		}
-
-		// 如果调用方和被调用方的包不同，则记录包依赖关系
-		if caller.Pkg != callee.Pkg {
-			if _, ok := packageDeps[caller.Pkg]; !ok {
-				packageDeps[caller.Pkg] = make(map[string]int)
-			}
-			packageDeps[caller.Pkg][callee.Pkg]++
-		}
-	}
-
-	// 转换包依赖关系为结果格式
-	var packageDependencies []*v1.PackageDependency
-
-	for source, targets := range packageDeps {
-		for target, count := range targets {
-			packageDependencies = append(packageDependencies, &v1.PackageDependency{
-				Source: source,
-				Target: target,
-				Count:  int32(count),
-			})
-		}
-	}
-
-	// 按依赖关系数量排序
-	sort.Slice(packageDependencies, func(i, j int) bool {
-		return packageDependencies[i].Count > packageDependencies[j].Count
-	})
-
-	// 计算总数
-	total := len(packageDependencies)
-
-	// 计算分页
-	page := int(req.Page)
-	pageSize := int(req.PageSize)
-
-	if page < 1 {
-		page = 1
-	}
-
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
-	// 计算起始和结束索引
-	startIndex := (page - 1) * pageSize
-	endIndex := startIndex + pageSize
-
-	if startIndex >= total {
-		startIndex = 0
-		endIndex = 0
-	}
-
-	if endIndex > total {
-		endIndex = total
-	}
-
-	// 获取当前页的数据
-	var pagedDependencies []*v1.PackageDependency
-	if startIndex < endIndex {
-		pagedDependencies = packageDependencies[startIndex:endIndex]
-	}
-
-	s.log.Infof("Returning %d package dependencies (total: %d)", len(pagedDependencies), total)
-
-	return &v1.GetPackageDependenciesResponse{
-		Dependencies: pagedDependencies,
-		Total:        int32(total),
-		Page:         int32(page),
-		PageSize:     int32(pageSize),
-		PageCount:    int32((total + pageSize - 1) / pageSize),
-	}, nil
-}
-
 // SearchFunctions 模糊搜索函数
 func (s *StaticAnalysisService) SearchFunctions(ctx context.Context, req *v1.SearchFunctionsRequest) (*v1.SearchFunctionsResponse, error) {
-	s.log.Infof("Searching functions in db: %s, query: %s", req.DbPath, req.Query)
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := s.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Infof("Searching functions in db: %s, query: %s", dbPath, req.Query)
 
 	// 验证文件是否存在
-	if _, err := os.Stat(req.DbPath); err != nil {
-		s.log.Errorf("Database file not found: %s", req.DbPath)
-		return nil, fmt.Errorf("Database file not found: %s", req.DbPath)
+	if _, err := os.Stat(dbPath); err != nil {
+		s.log.Errorf("Database file not found: %s", dbPath)
+		return nil, fmt.Errorf("Database file not found: %s", dbPath)
 	}
 
 	// 获取数据库连接
-	funcNodeDB, err := s.uc.GetFuncNodeDB(req.DbPath)
+	funcNodeDB, err := s.uc.GetFuncNodeDB(dbPath)
 	if err != nil {
 		s.log.Errorf("Failed to get database connection: %v", err)
 		return nil, fmt.Errorf("Failed to get database connection: %v", err)
@@ -701,460 +385,327 @@ func min(x, y int) int {
 	return y
 }
 
-// GetFunctionUpstream 获取函数上游调用关系
-func (s *StaticAnalysisService) GetFunctionUpstream(ctx context.Context, req *v1.GetFunctionUpstreamRequest) (*v1.GetFunctionUpstreamResponse, error) {
-	s.log.Infof("Getting function upstream for db: %s, functionKey: %s", req.DbPath, req.FunctionKey)
+// ================ 可视化分析API实现 ================
 
-	// 验证文件是否存在
-	if _, err := os.Stat(req.DbPath); err != nil {
-		s.log.Errorf("Database file not found: %s", req.DbPath)
-		return nil, fmt.Errorf("database file not found: %s", req.DbPath)
-	}
-
-	// 获取数据库连接
-	funcNodeDB, err := s.uc.GetFuncNodeDB(req.DbPath)
+// GetGlobalStatistics 获取全局统计信息
+func (s *StaticAnalysisService) GetGlobalStatistics(ctx context.Context, req *v1.GetGlobalStatisticsRequest) (*v1.GetGlobalStatisticsResponse, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := s.getDBPathFromContext(ctx)
 	if err != nil {
-		s.log.Errorf("Failed to get database connection: %v", err)
-		return nil, fmt.Errorf("Failed to get database connection: %v", err)
-	}
-
-	// 获取目标函数节点
-	targetNode, err := funcNodeDB.GetFuncNodeByKey(req.FunctionKey)
-	if err != nil || targetNode == nil {
-		s.log.Errorf("Function not found: %s", req.FunctionKey)
-		return nil, fmt.Errorf("Function not found: %s", req.FunctionKey)
-	}
-
-	// 获取所有函数调用边
-	allEdges, err := funcNodeDB.GetAllFuncEdges()
-	if err != nil {
-		s.log.Errorf("Failed to get function edges: %v", err)
-		return nil, fmt.Errorf("Failed to get function edges: %v", err)
-	}
-
-	// 统计函数被调用次数
-	funcCallCounts := make(map[string]int)
-	for _, edge := range allEdges {
-		funcCallCounts[edge.CalleeKey]++
-	}
-
-	// 创建调用方到被调用方的映射
-	callerToCallees := make(map[string][]string)
-	calleeToCallers := make(map[string][]string)
-
-	for _, edge := range allEdges {
-		callerToCallees[edge.CallerKey] = append(callerToCallees[edge.CallerKey], edge.CalleeKey)
-		calleeToCallers[edge.CalleeKey] = append(calleeToCallers[edge.CalleeKey], edge.CallerKey)
-	}
-
-	// 使用递归DFS算法获取所有上游调用节点
-	visited := make(map[string]bool)
-	var graphNodes []*v1.GraphNode
-	var graphEdges []*v1.GraphEdge
-
-	// 添加目标节点
-	graphNodes = append(graphNodes, &v1.GraphNode{
-		Key:       targetNode.Key,
-		Name:      targetNode.Name,
-		Package:   targetNode.Pkg,
-		CallCount: int32(funcCallCounts[targetNode.Key]),
-	})
-
-	// 记录已访问的节点
-	visited[targetNode.Key] = true
-
-	// 递归查找所有上游调用
-	s.findAllUpstreamCalls(targetNode, funcNodeDB, calleeToCallers, funcCallCounts, visited, &graphNodes, &graphEdges)
-
-	// 查找最顶层调用函数（没有被其他函数调用的函数）
-	topLevelNodes := s.findTopLevelCallers(graphNodes, graphEdges)
-	s.log.Infof("Found %d top level callers", len(topLevelNodes))
-
-	s.log.Infof("Found %d nodes and %d edges in the upstream graph", len(graphNodes), len(graphEdges))
-
-	return &v1.GetFunctionUpstreamResponse{
-		Nodes: graphNodes,
-		Edges: graphEdges,
-	}, nil
-}
-
-// findAllUpstreamCalls 递归查找所有上游调用
-func (s *StaticAnalysisService) findAllUpstreamCalls(
-	currentNode *dos.FuncNode,
-	funcNodeDB repo.StaticDBStore,
-	calleeToCallers map[string][]string,
-	funcCallCounts map[string]int,
-	visited map[string]bool,
-	graphNodes *[]*v1.GraphNode,
-	graphEdges *[]*v1.GraphEdge,
-) {
-	// 获取调用当前节点的所有函数
-	callers, ok := calleeToCallers[currentNode.Key]
-	if !ok {
-		return
-	}
-
-	for _, callerKey := range callers {
-		// 如果已经访问过，则跳过
-		if visited[callerKey] {
-			continue
-		}
-
-		// 获取调用方节点
-		callerNode, err := funcNodeDB.GetFuncNodeByKey(callerKey)
-		if err != nil || callerNode == nil {
-			continue
-		}
-
-		// 标记为已访问
-		visited[callerKey] = true
-
-		// 添加节点
-		*graphNodes = append(*graphNodes, &v1.GraphNode{
-			Key:       callerNode.Key,
-			Name:      callerNode.Name,
-			Package:   callerNode.Pkg,
-			CallCount: int32(funcCallCounts[callerNode.Key]),
-		})
-
-		// 添加边
-		*graphEdges = append(*graphEdges, &v1.GraphEdge{
-			Source: callerNode.Key,
-			Target: currentNode.Key,
-			Value:  1,
-		})
-
-		// 递归查找上游调用
-		s.findAllUpstreamCalls(callerNode, funcNodeDB, calleeToCallers, funcCallCounts, visited, graphNodes, graphEdges)
-	}
-}
-
-// findTopLevelCallers 查找最顶层调用函数（没有被其他函数调用的函数）
-func (s *StaticAnalysisService) findTopLevelCallers(nodes []*v1.GraphNode, edges []*v1.GraphEdge) []*v1.GraphNode {
-	// 创建一个映射，记录每个节点是否被其他节点调用
-	hasCallers := make(map[string]bool)
-
-	// 遍历所有边，记录被调用的节点
-	for _, edge := range edges {
-		hasCallers[edge.Target] = true
-	}
-
-	// 找出没有被调用的节点（最顶层调用函数）
-	var topLevelNodes []*v1.GraphNode
-	for _, node := range nodes {
-		if !hasCallers[node.Key] && node.Key != "" {
-			topLevelNodes = append(topLevelNodes, node)
-		}
-	}
-
-	return topLevelNodes
-}
-
-// GetFunctionDownstream 获取函数下游调用关系
-func (s *StaticAnalysisService) GetFunctionDownstream(ctx context.Context, req *v1.GetFunctionDownstreamRequest) (*v1.GetFunctionDownstreamResponse, error) {
-	s.log.Infof("Getting function downstream for db: %s, functionKey: %s", req.DbPath, req.FunctionKey)
-
-	// 验证文件是否存在
-	if _, err := os.Stat(req.DbPath); err != nil {
-		s.log.Errorf("Database file not found: %s", req.DbPath)
-		return nil, fmt.Errorf("database file not found: %s", req.DbPath)
-	}
-
-	// 获取数据库连接
-	funcNodeDB, err := s.uc.GetFuncNodeDB(req.DbPath)
-	if err != nil {
-		s.log.Errorf("Failed to get database connection: %v", err)
-		return nil, fmt.Errorf("Failed to get database connection: %v", err)
-	}
-
-	// 获取目标函数节点
-	targetNode, err := funcNodeDB.GetFuncNodeByKey(req.FunctionKey)
-	if err != nil || targetNode == nil {
-		s.log.Errorf("Function not found: %s", req.FunctionKey)
-		return nil, fmt.Errorf("Function not found: %s", req.FunctionKey)
-	}
-
-	// 获取所有函数调用边
-	allEdges, err := funcNodeDB.GetAllFuncEdges()
-	if err != nil {
-		s.log.Errorf("Failed to get function edges: %v", err)
-		return nil, fmt.Errorf("Failed to get function edges: %v", err)
-	}
-
-	// 统计函数被调用次数
-	funcCallCounts := make(map[string]int)
-	for _, edge := range allEdges {
-		funcCallCounts[edge.CalleeKey]++
-	}
-
-	// 创建调用方到被调用方的映射
-	callerToCallees := make(map[string][]string)
-	calleeToCallers := make(map[string][]string)
-
-	for _, edge := range allEdges {
-		callerToCallees[edge.CallerKey] = append(callerToCallees[edge.CallerKey], edge.CalleeKey)
-		calleeToCallers[edge.CalleeKey] = append(calleeToCallers[edge.CalleeKey], edge.CallerKey)
-	}
-
-	// 使用递归DFS算法获取所有下游调用节点
-	visited := make(map[string]bool)
-	var graphNodes []*v1.GraphNode
-	var graphEdges []*v1.GraphEdge
-
-	// 添加目标节点
-	graphNodes = append(graphNodes, &v1.GraphNode{
-		Key:       targetNode.Key,
-		Name:      targetNode.Name,
-		Package:   targetNode.Pkg,
-		CallCount: int32(funcCallCounts[targetNode.Key]),
-	})
-
-	// 记录已访问的节点
-	visited[targetNode.Key] = true
-
-	// 递归查找所有下游调用
-	s.findAllDownstreamCalls(targetNode, funcNodeDB, callerToCallees, funcCallCounts, visited, &graphNodes, &graphEdges)
-
-	// 查找最底层被调用函数（不调用其他函数的函数）
-	leafNodes := s.findLeafNodes(graphNodes, graphEdges)
-	s.log.Infof("Found %d leaf nodes", len(leafNodes))
-
-	s.log.Infof("Found %d nodes and %d edges in the downstream graph", len(graphNodes), len(graphEdges))
-
-	return &v1.GetFunctionDownstreamResponse{
-		Nodes: graphNodes,
-		Edges: graphEdges,
-	}, nil
-}
-
-// findAllDownstreamCalls 递归查找所有下游调用
-func (s *StaticAnalysisService) findAllDownstreamCalls(
-	currentNode *dos.FuncNode,
-	funcNodeDB repo.StaticDBStore,
-	callerToCallees map[string][]string,
-	funcCallCounts map[string]int,
-	visited map[string]bool,
-	graphNodes *[]*v1.GraphNode,
-	graphEdges *[]*v1.GraphEdge,
-) {
-	// 获取当前节点调用的所有函数
-	callees, ok := callerToCallees[currentNode.Key]
-	if !ok {
-		return
-	}
-
-	for _, calleeKey := range callees {
-		// 如果已经访问过，则跳过
-		if visited[calleeKey] {
-			continue
-		}
-
-		// 获取被调用方节点
-		calleeNode, err := funcNodeDB.GetFuncNodeByKey(calleeKey)
-		if err != nil || calleeNode == nil {
-			continue
-		}
-
-		// 标记为已访问
-		visited[calleeKey] = true
-
-		// 添加节点
-		*graphNodes = append(*graphNodes, &v1.GraphNode{
-			Key:       calleeNode.Key,
-			Name:      calleeNode.Name,
-			Package:   calleeNode.Pkg,
-			CallCount: int32(funcCallCounts[calleeNode.Key]),
-		})
-
-		// 添加边
-		*graphEdges = append(*graphEdges, &v1.GraphEdge{
-			Source: currentNode.Key,
-			Target: calleeNode.Key,
-			Value:  1,
-		})
-
-		// 递归查找下游调用
-		s.findAllDownstreamCalls(calleeNode, funcNodeDB, callerToCallees, funcCallCounts, visited, graphNodes, graphEdges)
-	}
-}
-
-// findLeafNodes 查找叶子节点（不调用其他函数的函数）
-func (s *StaticAnalysisService) findLeafNodes(nodes []*v1.GraphNode, edges []*v1.GraphEdge) []*v1.GraphNode {
-	// 创建一个映射，记录每个节点是否调用其他节点
-	hasCallees := make(map[string]bool)
-
-	// 遍历所有边，记录调用其他节点的节点
-	for _, edge := range edges {
-		hasCallees[edge.Source] = true
-	}
-
-	// 找出没有调用其他节点的节点（叶子节点）
-	var leafNodes []*v1.GraphNode
-	for _, node := range nodes {
-		if !hasCallees[node.Key] {
-			leafNodes = append(leafNodes, node)
-		}
-	}
-
-	return leafNodes
-}
-
-// GetFunctionFullChain 获取函数全链路调用关系
-func (s *StaticAnalysisService) GetFunctionFullChain(ctx context.Context, req *v1.GetFunctionFullChainRequest) (*v1.GetFunctionFullChainResponse, error) {
-	s.log.Infof("Getting function full chain for db: %s, functionKey: %s", req.DbPath, req.FunctionKey)
-
-	// 验证文件是否存在
-	if _, err := os.Stat(req.DbPath); err != nil {
-		s.log.Errorf("Database file not found: %s", req.DbPath)
-		return nil, fmt.Errorf("database file not found: %s", req.DbPath)
-	}
-
-	// 获取数据库连接
-	funcNodeDB, err := s.uc.GetFuncNodeDB(req.DbPath)
-	if err != nil {
-		s.log.Errorf("Failed to get database connection: %v", err)
-		return nil, fmt.Errorf("Failed to get database connection: %v", err)
-	}
-
-	// 获取目标函数节点
-	targetNode, err := funcNodeDB.GetFuncNodeByKey(req.FunctionKey)
-	if err != nil || targetNode == nil {
-		s.log.Errorf("Function not found: %s", req.FunctionKey)
-		return nil, fmt.Errorf("Function not found: %s", req.FunctionKey)
-	}
-
-	// 获取所有函数调用边
-	allEdges, err := funcNodeDB.GetAllFuncEdges()
-	if err != nil {
-		s.log.Errorf("Failed to get function edges: %v", err)
-		return nil, fmt.Errorf("Failed to get function edges: %v", err)
-	}
-
-	// 统计函数被调用次数
-	funcCallCounts := make(map[string]int)
-	for _, edge := range allEdges {
-		funcCallCounts[edge.CalleeKey]++
-	}
-
-	// 创建调用方到被调用方的映射
-	callerToCallees := make(map[string][]string)
-	calleeToCallers := make(map[string][]string)
-
-	for _, edge := range allEdges {
-		callerToCallees[edge.CallerKey] = append(callerToCallees[edge.CallerKey], edge.CalleeKey)
-		calleeToCallers[edge.CalleeKey] = append(calleeToCallers[edge.CalleeKey], edge.CallerKey)
-	}
-
-	// 使用两个独立的DFS算法获取上游和下游调用节点
-	upstreamVisited := make(map[string]bool)
-	downstreamVisited := make(map[string]bool)
-	var graphNodes []*v1.GraphNode
-	var graphEdges []*v1.GraphEdge
-
-	// 添加目标节点
-	graphNodes = append(graphNodes, &v1.GraphNode{
-		Key:       targetNode.Key,
-		Name:      targetNode.Name,
-		Package:   targetNode.Pkg,
-		CallCount: int32(funcCallCounts[targetNode.Key]),
-	})
-
-	// 记录已访问的节点
-	upstreamVisited[targetNode.Key] = true
-	downstreamVisited[targetNode.Key] = true
-
-	// 递归查找所有上游调用
-	s.findAllUpstreamCalls(targetNode, funcNodeDB, calleeToCallers, funcCallCounts, upstreamVisited, &graphNodes, &graphEdges)
-
-	// 递归查找所有下游调用
-	s.findAllDownstreamCalls(targetNode, funcNodeDB, callerToCallees, funcCallCounts, downstreamVisited, &graphNodes, &graphEdges)
-
-	// 合并节点（去重）
-	mergedNodes := s.mergeNodes(graphNodes)
-
-	s.log.Infof("Found %d nodes and %d edges in the full chain graph", len(mergedNodes), len(graphEdges))
-
-	return &v1.GetFunctionFullChainResponse{
-		Nodes: mergedNodes,
-		Edges: graphEdges,
-	}, nil
-}
-
-// mergeNodes 合并节点（去重）
-func (s *StaticAnalysisService) mergeNodes(nodes []*v1.GraphNode) []*v1.GraphNode {
-	nodeMap := make(map[string]*v1.GraphNode)
-
-	for _, node := range nodes {
-		if _, exists := nodeMap[node.Key]; !exists {
-			nodeMap[node.Key] = node
-		}
-	}
-
-	var mergedNodes []*v1.GraphNode
-	for _, node := range nodeMap {
-		mergedNodes = append(mergedNodes, node)
-	}
-
-	return mergedNodes
-}
-
-// GetTreeGraph 获取静态分析树状图数据
-func (s *StaticAnalysisService) GetTreeGraph(ctx context.Context, req *v1.GetTreeGraphReq) (*v1.GetTreeGraphReply, error) {
-	s.log.Infof("get tree graph, function: %s, dbpath: %s", req.FunctionKey, req.DbPath)
-
-	// 调用业务逻辑获取树状图数据
-	treeGraph, err := s.uc.GetTreeGraph(req.FunctionKey, req.DbPath)
-	if err != nil {
-		s.log.Errorf("get tree graph failed: %v", err)
 		return nil, err
 	}
 
-	// 转换为API响应格式
-	reply := &v1.GetTreeGraphReply{
-		Root: s.convertTreeNodeToProto(treeGraph.Root),
+	s.log.Infof("get global statistics for db: %s", dbPath)
+
+	// 验证数据库文件是否存在
+	if _, err := os.Stat(dbPath); err != nil {
+		s.log.Errorf("database file not found: %s", dbPath)
+		return nil, fmt.Errorf("database file not found: %s", dbPath)
 	}
 
-	return reply, nil
-}
-
-// 将实体TreeNode转换为proto TreeNode
-func (s *StaticAnalysisService) convertTreeNodeToProto(node *entity.TreeNode) *v1.TreeNode {
-	if node == nil {
-		return nil
-	}
-
-	protoNode := &v1.TreeNode{
-		Name:      node.Name,
-		Value:     node.Value,
-		Collapsed: true,
-	}
-
-	// 递归转换子节点
-	if len(node.Children) > 0 {
-		protoNode.Children = make([]*v1.TreeNode, 0, len(node.Children))
-		for _, child := range node.Children {
-			protoNode.Children = append(protoNode.Children, s.convertTreeNodeToProto(child))
-		}
-	}
-
-	return protoNode
-}
-
-// findFunctionByKey 通过函数Key查找函数节点
-func (s *StaticAnalysisService) findFunctionByKey(funcNodeDB repo.StaticDBStore, functionKey string) (*dos.FuncNode, error) {
-	// 直接通过Key查找函数节点
-	node, err := funcNodeDB.GetFuncNodeByKey(functionKey)
+	// 设置数据库连接
+	funcNodeDB, err := s.uc.GetFuncNodeDB(dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get function node by key: %s", err)
+		s.log.Errorf("failed to get database connection: %v", err)
+		return nil, fmt.Errorf("failed to get database connection: %v", err)
 	}
 
-	if node == nil {
-		return nil, fmt.Errorf("Function not found with key: %s", functionKey)
-	}
+	// 添加超时控制，为大型数据库设置更长的超时时间
+	// 使用 channel 来实现超时控制
+	resultChan := make(chan *v1.GetGlobalStatisticsResponse, 1)
+	errorChan := make(chan error, 1)
 
-	return node, nil
+	go func() {
+		response, err := s.uc.GetGlobalStatistics(ctx, funcNodeDB)
+		if err != nil {
+			errorChan <- err
+		} else {
+			resultChan <- response
+		}
+	}()
+
+	// 等待结果或超时
+	select {
+	case response := <-resultChan:
+		s.log.Infof("Retrieved global statistics: %d functions, %d packages, %d edges",
+			response.TotalFunctions, response.TotalPackages, response.TotalEdges)
+		return response, nil
+	case err := <-errorChan:
+		s.log.Errorf("failed to get global statistics: %v", err)
+		return nil, err
+	case <-ctx.Done():
+		s.log.Errorf("global statistics calculation timed out or was cancelled")
+		return nil, fmt.Errorf("global statistics calculation timed out")
+	}
 }
 
-// GetFunctionMindMap 已删除 - 已替换为树形表格功能
+// GetCallGraph 获取调用图数据
+func (s *StaticAnalysisService) GetCallGraph(ctx context.Context, req *v1.GetCallGraphRequest) (*v1.GetCallGraphResponse, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := s.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-// 思维导图相关辅助方法已删除 - 已替换为树形表格功能
+	s.log.Infof("get call graph for db: %s, root: %s, max_depth: %d",
+		dbPath, req.RootFunction, req.MaxDepth)
+
+	// 验证数据库文件是否存在
+	if _, err := os.Stat(dbPath); err != nil {
+		s.log.Errorf("Database file not found: %s", dbPath)
+		return nil, fmt.Errorf("Database file not found: %s", dbPath)
+	}
+
+	// 设置默认值
+	if req.MaxDepth <= 0 {
+		req.MaxDepth = 3
+	}
+
+	// 设置数据库连接
+	funcNodeDB, err := s.uc.GetFuncNodeDB(dbPath)
+	if err != nil {
+		s.log.Errorf("Failed to get database connection: %v", err)
+		return nil, fmt.Errorf("Failed to get database connection: %v", err)
+	}
+
+	response, err := s.uc.GetCallGraph(ctx, req, funcNodeDB)
+	if err != nil {
+		s.log.Errorf("Failed to get call graph: %v", err)
+		return nil, err
+	}
+
+	s.log.Infof("Retrieved call graph: %d nodes, %d edges",
+		response.TotalNodes, response.TotalEdges)
+
+	return response, nil
+}
+
+// GetPackageDependencies 获取包依赖关系
+func (s *StaticAnalysisService) GetPackageDependencies(ctx context.Context, req *v1.GetPackageDependenciesRequest) (*v1.GetPackageDependenciesResponse, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := s.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Infof("get package dependencies for db: %s", dbPath)
+
+	// 验证数据库文件是否存在
+	if _, err := os.Stat(dbPath); err != nil {
+		s.log.Errorf("database file not found: %s", dbPath)
+		return nil, fmt.Errorf("database file not found: %s", dbPath)
+	}
+
+	// 设置数据库连接
+	funcNodeDB, err := s.uc.GetFuncNodeDB(dbPath)
+	if err != nil {
+		s.log.Errorf("failed to get database connection: %v", err)
+		return nil, fmt.Errorf("failed to get database connection: %v", err)
+	}
+
+	// 添加超时控制，为大型数据库设置更长的超时时间
+	resultChan := make(chan *v1.GetPackageDependenciesResponse, 1)
+	errorChan := make(chan error, 1)
+
+	go func() {
+		response, err := s.uc.GetPackageDependencies(ctx, funcNodeDB)
+		if err != nil {
+			errorChan <- err
+		} else {
+			resultChan <- response
+		}
+	}()
+
+	// 等待结果或超时
+	select {
+	case response := <-resultChan:
+		s.log.Infof("Retrieved package dependencies: %d packages, %d dependencies",
+			len(response.Packages), len(response.Dependencies))
+		return response, nil
+	case err := <-errorChan:
+		s.log.Errorf("failed to get package dependencies: %v", err)
+		return nil, err
+	case <-ctx.Done():
+		s.log.Errorf("package dependencies calculation timed out or was cancelled")
+		return nil, fmt.Errorf("package dependencies calculation timed out")
+	}
+}
+
+// GetHotFunctions 获取热点函数分析
+func (s *StaticAnalysisService) GetHotFunctions(ctx context.Context, req *v1.GetHotFunctionsRequest) (*v1.GetHotFunctionsResponse, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := s.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Infof("get hot functions for db: %s, limit: %d, sort_by: %s",
+		dbPath, req.Limit, req.SortBy)
+
+	// 验证数据库文件是否存在
+	if _, err := os.Stat(dbPath); err != nil {
+		s.log.Errorf("Database file not found: %s", dbPath)
+		return nil, fmt.Errorf("Database file not found: %s", dbPath)
+	}
+
+	// 设置默认值
+	if req.Limit <= 0 {
+		req.Limit = 10
+	}
+	if req.SortBy == "" {
+		req.SortBy = "importance"
+	}
+
+	// 设置数据库连接
+	funcNodeDB, err := s.uc.GetFuncNodeDB(dbPath)
+	if err != nil {
+		s.log.Errorf("Failed to get database connection: %v", err)
+		return nil, fmt.Errorf("Failed to get database connection: %v", err)
+	}
+
+	response, err := s.uc.GetHotFunctions(ctx, req, funcNodeDB)
+	if err != nil {
+		s.log.Errorf("Failed to get hot functions: %v", err)
+		return nil, err
+	}
+
+	s.log.Infof("Retrieved hot functions: %d functions", len(response.Functions))
+
+	return response, nil
+}
+
+// GetFunctionDetails 获取函数详细信息
+func (s *StaticAnalysisService) GetFunctionDetails(ctx context.Context, req *v1.GetFunctionDetailsRequest) (*v1.GetFunctionDetailsResponse, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := s.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Infof("get function details for db: %s, function: %s",
+		dbPath, req.FunctionKey)
+
+	// 验证数据库文件是否存在
+	if _, err := os.Stat(dbPath); err != nil {
+		s.log.Errorf("Database file not found: %s", dbPath)
+		return nil, fmt.Errorf("Database file not found: %s", dbPath)
+	}
+
+	// 设置数据库连接
+	funcNodeDB, err := s.uc.GetFuncNodeDB(dbPath)
+	if err != nil {
+		s.log.Errorf("Failed to get database connection: %v", err)
+		return nil, fmt.Errorf("Failed to get database connection: %v", err)
+	}
+
+	response, err := s.uc.GetFunctionDetails(ctx, req.FunctionKey, funcNodeDB)
+	if err != nil {
+		s.log.Errorf("Failed to get function details: %v", err)
+		return nil, err
+	}
+
+	s.log.Infof("Retrieved function details: %s, callers: %d, callees: %d",
+		response.Function.Name, len(response.Callers), len(response.Callees))
+
+	return response, nil
+}
+
+// GetFunctionCallPaths 获取函数调用路径
+func (s *StaticAnalysisService) GetFunctionCallPaths(ctx context.Context, req *v1.GetFunctionCallPathsRequest) (*v1.GetFunctionCallPathsResponse, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := s.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Infof("get function call paths for db: %s, from: %s, to: %s",
+		dbPath, req.FromFunction, req.ToFunction)
+
+	// 验证数据库文件是否存在
+	if _, err := os.Stat(dbPath); err != nil {
+		s.log.Errorf("Database file not found: %s", dbPath)
+		return nil, fmt.Errorf("Database file not found: %s", dbPath)
+	}
+
+	// 设置默认值
+	if req.MaxPaths <= 0 {
+		req.MaxPaths = 5
+	}
+	if req.MaxDepth <= 0 {
+		req.MaxDepth = 10
+	}
+
+	// 设置数据库连接
+	funcNodeDB, err := s.uc.GetFuncNodeDB(dbPath)
+	if err != nil {
+		s.log.Errorf("Failed to get database connection: %v", err)
+		return nil, fmt.Errorf("Failed to get database connection: %v", err)
+	}
+
+	response, err := s.uc.GetFunctionCallPaths(ctx, req, funcNodeDB)
+	if err != nil {
+		s.log.Errorf("Failed to get function call paths: %v", err)
+		return nil, err
+	}
+
+	s.log.Infof("Retrieved function call paths: %d paths", len(response.Paths))
+
+	return response, nil
+}
+
+// GetInitFunctions 获取Init函数列表
+func (s *StaticAnalysisService) GetInitFunctions(ctx context.Context, req *v1.GetInitFunctionsRequest) (*v1.GetInitFunctionsResponse, error) {
+	// 从gRPC metadata中获取数据库路径
+	dbPath, err := s.getDBPathFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Infof("get init functions for db: %s, limit: %d, package_filter: %s",
+		dbPath, req.Limit, req.PackageFilter)
+
+	// 验证数据库文件是否存在
+	if _, err := os.Stat(dbPath); err != nil {
+		s.log.Errorf("database file not found: %s", dbPath)
+		return nil, fmt.Errorf("database file not found: %s", dbPath)
+	}
+
+	// 设置默认值
+	if req.Limit <= 0 {
+		req.Limit = 50 // 默认返回50个
+	}
+
+	// 设置数据库连接
+	funcNodeDB, err := s.uc.GetFuncNodeDB(dbPath)
+	if err != nil {
+		s.log.Errorf("failed to get database connection: %v", err)
+		return nil, fmt.Errorf("failed to get database connection: %v", err)
+	}
+
+	// 添加超时控制
+	resultChan := make(chan *v1.GetInitFunctionsResponse, 1)
+	errorChan := make(chan error, 1)
+
+	go func() {
+		response, err := s.uc.GetInitFunctions(ctx, req, funcNodeDB)
+		if err != nil {
+			errorChan <- err
+		} else {
+			resultChan <- response
+		}
+	}()
+
+	// 等待结果或超时
+	select {
+	case response := <-resultChan:
+		s.log.Infof("Retrieved init functions: %d functions (total: %d)",
+			len(response.InitFunctions), response.TotalCount)
+		return response, nil
+	case err := <-errorChan:
+		s.log.Errorf("failed to get init functions: %v", err)
+		return nil, err
+	case <-ctx.Done():
+		s.log.Errorf("init functions retrieval timed out or was cancelled")
+		return nil, fmt.Errorf("init functions retrieval timed out")
+	}
+}

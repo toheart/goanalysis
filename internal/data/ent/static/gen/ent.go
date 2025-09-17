@@ -14,6 +14,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcedge"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcnode"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/packagedep"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/pkg"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -74,8 +76,10 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			funcedge.Table: funcedge.ValidColumn,
-			funcnode.Table: funcnode.ValidColumn,
+			funcedge.Table:   funcedge.ValidColumn,
+			funcnode.Table:   funcnode.ValidColumn,
+			packagedep.Table: packagedep.ValidColumn,
+			pkg.Table:        pkg.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

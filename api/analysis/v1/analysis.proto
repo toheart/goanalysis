@@ -131,6 +131,21 @@ service Analysis {
       body: "*"
     };
   }
+
+  // Session管理相关API
+  // GetAnalysisPath 从session中获取分析路径
+  rpc GetAnalysisPath(GetAnalysisPathReq) returns (GetAnalysisPathReply) {
+    option (google.api.http) = {
+      get: "/api/session/analysis-path"
+    };
+  }
+
+  // ClearSession 清除session
+  rpc ClearSession(ClearSessionReq) returns (ClearSessionReply) {
+    option (google.api.http) = {
+      delete: "/api/session"
+    };
+  }
 }
 
 
@@ -144,7 +159,7 @@ message VerifyProjectPathReply {
 
 message GetGidsByFunctionNameReq {
   string functionName = 1;
-  string path = 2;
+  // path参数已移除，从session中获取
   bool includeMetrics = 3; // 是否包含调用深度和执行时间等指标
 }
 
@@ -162,7 +177,7 @@ message GetGidsByFunctionNameReply {
 }
 
 message GetAllFunctionNameReq {
-  string dbpath = 1; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 message GetAllFunctionNameReply {
@@ -171,7 +186,7 @@ message GetAllFunctionNameReply {
 
 message GenerateImageReq {
   uint64 gid = 1;
-  string dbpath = 2; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 message GenerateImageReply {
@@ -181,7 +196,7 @@ message GenerateImageReply {
 // The request message containing the user's name.
 message AnalysisRequest {
   string name = 1;
-  string dbpath = 2; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 // The response message containing the greetings
@@ -191,7 +206,7 @@ message AnalysisReply {
 
 message AnalysisByGIDRequest {
   uint64 gid = 1;
-  string dbpath = 2; // 数据库路径
+  // dbpath参数已移除，从session中获取
   int32 depth = 3; // 深度
   string createTime = 4; // 创建时间
 }
@@ -220,7 +235,7 @@ message GetAllGIDsReq {
   int32 page = 1; // 当前页
   int32 limit = 2; // 每页条目数
   bool includeMetrics = 3; // 是否包含调用深度和执行时间等指标
-  string dbpath = 4; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 message GetAllGIDsReply {
@@ -237,7 +252,7 @@ message GetAllGIDsReply {
 
 message GetParamsByIDReq {
   int32 id = 1;
-  string dbpath = 2; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 message GetParamsByIDReply {
@@ -261,7 +276,7 @@ message GraphEdge {
 
 message GetTraceGraphReq {
   uint64 gid = 1;
-  string dbpath = 2; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 message GetTraceGraphReply {
@@ -272,7 +287,7 @@ message GetTraceGraphReply {
 // GetTracesByParentFuncReq 根据父函数ID获取函数调用的请求
 message GetTracesByParentFuncReq {
   int64 parentId = 1;
-  string dbpath = 2; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 // GetTracesByParentFuncReply 根据父函数名称获取函数调用的响应
@@ -292,7 +307,7 @@ message GetTracesByParentFuncReply {
 }
 
 message GetParentFunctionsReq {
-  string dbpath = 1; // 数据库路径
+  // dbpath参数已移除，从session中获取
   string functionName = 2; // 函数名称
 }
 
@@ -316,7 +331,7 @@ message GetParentFunctionsReply {
 // GetChildFunctionsReq 获取函数的子函数的请求
 message GetChildFunctionsReq {
   int64 parentId = 1;
-  string dbpath = 2; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 // GetChildFunctionsReply 获取函数的子函数的响应
@@ -326,7 +341,7 @@ message GetChildFunctionsReply {
 
 // GetGoroutineStatsReq 获取Goroutine统计信息的请求
 message GetGoroutineStatsReq {
-  string dbpath = 1; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 // GetGoroutineStatsReply 获取Goroutine统计信息的响应
@@ -340,7 +355,7 @@ message GetGoroutineStatsReply {
 message GetFunctionAnalysisReq {
   string functionName = 1; // 函数名称
   string type = 2;         // 查询类型: "caller" 或 "callee"
-  string dbpath = 3;         // 项目路径
+  // dbpath参数已移除，从session中获取
 }
 
 // GetFunctionAnalysisReply 获取函数调用关系分析的响应
@@ -410,7 +425,7 @@ message InstrumentProjectReply {
 
 // 获取树状图请求
 message GetTreeGraphReq {
-  string dbPath = 1; // 数据库路径
+  // dbPath参数已移除，从session中获取
   string functionName = 2; // 函数名称
   string chainType = 3; // 链路类型: "upstream"(上游调用), "downstream"(下游调用), "full"(全链路)
   int32 depth = 4; // 深度
@@ -432,7 +447,7 @@ message GetTreeGraphReply {
 
 // 根据GID获取树状图请求
 message GetTreeGraphByGIDReq {
-  string dbPath = 1; // 数据库路径
+  // dbPath参数已移除，从session中获取
   uint64 gid = 2;     // Goroutine ID
 }
 
@@ -444,7 +459,7 @@ message GetTreeGraphByGIDReply {
 
 // 获取函数调用统计请求
 message GetFunctionCallStatsReq {
-  string dbPath = 1; // 数据库路径
+  // dbPath参数已移除，从session中获取
   string functionName = 2; // 函数名称（可选，不提供则分析所有函数）
 }
 
@@ -468,7 +483,7 @@ message GetFunctionCallStatsReply {
 
 // 获取性能异常检测请求
 message GetPerformanceAnomaliesReq {
-  string dbPath = 1; // 数据库路径
+  // dbPath参数已移除，从session中获取
   string functionName = 2; // 函数名称（可选，不提供则检测所有函数）
   double threshold = 3; // 异常阈值（标准差倍数），默认为2.0
 }
@@ -491,7 +506,7 @@ message GetPerformanceAnomaliesReply {
 // GetHotFunctionsReq 获取热点函数的请求
 message GetHotFunctionsReq {
   string sort_by = 1; // 排序方式: "calls" 或 "time"
-  string dbpath = 2; // 数据库路径
+  // dbpath参数已移除，从session中获取
 }
 
 // GetHotFunctionsReply 获取热点函数的响应
@@ -508,7 +523,7 @@ message GetHotFunctionsReply {
 
 // 搜索函数请求
 message SearchFunctionsReq {
-  string dbpath = 1; // 项目路径
+  // dbpath参数已移除，从session中获取
   string query = 2;  // 搜索关键词
   int32 limit = 3;   // 返回结果数量限制
 }
@@ -525,7 +540,7 @@ message SearchFunctionsReply {
 
 // GetFunctionInfoInGoroutineReq 获取函数在指定Goroutine中的信息请求
 message GetFunctionInfoInGoroutineReq {
-  string dbpath = 1; // 数据库路径
+  // dbpath参数已移除，从session中获取
   uint64 gid = 2; // Goroutine ID
   int64 functionId = 3; // 目标函数ID
   int32 currentDepth = 4; // 当前显示深度
@@ -551,11 +566,33 @@ message GetFunctionInfoInGoroutineReply {
 
 // GetModuleNamesReq 获取模块名称请求
 message GetModuleNamesReq {
-  string dbpath = 1; // 数据库路径
+  // dbpath参数已移除，从session中获取
   int32 maxSamples = 2; // 最大采样数量，默认5000
 }
 
 // GetModuleNamesReply 获取模块名称响应
 message GetModuleNamesReply {
   repeated string moduleNames = 1; // 前5个最频繁的模块名称（按频率排序）
+}
+
+// Session管理相关消息定义
+// GetAnalysisPathReq 获取分析路径请求
+message GetAnalysisPathReq {
+  // 空请求，从session中获取
+}
+
+// GetAnalysisPathReply 获取分析路径响应
+message GetAnalysisPathReply {
+  string dbpath = 1; // 数据库路径
+  bool exists = 2; // 是否存在
+}
+
+// ClearSessionReq 清除session请求
+message ClearSessionReq {
+  // 空请求
+}
+
+// ClearSessionReply 清除session响应
+message ClearSessionReply {
+  bool success = 1; // 是否成功
 }

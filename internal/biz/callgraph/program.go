@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,11 +53,12 @@ type ProgramAnalysis struct {
 	moduleName string           // 模块名
 
 	// 组件
-	nodeManager *NodeManager
-	edgeManager *EdgeManager
-	filter      *Filter
-	reporter    *StatusReporter
-	tracker     *ProgressTracker
+	nodeManager    *NodeManager
+	edgeManager    *EdgeManager
+	filter         *Filter
+	reporter       *StatusReporter
+	tracker        *ProgressTracker
+	importAnalyzer *ImportAnalyzer
 
 	// 状态跟踪
 	isVisited map[string]bool // 是否访问过
@@ -125,6 +127,12 @@ func (p *ProgramAnalysis) Execute(ctx context.Context, statusChan chan []byte) e
 		errChan <- p.consumeData(ctx, statusChan)
 	}()
 
+	// 分析import依赖关系
+	if err := p.analyzeImports(); err != nil {
+		p.log.Errorf("failed to analyze imports: %v", err)
+		return fmt.Errorf("failed to analyze imports: %w", err)
+	}
+
 	// 生产数据到channels
 	if err := p.produceData(statusChan); err != nil {
 		p.log.Errorf("failed to produce data: %v", err)
@@ -189,6 +197,9 @@ func (p *ProgramAnalysis) Analysis() error {
 	}
 	p.moduleName = moduleName
 	p.log.Infof("analyzing module: %s", p.moduleName)
+
+	// 初始化import分析器
+	p.importAnalyzer = NewImportAnalyzer(p.moduleName, p.log)
 
 	pkgs, err := p.loadPackages()
 	if err != nil {
@@ -338,7 +349,10 @@ func (p *ProgramAnalysis) setTree(statusChan chan []byte) error {
 				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
 		}
-		callerNode := p.nodeManager.GetOrCreateNode(caller.ID, callerFullName, callerPkg, callerName)
+		callerSignature := p.extractSignature(caller.Func)
+		callerPosition := p.extractPosition(caller.Func)
+		callerSourceCode := p.extractSourceCode(caller.Func)
+		callerNode := p.nodeManager.GetOrCreateNode(caller.ID, callerFullName, callerPkg, callerPkg, callerName, callerSignature, callerPosition, callerSourceCode)
 
 		// 处理callee节点
 		calleeFullName := callee.String()
@@ -353,10 +367,16 @@ func (p *ProgramAnalysis) setTree(statusChan chan []byte) error {
 				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
 		}
-		calleeNode := p.nodeManager.GetOrCreateNode(callee.ID, calleeFullName, calleePkg, calleeName)
+		calleeSignature := p.extractSignature(callee.Func)
+		calleePosition := p.extractPosition(callee.Func)
+		calleeSourceCode := p.extractSourceCode(callee.Func)
+		calleeNode := p.nodeManager.GetOrCreateNode(callee.ID, calleeFullName, calleePkg, calleePkg, calleeName, calleeSignature, calleePosition, calleeSourceCode)
+
+		// 提取调用点信息
+		callSiteFile, callSiteLine, callType := p.extractCallSiteInfo(edge)
 
 		// 建立边关系 - 使用EdgeManager封装逻辑
-		p.edgeManager.BuildRelationship(callerNode, calleeNode)
+		p.edgeManager.BuildRelationship(callerNode, calleeNode, callSiteFile, callSiteLine, callType)
 		edgeCount++
 
 		// 每处理20条边发送一次状态更新
@@ -552,7 +572,10 @@ func (p *ProgramAnalysis) produceData(statusChan chan []byte) error {
 				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
 		}
-		callerNode := p.nodeManager.GetOrCreateNode(caller.ID, callerFullName, callerPkg, callerName)
+		callerSignature := p.extractSignature(caller.Func)
+		callerPosition := p.extractPosition(caller.Func)
+		callerSourceCode := p.extractSourceCode(caller.Func)
+		callerNode := p.nodeManager.GetOrCreateNode(caller.ID, callerFullName, callerPkg, callerPkg, callerName, callerSignature, callerPosition, callerSourceCode)
 
 		// 处理callee节点
 		calleeFullName := callee.String()
@@ -567,10 +590,16 @@ func (p *ProgramAnalysis) produceData(statusChan chan []byte) error {
 				p.reporter.ReportStatus(fmt.Sprintf("Processed %d nodes, %d edges", nodeCount, edgeCount))
 			}
 		}
-		calleeNode := p.nodeManager.GetOrCreateNode(callee.ID, calleeFullName, calleePkg, calleeName)
+		calleeSignature := p.extractSignature(callee.Func)
+		calleePosition := p.extractPosition(callee.Func)
+		calleeSourceCode := p.extractSourceCode(callee.Func)
+		calleeNode := p.nodeManager.GetOrCreateNode(callee.ID, calleeFullName, calleePkg, calleePkg, calleeName, calleeSignature, calleePosition, calleeSourceCode)
+
+		// 提取调用点信息
+		callSiteFile, callSiteLine, callType := p.extractCallSiteInfo(edge)
 
 		// 建立边关系 - 使用EdgeManager封装逻辑
-		p.edgeManager.BuildRelationship(callerNode, calleeNode)
+		p.edgeManager.BuildRelationship(callerNode, calleeNode, callSiteFile, callSiteLine, callType)
 		edgeCount++
 
 		// 每处理20条边发送一次状态更新
@@ -603,6 +632,15 @@ func (p *ProgramAnalysis) consumeData(ctx context.Context, statusChan chan []byt
 	if statusChan != nil {
 		statusChan <- []byte("Starting to save data to database...")
 	}
+
+	// 保存包依赖数据
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := p.savePackageData(); err != nil {
+			p.log.Errorf("save package data failed: %v", err)
+		}
+	}()
 
 	// 启动goroutine处理节点保存
 	wg.Add(1)
@@ -649,5 +687,168 @@ func (p *ProgramAnalysis) consumeData(ctx context.Context, statusChan chan []byt
 	}
 
 	p.log.Infof("consume data success")
+	return nil
+}
+
+// extractSourceCode 提取函数源代码
+func (p *ProgramAnalysis) extractSourceCode(fn *ssa.Function) string {
+	if fn == nil || fn.Pos() == 0 {
+		return ""
+	}
+
+	// 获取函数位置信息
+	pos := fn.Prog.Fset.Position(fn.Pos())
+
+	// 只为内部包提取源代码
+	if !p.isInternalPackage(fn.Pkg.Pkg.Path()) {
+		return ""
+	}
+
+	// 读取源文件
+	content, err := ioutil.ReadFile(pos.Filename)
+	if err != nil {
+		p.log.Errorf("read source file failed: %v", err)
+		return ""
+	}
+
+	// 获取函数结束位置（使用函数体的最后位置）
+	endPos := pos // 暂时使用起始位置，后续可以通过 AST 获取更精确的结束位置
+
+	// 按行分割内容
+	lines := strings.Split(string(content), "\n")
+
+	// 确保行号在有效范围内
+	startLine := pos.Line - 1 // 转换为0基索引
+	endLine := endPos.Line
+
+	if startLine < 0 || startLine >= len(lines) {
+		return ""
+	}
+
+	if endLine > len(lines) {
+		endLine = len(lines)
+	}
+
+	// 提取函数源代码
+	funcLines := lines[startLine:endLine]
+	return strings.Join(funcLines, "\n")
+}
+
+// extractPosition 提取函数位置信息
+func (p *ProgramAnalysis) extractPosition(fn *ssa.Function) *dos.Position {
+	if fn == nil || fn.Pos() == 0 {
+		return nil
+	}
+
+	pos := fn.Prog.Fset.Position(fn.Pos())
+	endPos := pos // 暂时使用起始位置，后续可以通过 AST 获取更精确的结束位置
+
+	return &dos.Position{
+		Filename: pos.Filename,
+		Line:     pos.Line,
+		EndLine:  endPos.Line,
+	}
+}
+
+// extractSignature 提取函数签名
+func (p *ProgramAnalysis) extractSignature(fn *ssa.Function) string {
+	if fn == nil {
+		return ""
+	}
+
+	// 使用 SSA 函数的字符串表示作为签名
+	return fn.String()
+}
+
+// extractCallSiteInfo 提取调用点信息
+func (p *ProgramAnalysis) extractCallSiteInfo(edge *callgraph.Edge) (string, int, string) {
+	if edge == nil || edge.Pos() == 0 {
+		return "", 0, "unknown"
+	}
+
+	pos := edge.Caller.Func.Prog.Fset.Position(edge.Pos())
+	callType := "static" // 默认调用类型
+
+	// 根据调用指令类型确定调用类型
+	if edge.Site != nil {
+		switch edge.Site.(type) {
+		case *ssa.Call:
+			callType = "direct"
+		case *ssa.Go:
+			callType = "goroutine"
+		case *ssa.Defer:
+			callType = "defer"
+		default:
+			callType = "indirect"
+		}
+	}
+
+	return pos.Filename, pos.Line, callType
+}
+
+// isInternalPackage 判断是否为内部包
+func (p *ProgramAnalysis) isInternalPackage(pkgPath string) bool {
+	if pkgPath == "" {
+		return false
+	}
+
+	// 标准库包识别
+	if !strings.Contains(pkgPath, ".") {
+		return false // 标准库包不包含点号
+	}
+
+	// 基于模块名判断
+	return strings.HasPrefix(pkgPath, p.moduleName)
+}
+
+// analyzeImports 分析import依赖关系
+func (p *ProgramAnalysis) analyzeImports() error {
+	p.log.Info("analyzing import dependencies")
+
+	// 确保import分析器已初始化
+	if p.importAnalyzer == nil {
+		p.importAnalyzer = NewImportAnalyzer(p.moduleName, p.log)
+	}
+
+	// 分析项目目录中的import语句
+	if err := p.importAnalyzer.AnalyzeDirectory(p.Dir); err != nil {
+		return fmt.Errorf("analyze directory imports failed: %w", err)
+	}
+
+	p.log.Infof("import analysis completed, found %d packages and %d dependencies",
+		len(p.importAnalyzer.GetPackages()),
+		len(p.importAnalyzer.GetDependencies()))
+
+	return nil
+}
+
+// savePackageData 保存包依赖数据
+func (p *ProgramAnalysis) savePackageData() error {
+	if p.importAnalyzer == nil {
+		return nil
+	}
+
+	p.log.Info("saving package data")
+
+	// 批量保存包信息
+	packages := p.importAnalyzer.GetPackages()
+	if len(packages) > 0 {
+		if err := p.data.BatchSavePackages(packages); err != nil {
+			p.log.Errorf("batch save packages failed: %v", err)
+			return err
+		}
+		p.log.Infof("saved %d packages", len(packages))
+	}
+
+	// 批量保存包依赖关系
+	deps := p.importAnalyzer.GetDependencies()
+	if len(deps) > 0 {
+		if err := p.data.BatchSavePackageDeps(deps); err != nil {
+			p.log.Errorf("batch save package deps failed: %v", err)
+			return err
+		}
+		p.log.Infof("saved %d package dependencies", len(deps))
+	}
+
 	return nil
 }

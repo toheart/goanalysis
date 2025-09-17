@@ -16,6 +16,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcedge"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcnode"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/packagedep"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/pkg"
 )
 
 // Client is the client that holds all ent builders.
@@ -27,6 +29,10 @@ type Client struct {
 	FuncEdge *FuncEdgeClient
 	// FuncNode is the client for interacting with the FuncNode builders.
 	FuncNode *FuncNodeClient
+	// PackageDep is the client for interacting with the PackageDep builders.
+	PackageDep *PackageDepClient
+	// Pkg is the client for interacting with the Pkg builders.
+	Pkg *PkgClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -40,6 +46,8 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.FuncEdge = NewFuncEdgeClient(c.config)
 	c.FuncNode = NewFuncNodeClient(c.config)
+	c.PackageDep = NewPackageDepClient(c.config)
+	c.Pkg = NewPkgClient(c.config)
 }
 
 type (
@@ -130,10 +138,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		FuncEdge: NewFuncEdgeClient(cfg),
-		FuncNode: NewFuncNodeClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		FuncEdge:   NewFuncEdgeClient(cfg),
+		FuncNode:   NewFuncNodeClient(cfg),
+		PackageDep: NewPackageDepClient(cfg),
+		Pkg:        NewPkgClient(cfg),
 	}, nil
 }
 
@@ -151,10 +161,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		FuncEdge: NewFuncEdgeClient(cfg),
-		FuncNode: NewFuncNodeClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		FuncEdge:   NewFuncEdgeClient(cfg),
+		FuncNode:   NewFuncNodeClient(cfg),
+		PackageDep: NewPackageDepClient(cfg),
+		Pkg:        NewPkgClient(cfg),
 	}, nil
 }
 
@@ -185,6 +197,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.FuncEdge.Use(hooks...)
 	c.FuncNode.Use(hooks...)
+	c.PackageDep.Use(hooks...)
+	c.Pkg.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -192,6 +206,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.FuncEdge.Intercept(interceptors...)
 	c.FuncNode.Intercept(interceptors...)
+	c.PackageDep.Intercept(interceptors...)
+	c.Pkg.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -201,6 +217,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.FuncEdge.mutate(ctx, m)
 	case *FuncNodeMutation:
 		return c.FuncNode.mutate(ctx, m)
+	case *PackageDepMutation:
+		return c.PackageDep.mutate(ctx, m)
+	case *PkgMutation:
+		return c.Pkg.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("gen: unknown mutation type %T", m)
 	}
@@ -472,12 +492,278 @@ func (c *FuncNodeClient) mutate(ctx context.Context, m *FuncNodeMutation) (Value
 	}
 }
 
+// PackageDepClient is a client for the PackageDep schema.
+type PackageDepClient struct {
+	config
+}
+
+// NewPackageDepClient returns a client for the PackageDep from the given config.
+func NewPackageDepClient(c config) *PackageDepClient {
+	return &PackageDepClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `packagedep.Hooks(f(g(h())))`.
+func (c *PackageDepClient) Use(hooks ...Hook) {
+	c.hooks.PackageDep = append(c.hooks.PackageDep, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `packagedep.Intercept(f(g(h())))`.
+func (c *PackageDepClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PackageDep = append(c.inters.PackageDep, interceptors...)
+}
+
+// Create returns a builder for creating a PackageDep entity.
+func (c *PackageDepClient) Create() *PackageDepCreate {
+	mutation := newPackageDepMutation(c.config, OpCreate)
+	return &PackageDepCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PackageDep entities.
+func (c *PackageDepClient) CreateBulk(builders ...*PackageDepCreate) *PackageDepCreateBulk {
+	return &PackageDepCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PackageDepClient) MapCreateBulk(slice any, setFunc func(*PackageDepCreate, int)) *PackageDepCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PackageDepCreateBulk{err: fmt.Errorf("calling to PackageDepClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PackageDepCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PackageDepCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PackageDep.
+func (c *PackageDepClient) Update() *PackageDepUpdate {
+	mutation := newPackageDepMutation(c.config, OpUpdate)
+	return &PackageDepUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PackageDepClient) UpdateOne(pd *PackageDep) *PackageDepUpdateOne {
+	mutation := newPackageDepMutation(c.config, OpUpdateOne, withPackageDep(pd))
+	return &PackageDepUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PackageDepClient) UpdateOneID(id int) *PackageDepUpdateOne {
+	mutation := newPackageDepMutation(c.config, OpUpdateOne, withPackageDepID(id))
+	return &PackageDepUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PackageDep.
+func (c *PackageDepClient) Delete() *PackageDepDelete {
+	mutation := newPackageDepMutation(c.config, OpDelete)
+	return &PackageDepDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PackageDepClient) DeleteOne(pd *PackageDep) *PackageDepDeleteOne {
+	return c.DeleteOneID(pd.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PackageDepClient) DeleteOneID(id int) *PackageDepDeleteOne {
+	builder := c.Delete().Where(packagedep.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PackageDepDeleteOne{builder}
+}
+
+// Query returns a query builder for PackageDep.
+func (c *PackageDepClient) Query() *PackageDepQuery {
+	return &PackageDepQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePackageDep},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PackageDep entity by its id.
+func (c *PackageDepClient) Get(ctx context.Context, id int) (*PackageDep, error) {
+	return c.Query().Where(packagedep.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PackageDepClient) GetX(ctx context.Context, id int) *PackageDep {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PackageDepClient) Hooks() []Hook {
+	return c.hooks.PackageDep
+}
+
+// Interceptors returns the client interceptors.
+func (c *PackageDepClient) Interceptors() []Interceptor {
+	return c.inters.PackageDep
+}
+
+func (c *PackageDepClient) mutate(ctx context.Context, m *PackageDepMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PackageDepCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PackageDepUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PackageDepUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PackageDepDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("gen: unknown PackageDep mutation op: %q", m.Op())
+	}
+}
+
+// PkgClient is a client for the Pkg schema.
+type PkgClient struct {
+	config
+}
+
+// NewPkgClient returns a client for the Pkg from the given config.
+func NewPkgClient(c config) *PkgClient {
+	return &PkgClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pkg.Hooks(f(g(h())))`.
+func (c *PkgClient) Use(hooks ...Hook) {
+	c.hooks.Pkg = append(c.hooks.Pkg, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `pkg.Intercept(f(g(h())))`.
+func (c *PkgClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Pkg = append(c.inters.Pkg, interceptors...)
+}
+
+// Create returns a builder for creating a Pkg entity.
+func (c *PkgClient) Create() *PkgCreate {
+	mutation := newPkgMutation(c.config, OpCreate)
+	return &PkgCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Pkg entities.
+func (c *PkgClient) CreateBulk(builders ...*PkgCreate) *PkgCreateBulk {
+	return &PkgCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PkgClient) MapCreateBulk(slice any, setFunc func(*PkgCreate, int)) *PkgCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PkgCreateBulk{err: fmt.Errorf("calling to PkgClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PkgCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PkgCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Pkg.
+func (c *PkgClient) Update() *PkgUpdate {
+	mutation := newPkgMutation(c.config, OpUpdate)
+	return &PkgUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PkgClient) UpdateOne(pk *Pkg) *PkgUpdateOne {
+	mutation := newPkgMutation(c.config, OpUpdateOne, withPkg(pk))
+	return &PkgUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PkgClient) UpdateOneID(id int) *PkgUpdateOne {
+	mutation := newPkgMutation(c.config, OpUpdateOne, withPkgID(id))
+	return &PkgUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Pkg.
+func (c *PkgClient) Delete() *PkgDelete {
+	mutation := newPkgMutation(c.config, OpDelete)
+	return &PkgDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PkgClient) DeleteOne(pk *Pkg) *PkgDeleteOne {
+	return c.DeleteOneID(pk.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PkgClient) DeleteOneID(id int) *PkgDeleteOne {
+	builder := c.Delete().Where(pkg.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PkgDeleteOne{builder}
+}
+
+// Query returns a query builder for Pkg.
+func (c *PkgClient) Query() *PkgQuery {
+	return &PkgQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePkg},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Pkg entity by its id.
+func (c *PkgClient) Get(ctx context.Context, id int) (*Pkg, error) {
+	return c.Query().Where(pkg.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PkgClient) GetX(ctx context.Context, id int) *Pkg {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PkgClient) Hooks() []Hook {
+	return c.hooks.Pkg
+}
+
+// Interceptors returns the client interceptors.
+func (c *PkgClient) Interceptors() []Interceptor {
+	return c.inters.Pkg
+}
+
+func (c *PkgClient) mutate(ctx context.Context, m *PkgMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PkgCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PkgUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PkgUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PkgDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("gen: unknown Pkg mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		FuncEdge, FuncNode []ent.Hook
+		FuncEdge, FuncNode, PackageDep, Pkg []ent.Hook
 	}
 	inters struct {
-		FuncEdge, FuncNode []ent.Interceptor
+		FuncEdge, FuncNode, PackageDep, Pkg []ent.Interceptor
 	}
 )

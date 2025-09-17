@@ -111,10 +111,10 @@ func (x *VerifyProjectPathReply) GetVerified() bool {
 }
 
 type GetGidsByFunctionNameReq struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	FunctionName   string                 `protobuf:"bytes,1,opt,name=functionName,proto3" json:"functionName,omitempty"`
-	Path           string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
-	IncludeMetrics bool                   `protobuf:"varint,3,opt,name=includeMetrics,proto3" json:"includeMetrics,omitempty"` // 是否包含调用深度和执行时间等指标
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	FunctionName string                 `protobuf:"bytes,1,opt,name=functionName,proto3" json:"functionName,omitempty"`
+	// path参数已移除，从session中获取
+	IncludeMetrics bool `protobuf:"varint,3,opt,name=includeMetrics,proto3" json:"includeMetrics,omitempty"` // 是否包含调用深度和执行时间等指标
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -152,13 +152,6 @@ func (*GetGidsByFunctionNameReq) Descriptor() ([]byte, []int) {
 func (x *GetGidsByFunctionNameReq) GetFunctionName() string {
 	if x != nil {
 		return x.FunctionName
-	}
-	return ""
-}
-
-func (x *GetGidsByFunctionNameReq) GetPath() string {
-	if x != nil {
-		return x.Path
 	}
 	return ""
 }
@@ -224,7 +217,6 @@ func (x *GetGidsByFunctionNameReply) GetTotal() int32 {
 
 type GetAllFunctionNameReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dbpath        string                 `protobuf:"bytes,1,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 数据库路径
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -257,13 +249,6 @@ func (x *GetAllFunctionNameReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetAllFunctionNameReq.ProtoReflect.Descriptor instead.
 func (*GetAllFunctionNameReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *GetAllFunctionNameReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 type GetAllFunctionNameReply struct {
@@ -312,8 +297,7 @@ func (x *GetAllFunctionNameReply) GetFunctionNames() []string {
 
 type GenerateImageReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Gid           uint64                 `protobuf:"varint,1,opt,name=gid,proto3" json:"gid,omitempty"`
-	Dbpath        string                 `protobuf:"bytes,2,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 数据库路径
+	Gid           uint64                 `protobuf:"varint,1,opt,name=gid,proto3" json:"gid,omitempty"` // dbpath参数已移除，从session中获取
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -353,13 +337,6 @@ func (x *GenerateImageReq) GetGid() uint64 {
 		return x.Gid
 	}
 	return 0
-}
-
-func (x *GenerateImageReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 type GenerateImageReply struct {
@@ -409,8 +386,7 @@ func (x *GenerateImageReply) GetImage() string {
 // The request message containing the user's name.
 type AnalysisRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Dbpath        string                 `protobuf:"bytes,2,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 数据库路径
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"` // dbpath参数已移除，从session中获取
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -448,13 +424,6 @@ func (*AnalysisRequest) Descriptor() ([]byte, []int) {
 func (x *AnalysisRequest) GetName() string {
 	if x != nil {
 		return x.Name
-	}
-	return ""
-}
-
-func (x *AnalysisRequest) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
 	}
 	return ""
 }
@@ -505,11 +474,11 @@ func (x *AnalysisReply) GetMessage() string {
 }
 
 type AnalysisByGIDRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Gid           uint64                 `protobuf:"varint,1,opt,name=gid,proto3" json:"gid,omitempty"`
-	Dbpath        string                 `protobuf:"bytes,2,opt,name=dbpath,proto3" json:"dbpath,omitempty"`         // 数据库路径
-	Depth         int32                  `protobuf:"varint,3,opt,name=depth,proto3" json:"depth,omitempty"`          // 深度
-	CreateTime    string                 `protobuf:"bytes,4,opt,name=createTime,proto3" json:"createTime,omitempty"` // 创建时间
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Gid   uint64                 `protobuf:"varint,1,opt,name=gid,proto3" json:"gid,omitempty"`
+	// dbpath参数已移除，从session中获取
+	Depth         int32  `protobuf:"varint,3,opt,name=depth,proto3" json:"depth,omitempty"`          // 深度
+	CreateTime    string `protobuf:"bytes,4,opt,name=createTime,proto3" json:"createTime,omitempty"` // 创建时间
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -549,13 +518,6 @@ func (x *AnalysisByGIDRequest) GetGid() uint64 {
 		return x.Gid
 	}
 	return 0
-}
-
-func (x *AnalysisByGIDRequest) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 func (x *AnalysisByGIDRequest) GetDepth() int32 {
@@ -673,7 +635,6 @@ type GetAllGIDsReq struct {
 	Page           int32                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`                     // 当前页
 	Limit          int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`                   // 每页条目数
 	IncludeMetrics bool                   `protobuf:"varint,3,opt,name=includeMetrics,proto3" json:"includeMetrics,omitempty"` // 是否包含调用深度和执行时间等指标
-	Dbpath         string                 `protobuf:"bytes,4,opt,name=dbpath,proto3" json:"dbpath,omitempty"`                  // 数据库路径
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -727,13 +688,6 @@ func (x *GetAllGIDsReq) GetIncludeMetrics() bool {
 		return x.IncludeMetrics
 	}
 	return false
-}
-
-func (x *GetAllGIDsReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 type GetAllGIDsReply struct {
@@ -790,8 +744,7 @@ func (x *GetAllGIDsReply) GetTotal() int32 {
 
 type GetParamsByIDReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Dbpath        string                 `protobuf:"bytes,2,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 数据库路径
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"` // dbpath参数已移除，从session中获取
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -831,13 +784,6 @@ func (x *GetParamsByIDReq) GetId() int32 {
 		return x.Id
 	}
 	return 0
-}
-
-func (x *GetParamsByIDReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 type GetParamsByIDReply struct {
@@ -1030,8 +976,7 @@ func (x *GraphEdge) GetCount() int32 {
 
 type GetTraceGraphReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Gid           uint64                 `protobuf:"varint,1,opt,name=gid,proto3" json:"gid,omitempty"`
-	Dbpath        string                 `protobuf:"bytes,2,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 数据库路径
+	Gid           uint64                 `protobuf:"varint,1,opt,name=gid,proto3" json:"gid,omitempty"` // dbpath参数已移除，从session中获取
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1071,13 +1016,6 @@ func (x *GetTraceGraphReq) GetGid() uint64 {
 		return x.Gid
 	}
 	return 0
-}
-
-func (x *GetTraceGraphReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 type GetTraceGraphReply struct {
@@ -1135,8 +1073,7 @@ func (x *GetTraceGraphReply) GetEdges() []*GraphEdge {
 // GetTracesByParentFuncReq 根据父函数ID获取函数调用的请求
 type GetTracesByParentFuncReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ParentId      int64                  `protobuf:"varint,1,opt,name=parentId,proto3" json:"parentId,omitempty"`
-	Dbpath        string                 `protobuf:"bytes,2,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 数据库路径
+	ParentId      int64                  `protobuf:"varint,1,opt,name=parentId,proto3" json:"parentId,omitempty"` // dbpath参数已移除，从session中获取
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1176,13 +1113,6 @@ func (x *GetTracesByParentFuncReq) GetParentId() int64 {
 		return x.ParentId
 	}
 	return 0
-}
-
-func (x *GetTracesByParentFuncReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 // GetTracesByParentFuncReply 根据父函数名称获取函数调用的响应
@@ -1231,9 +1161,9 @@ func (x *GetTracesByParentFuncReply) GetTraceData() []*GetTracesByParentFuncRepl
 }
 
 type GetParentFunctionsReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dbpath        string                 `protobuf:"bytes,1,opt,name=dbpath,proto3" json:"dbpath,omitempty"`             // 数据库路径
-	FunctionName  string                 `protobuf:"bytes,2,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dbpath参数已移除，从session中获取
+	FunctionName  string `protobuf:"bytes,2,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1266,13 +1196,6 @@ func (x *GetParentFunctionsReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetParentFunctionsReq.ProtoReflect.Descriptor instead.
 func (*GetParentFunctionsReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *GetParentFunctionsReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 func (x *GetParentFunctionsReq) GetFunctionName() string {
@@ -1437,8 +1360,7 @@ func (x *GetParentFunctionsReply) GetFunctions() []*FunctionNode {
 // GetChildFunctionsReq 获取函数的子函数的请求
 type GetChildFunctionsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ParentId      int64                  `protobuf:"varint,1,opt,name=parentId,proto3" json:"parentId,omitempty"`
-	Dbpath        string                 `protobuf:"bytes,2,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 数据库路径
+	ParentId      int64                  `protobuf:"varint,1,opt,name=parentId,proto3" json:"parentId,omitempty"` // dbpath参数已移除，从session中获取
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1478,13 +1400,6 @@ func (x *GetChildFunctionsReq) GetParentId() int64 {
 		return x.ParentId
 	}
 	return 0
-}
-
-func (x *GetChildFunctionsReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 // GetChildFunctionsReply 获取函数的子函数的响应
@@ -1535,7 +1450,6 @@ func (x *GetChildFunctionsReply) GetFunctions() []*FunctionNode {
 // GetGoroutineStatsReq 获取Goroutine统计信息的请求
 type GetGoroutineStatsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dbpath        string                 `protobuf:"bytes,1,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 数据库路径
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1568,13 +1482,6 @@ func (x *GetGoroutineStatsReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetGoroutineStatsReq.ProtoReflect.Descriptor instead.
 func (*GetGoroutineStatsReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{28}
-}
-
-func (x *GetGoroutineStatsReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 // GetGoroutineStatsReply 获取Goroutine统计信息的响应
@@ -1643,7 +1550,6 @@ type GetFunctionAnalysisReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FunctionName  string                 `protobuf:"bytes,1,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称
 	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`                 // 查询类型: "caller" 或 "callee"
-	Dbpath        string                 `protobuf:"bytes,3,opt,name=dbpath,proto3" json:"dbpath,omitempty"`             // 项目路径
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1688,13 +1594,6 @@ func (x *GetFunctionAnalysisReq) GetFunctionName() string {
 func (x *GetFunctionAnalysisReq) GetType() string {
 	if x != nil {
 		return x.Type
-	}
-	return ""
-}
-
-func (x *GetFunctionAnalysisReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
 	}
 	return ""
 }
@@ -2186,11 +2085,11 @@ func (x *InstrumentProjectReply) GetMessage() string {
 
 // 获取树状图请求
 type GetTreeGraphReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=dbPath,proto3" json:"dbPath,omitempty"`             // 数据库路径
-	FunctionName  string                 `protobuf:"bytes,2,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称
-	ChainType     string                 `protobuf:"bytes,3,opt,name=chainType,proto3" json:"chainType,omitempty"`       // 链路类型: "upstream"(上游调用), "downstream"(下游调用), "full"(全链路)
-	Depth         int32                  `protobuf:"varint,4,opt,name=depth,proto3" json:"depth,omitempty"`              // 深度
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dbPath参数已移除，从session中获取
+	FunctionName  string `protobuf:"bytes,2,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称
+	ChainType     string `protobuf:"bytes,3,opt,name=chainType,proto3" json:"chainType,omitempty"`       // 链路类型: "upstream"(上游调用), "downstream"(下游调用), "full"(全链路)
+	Depth         int32  `protobuf:"varint,4,opt,name=depth,proto3" json:"depth,omitempty"`              // 深度
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2223,13 +2122,6 @@ func (x *GetTreeGraphReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetTreeGraphReq.ProtoReflect.Descriptor instead.
 func (*GetTreeGraphReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{40}
-}
-
-func (x *GetTreeGraphReq) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
 }
 
 func (x *GetTreeGraphReq) GetFunctionName() string {
@@ -2369,9 +2261,9 @@ func (x *GetTreeGraphReply) GetTrees() []*TreeNode {
 
 // 根据GID获取树状图请求
 type GetTreeGraphByGIDReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=dbPath,proto3" json:"dbPath,omitempty"` // 数据库路径
-	Gid           uint64                 `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"`      // Goroutine ID
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dbPath参数已移除，从session中获取
+	Gid           uint64 `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"` // Goroutine ID
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2404,13 +2296,6 @@ func (x *GetTreeGraphByGIDReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetTreeGraphByGIDReq.ProtoReflect.Descriptor instead.
 func (*GetTreeGraphByGIDReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{43}
-}
-
-func (x *GetTreeGraphByGIDReq) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
 }
 
 func (x *GetTreeGraphByGIDReq) GetGid() uint64 {
@@ -2467,9 +2352,9 @@ func (x *GetTreeGraphByGIDReply) GetTrees() []*TreeNode {
 
 // 获取函数调用统计请求
 type GetFunctionCallStatsReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=dbPath,proto3" json:"dbPath,omitempty"`             // 数据库路径
-	FunctionName  string                 `protobuf:"bytes,2,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称（可选，不提供则分析所有函数）
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dbPath参数已移除，从session中获取
+	FunctionName  string `protobuf:"bytes,2,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称（可选，不提供则分析所有函数）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2502,13 +2387,6 @@ func (x *GetFunctionCallStatsReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetFunctionCallStatsReq.ProtoReflect.Descriptor instead.
 func (*GetFunctionCallStatsReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{45}
-}
-
-func (x *GetFunctionCallStatsReq) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
 }
 
 func (x *GetFunctionCallStatsReq) GetFunctionName() string {
@@ -2674,10 +2552,10 @@ func (x *GetFunctionCallStatsReply) GetStats() []*FunctionCallStats {
 
 // 获取性能异常检测请求
 type GetPerformanceAnomaliesReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=dbPath,proto3" json:"dbPath,omitempty"`             // 数据库路径
-	FunctionName  string                 `protobuf:"bytes,2,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称（可选，不提供则检测所有函数）
-	Threshold     float64                `protobuf:"fixed64,3,opt,name=threshold,proto3" json:"threshold,omitempty"`     // 异常阈值（标准差倍数），默认为2.0
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dbPath参数已移除，从session中获取
+	FunctionName  string  `protobuf:"bytes,2,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称（可选，不提供则检测所有函数）
+	Threshold     float64 `protobuf:"fixed64,3,opt,name=threshold,proto3" json:"threshold,omitempty"`     // 异常阈值（标准差倍数），默认为2.0
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2710,13 +2588,6 @@ func (x *GetPerformanceAnomaliesReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetPerformanceAnomaliesReq.ProtoReflect.Descriptor instead.
 func (*GetPerformanceAnomaliesReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{48}
-}
-
-func (x *GetPerformanceAnomaliesReq) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
 }
 
 func (x *GetPerformanceAnomaliesReq) GetFunctionName() string {
@@ -2867,7 +2738,6 @@ func (x *GetPerformanceAnomaliesReply) GetAnomalies() []*PerformanceAnomaly {
 type GetHotFunctionsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SortBy        string                 `protobuf:"bytes,1,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"` // 排序方式: "calls" 或 "time"
-	Dbpath        string                 `protobuf:"bytes,2,opt,name=dbpath,proto3" json:"dbpath,omitempty"`               // 数据库路径
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2905,13 +2775,6 @@ func (*GetHotFunctionsReq) Descriptor() ([]byte, []int) {
 func (x *GetHotFunctionsReq) GetSortBy() string {
 	if x != nil {
 		return x.SortBy
-	}
-	return ""
-}
-
-func (x *GetHotFunctionsReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
 	}
 	return ""
 }
@@ -2963,10 +2826,10 @@ func (x *GetHotFunctionsReply) GetFunctions() []*GetHotFunctionsReply_HotFunctio
 
 // 搜索函数请求
 type SearchFunctionsReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dbpath        string                 `protobuf:"bytes,1,opt,name=dbpath,proto3" json:"dbpath,omitempty"` // 项目路径
-	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`   // 搜索关键词
-	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`  // 返回结果数量限制
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dbpath参数已移除，从session中获取
+	Query         string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`  // 搜索关键词
+	Limit         int32  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"` // 返回结果数量限制
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2999,13 +2862,6 @@ func (x *SearchFunctionsReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SearchFunctionsReq.ProtoReflect.Descriptor instead.
 func (*SearchFunctionsReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{53}
-}
-
-func (x *SearchFunctionsReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 func (x *SearchFunctionsReq) GetQuery() string {
@@ -3077,11 +2933,11 @@ func (x *SearchFunctionsReply) GetTotal() int32 {
 
 // GetFunctionInfoInGoroutineReq 获取函数在指定Goroutine中的信息请求
 type GetFunctionInfoInGoroutineReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dbpath        string                 `protobuf:"bytes,1,opt,name=dbpath,proto3" json:"dbpath,omitempty"`              // 数据库路径
-	Gid           uint64                 `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"`                   // Goroutine ID
-	FunctionId    int64                  `protobuf:"varint,3,opt,name=functionId,proto3" json:"functionId,omitempty"`     // 目标函数ID
-	CurrentDepth  int32                  `protobuf:"varint,4,opt,name=currentDepth,proto3" json:"currentDepth,omitempty"` // 当前显示深度
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dbpath参数已移除，从session中获取
+	Gid           uint64 `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"`                   // Goroutine ID
+	FunctionId    int64  `protobuf:"varint,3,opt,name=functionId,proto3" json:"functionId,omitempty"`     // 目标函数ID
+	CurrentDepth  int32  `protobuf:"varint,4,opt,name=currentDepth,proto3" json:"currentDepth,omitempty"` // 当前显示深度
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3114,13 +2970,6 @@ func (x *GetFunctionInfoInGoroutineReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetFunctionInfoInGoroutineReq.ProtoReflect.Descriptor instead.
 func (*GetFunctionInfoInGoroutineReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{55}
-}
-
-func (x *GetFunctionInfoInGoroutineReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 func (x *GetFunctionInfoInGoroutineReq) GetGid() uint64 {
@@ -3252,9 +3101,9 @@ func (x *GetFunctionInfoInGoroutineReply) GetFunctionInfo() *GetFunctionInfoInGo
 
 // GetModuleNamesReq 获取模块名称请求
 type GetModuleNamesReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dbpath        string                 `protobuf:"bytes,1,opt,name=dbpath,proto3" json:"dbpath,omitempty"`          // 数据库路径
-	MaxSamples    int32                  `protobuf:"varint,2,opt,name=maxSamples,proto3" json:"maxSamples,omitempty"` // 最大采样数量，默认5000
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// dbpath参数已移除，从session中获取
+	MaxSamples    int32 `protobuf:"varint,2,opt,name=maxSamples,proto3" json:"maxSamples,omitempty"` // 最大采样数量，默认5000
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3287,13 +3136,6 @@ func (x *GetModuleNamesReq) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetModuleNamesReq.ProtoReflect.Descriptor instead.
 func (*GetModuleNamesReq) Descriptor() ([]byte, []int) {
 	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{58}
-}
-
-func (x *GetModuleNamesReq) GetDbpath() string {
-	if x != nil {
-		return x.Dbpath
-	}
-	return ""
 }
 
 func (x *GetModuleNamesReq) GetMaxSamples() int32 {
@@ -3348,6 +3190,179 @@ func (x *GetModuleNamesReply) GetModuleNames() []string {
 	return nil
 }
 
+// Session管理相关消息定义
+// GetAnalysisPathReq 获取分析路径请求
+type GetAnalysisPathReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAnalysisPathReq) Reset() {
+	*x = GetAnalysisPathReq{}
+	mi := &file_analysis_v1_analysis_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAnalysisPathReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAnalysisPathReq) ProtoMessage() {}
+
+func (x *GetAnalysisPathReq) ProtoReflect() protoreflect.Message {
+	mi := &file_analysis_v1_analysis_proto_msgTypes[60]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAnalysisPathReq.ProtoReflect.Descriptor instead.
+func (*GetAnalysisPathReq) Descriptor() ([]byte, []int) {
+	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{60}
+}
+
+// GetAnalysisPathReply 获取分析路径响应
+type GetAnalysisPathReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Dbpath        string                 `protobuf:"bytes,1,opt,name=dbpath,proto3" json:"dbpath,omitempty"`  // 数据库路径
+	Exists        bool                   `protobuf:"varint,2,opt,name=exists,proto3" json:"exists,omitempty"` // 是否存在
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetAnalysisPathReply) Reset() {
+	*x = GetAnalysisPathReply{}
+	mi := &file_analysis_v1_analysis_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetAnalysisPathReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAnalysisPathReply) ProtoMessage() {}
+
+func (x *GetAnalysisPathReply) ProtoReflect() protoreflect.Message {
+	mi := &file_analysis_v1_analysis_proto_msgTypes[61]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAnalysisPathReply.ProtoReflect.Descriptor instead.
+func (*GetAnalysisPathReply) Descriptor() ([]byte, []int) {
+	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *GetAnalysisPathReply) GetDbpath() string {
+	if x != nil {
+		return x.Dbpath
+	}
+	return ""
+}
+
+func (x *GetAnalysisPathReply) GetExists() bool {
+	if x != nil {
+		return x.Exists
+	}
+	return false
+}
+
+// ClearSessionReq 清除session请求
+type ClearSessionReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClearSessionReq) Reset() {
+	*x = ClearSessionReq{}
+	mi := &file_analysis_v1_analysis_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClearSessionReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClearSessionReq) ProtoMessage() {}
+
+func (x *ClearSessionReq) ProtoReflect() protoreflect.Message {
+	mi := &file_analysis_v1_analysis_proto_msgTypes[62]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClearSessionReq.ProtoReflect.Descriptor instead.
+func (*ClearSessionReq) Descriptor() ([]byte, []int) {
+	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{62}
+}
+
+// ClearSessionReply 清除session响应
+type ClearSessionReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // 是否成功
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ClearSessionReply) Reset() {
+	*x = ClearSessionReply{}
+	mi := &file_analysis_v1_analysis_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClearSessionReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClearSessionReply) ProtoMessage() {}
+
+func (x *ClearSessionReply) ProtoReflect() protoreflect.Message {
+	mi := &file_analysis_v1_analysis_proto_msgTypes[63]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClearSessionReply.ProtoReflect.Descriptor instead.
+func (*ClearSessionReply) Descriptor() ([]byte, []int) {
+	return file_analysis_v1_analysis_proto_rawDescGZIP(), []int{63}
+}
+
+func (x *ClearSessionReply) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 type GetGidsByFunctionNameReply_Body struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Gid           uint64                 `protobuf:"varint,1,opt,name=gid,proto3" json:"gid,omitempty"`
@@ -3362,7 +3377,7 @@ type GetGidsByFunctionNameReply_Body struct {
 
 func (x *GetGidsByFunctionNameReply_Body) Reset() {
 	*x = GetGidsByFunctionNameReply_Body{}
-	mi := &file_analysis_v1_analysis_proto_msgTypes[60]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3374,7 +3389,7 @@ func (x *GetGidsByFunctionNameReply_Body) String() string {
 func (*GetGidsByFunctionNameReply_Body) ProtoMessage() {}
 
 func (x *GetGidsByFunctionNameReply_Body) ProtoReflect() protoreflect.Message {
-	mi := &file_analysis_v1_analysis_proto_msgTypes[60]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3449,7 +3464,7 @@ type AnalysisByGIDReply_TraceData struct {
 
 func (x *AnalysisByGIDReply_TraceData) Reset() {
 	*x = AnalysisByGIDReply_TraceData{}
-	mi := &file_analysis_v1_analysis_proto_msgTypes[61]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3461,7 +3476,7 @@ func (x *AnalysisByGIDReply_TraceData) String() string {
 func (*AnalysisByGIDReply_TraceData) ProtoMessage() {}
 
 func (x *AnalysisByGIDReply_TraceData) ProtoReflect() protoreflect.Message {
-	mi := &file_analysis_v1_analysis_proto_msgTypes[61]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3553,7 +3568,7 @@ type GetAllGIDsReply_Body struct {
 
 func (x *GetAllGIDsReply_Body) Reset() {
 	*x = GetAllGIDsReply_Body{}
-	mi := &file_analysis_v1_analysis_proto_msgTypes[62]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3565,7 +3580,7 @@ func (x *GetAllGIDsReply_Body) String() string {
 func (*GetAllGIDsReply_Body) ProtoMessage() {}
 
 func (x *GetAllGIDsReply_Body) ProtoReflect() protoreflect.Message {
-	mi := &file_analysis_v1_analysis_proto_msgTypes[62]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3633,7 +3648,7 @@ type GetTracesByParentFuncReply_TraceData struct {
 
 func (x *GetTracesByParentFuncReply_TraceData) Reset() {
 	*x = GetTracesByParentFuncReply_TraceData{}
-	mi := &file_analysis_v1_analysis_proto_msgTypes[63]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3645,7 +3660,7 @@ func (x *GetTracesByParentFuncReply_TraceData) String() string {
 func (*GetTracesByParentFuncReply_TraceData) ProtoMessage() {}
 
 func (x *GetTracesByParentFuncReply_TraceData) ProtoReflect() protoreflect.Message {
-	mi := &file_analysis_v1_analysis_proto_msgTypes[63]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3738,7 +3753,7 @@ type GetFunctionAnalysisReply_FunctionNode struct {
 
 func (x *GetFunctionAnalysisReply_FunctionNode) Reset() {
 	*x = GetFunctionAnalysisReply_FunctionNode{}
-	mi := &file_analysis_v1_analysis_proto_msgTypes[64]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3750,7 +3765,7 @@ func (x *GetFunctionAnalysisReply_FunctionNode) String() string {
 func (*GetFunctionAnalysisReply_FunctionNode) ProtoMessage() {}
 
 func (x *GetFunctionAnalysisReply_FunctionNode) ProtoReflect() protoreflect.Message {
-	mi := &file_analysis_v1_analysis_proto_msgTypes[64]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3821,7 +3836,7 @@ type GetHotFunctionsReply_HotFunction struct {
 
 func (x *GetHotFunctionsReply_HotFunction) Reset() {
 	*x = GetHotFunctionsReply_HotFunction{}
-	mi := &file_analysis_v1_analysis_proto_msgTypes[66]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3833,7 +3848,7 @@ func (x *GetHotFunctionsReply_HotFunction) String() string {
 func (*GetHotFunctionsReply_HotFunction) ProtoMessage() {}
 
 func (x *GetHotFunctionsReply_HotFunction) ProtoReflect() protoreflect.Message {
-	mi := &file_analysis_v1_analysis_proto_msgTypes[66]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3894,7 +3909,7 @@ type SearchFunctionsReply_FunctionInfo struct {
 
 func (x *SearchFunctionsReply_FunctionInfo) Reset() {
 	*x = SearchFunctionsReply_FunctionInfo{}
-	mi := &file_analysis_v1_analysis_proto_msgTypes[67]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3906,7 +3921,7 @@ func (x *SearchFunctionsReply_FunctionInfo) String() string {
 func (*SearchFunctionsReply_FunctionInfo) ProtoMessage() {}
 
 func (x *SearchFunctionsReply_FunctionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_analysis_v1_analysis_proto_msgTypes[67]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3948,7 +3963,7 @@ type GetFunctionInfoInGoroutineReply_FunctionInfo struct {
 
 func (x *GetFunctionInfoInGoroutineReply_FunctionInfo) Reset() {
 	*x = GetFunctionInfoInGoroutineReply_FunctionInfo{}
-	mi := &file_analysis_v1_analysis_proto_msgTypes[68]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3960,7 +3975,7 @@ func (x *GetFunctionInfoInGoroutineReply_FunctionInfo) String() string {
 func (*GetFunctionInfoInGoroutineReply_FunctionInfo) ProtoMessage() {}
 
 func (x *GetFunctionInfoInGoroutineReply_FunctionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_analysis_v1_analysis_proto_msgTypes[68]
+	mi := &file_analysis_v1_analysis_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4012,10 +4027,9 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\x14VerifyProjectPathReq\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"4\n" +
 	"\x16VerifyProjectPathReply\x12\x1a\n" +
-	"\bverified\x18\x01 \x01(\bR\bverified\"z\n" +
+	"\bverified\x18\x01 \x01(\bR\bverified\"f\n" +
 	"\x18GetGidsByFunctionNameReq\x12\"\n" +
-	"\ffunctionName\x18\x01 \x01(\tR\ffunctionName\x12\x12\n" +
-	"\x04path\x18\x02 \x01(\tR\x04path\x12&\n" +
+	"\ffunctionName\x18\x01 \x01(\tR\ffunctionName\x12&\n" +
 	"\x0eincludeMetrics\x18\x03 \x01(\bR\x0eincludeMetrics\"\xad\x02\n" +
 	"\x1aGetGidsByFunctionNameReply\x12@\n" +
 	"\x04body\x18\x01 \x03(\v2,.analysis.v1.GetGidsByFunctionNameReply.BodyR\x04body\x12\x14\n" +
@@ -4030,24 +4044,20 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"isFinished\x12\x1e\n" +
 	"\n" +
 	"functionId\x18\x06 \x01(\x03R\n" +
-	"functionId\"/\n" +
-	"\x15GetAllFunctionNameReq\x12\x16\n" +
-	"\x06dbpath\x18\x01 \x01(\tR\x06dbpath\"?\n" +
+	"functionId\"\x17\n" +
+	"\x15GetAllFunctionNameReq\"?\n" +
 	"\x17GetAllFunctionNameReply\x12$\n" +
-	"\rfunctionNames\x18\x01 \x03(\tR\rfunctionNames\"<\n" +
+	"\rfunctionNames\x18\x01 \x03(\tR\rfunctionNames\"$\n" +
 	"\x10GenerateImageReq\x12\x10\n" +
-	"\x03gid\x18\x01 \x01(\x04R\x03gid\x12\x16\n" +
-	"\x06dbpath\x18\x02 \x01(\tR\x06dbpath\"*\n" +
+	"\x03gid\x18\x01 \x01(\x04R\x03gid\"*\n" +
 	"\x12GenerateImageReply\x12\x14\n" +
-	"\x05image\x18\x01 \x01(\tR\x05image\"=\n" +
+	"\x05image\x18\x01 \x01(\tR\x05image\"%\n" +
 	"\x0fAnalysisRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
-	"\x06dbpath\x18\x02 \x01(\tR\x06dbpath\")\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\")\n" +
 	"\rAnalysisReply\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"v\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"^\n" +
 	"\x14AnalysisByGIDRequest\x12\x10\n" +
-	"\x03gid\x18\x01 \x01(\x04R\x03gid\x12\x16\n" +
-	"\x06dbpath\x18\x02 \x01(\tR\x06dbpath\x12\x14\n" +
+	"\x03gid\x18\x01 \x01(\x04R\x03gid\x12\x14\n" +
 	"\x05depth\x18\x03 \x01(\x05R\x05depth\x12\x1e\n" +
 	"\n" +
 	"createTime\x18\x04 \x01(\tR\n" +
@@ -4068,12 +4078,11 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"paramCount\x12\x1a\n" +
 	"\btimeCost\x18\a \x01(\tR\btimeCost\x12\x1a\n" +
 	"\bparentId\x18\b \x01(\x03R\bparentId\x12\x10\n" +
-	"\x03seq\x18\t \x01(\tR\x03seq\"y\n" +
+	"\x03seq\x18\t \x01(\tR\x03seq\"a\n" +
 	"\rGetAllGIDsReq\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12&\n" +
-	"\x0eincludeMetrics\x18\x03 \x01(\bR\x0eincludeMetrics\x12\x16\n" +
-	"\x06dbpath\x18\x04 \x01(\tR\x06dbpath\"\xf7\x01\n" +
+	"\x0eincludeMetrics\x18\x03 \x01(\bR\x0eincludeMetrics\"\xf7\x01\n" +
 	"\x0fGetAllGIDsReply\x125\n" +
 	"\x04body\x18\x01 \x03(\v2!.analysis.v1.GetAllGIDsReply.BodyR\x04body\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x1a\x96\x01\n" +
@@ -4084,10 +4093,9 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\rexecutionTime\x18\x04 \x01(\tR\rexecutionTime\x12\x1e\n" +
 	"\n" +
 	"isFinished\x18\x05 \x01(\bR\n" +
-	"isFinished\":\n" +
+	"isFinished\"\"\n" +
 	"\x10GetParamsByIDReq\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x16\n" +
-	"\x06dbpath\x18\x02 \x01(\tR\x06dbpath\"F\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\"F\n" +
 	"\x12GetParamsByIDReply\x120\n" +
 	"\x06params\x18\x01 \x03(\v2\x18.analysis.v1.TraceParamsR\x06params\"\x83\x01\n" +
 	"\tGraphNode\x12\x0e\n" +
@@ -4100,16 +4108,14 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x16\n" +
 	"\x06target\x18\x02 \x01(\tR\x06target\x12\x14\n" +
 	"\x05label\x18\x03 \x01(\tR\x05label\x12\x14\n" +
-	"\x05count\x18\x04 \x01(\x05R\x05count\"<\n" +
+	"\x05count\x18\x04 \x01(\x05R\x05count\"$\n" +
 	"\x10GetTraceGraphReq\x12\x10\n" +
-	"\x03gid\x18\x01 \x01(\x04R\x03gid\x12\x16\n" +
-	"\x06dbpath\x18\x02 \x01(\tR\x06dbpath\"p\n" +
+	"\x03gid\x18\x01 \x01(\x04R\x03gid\"p\n" +
 	"\x12GetTraceGraphReply\x12,\n" +
 	"\x05nodes\x18\x01 \x03(\v2\x16.analysis.v1.GraphNodeR\x05nodes\x12,\n" +
-	"\x05edges\x18\x02 \x03(\v2\x16.analysis.v1.GraphEdgeR\x05edges\"N\n" +
+	"\x05edges\x18\x02 \x03(\v2\x16.analysis.v1.GraphEdgeR\x05edges\"6\n" +
 	"\x18GetTracesByParentFuncReq\x12\x1a\n" +
-	"\bparentId\x18\x01 \x01(\x03R\bparentId\x12\x16\n" +
-	"\x06dbpath\x18\x02 \x01(\tR\x06dbpath\"\xe5\x02\n" +
+	"\bparentId\x18\x01 \x01(\x03R\bparentId\"\xe5\x02\n" +
 	"\x1aGetTracesByParentFuncReply\x12O\n" +
 	"\ttraceData\x18\x01 \x03(\v21.analysis.v1.GetTracesByParentFuncReply.TraceDataR\ttraceData\x1a\xf5\x01\n" +
 	"\tTraceData\x12\x0e\n" +
@@ -4123,9 +4129,8 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"paramCount\x12\x1a\n" +
 	"\btimeCost\x18\a \x01(\tR\btimeCost\x12\x1a\n" +
 	"\bparentId\x18\b \x01(\x03R\bparentId\x12\x10\n" +
-	"\x03seq\x18\t \x01(\tR\x03seq\"S\n" +
-	"\x15GetParentFunctionsReq\x12\x16\n" +
-	"\x06dbpath\x18\x01 \x01(\tR\x06dbpath\x12\"\n" +
+	"\x03seq\x18\t \x01(\tR\x03seq\";\n" +
+	"\x15GetParentFunctionsReq\x12\"\n" +
 	"\ffunctionName\x18\x02 \x01(\tR\ffunctionName\"\xe8\x01\n" +
 	"\fFunctionNode\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
@@ -4140,22 +4145,19 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\x05depth\x18\b \x01(\x05R\x05depth\x12\x10\n" +
 	"\x03seq\x18\t \x01(\tR\x03seq\"R\n" +
 	"\x17GetParentFunctionsReply\x127\n" +
-	"\tfunctions\x18\x01 \x03(\v2\x19.analysis.v1.FunctionNodeR\tfunctions\"J\n" +
+	"\tfunctions\x18\x01 \x03(\v2\x19.analysis.v1.FunctionNodeR\tfunctions\"2\n" +
 	"\x14GetChildFunctionsReq\x12\x1a\n" +
-	"\bparentId\x18\x01 \x01(\x03R\bparentId\x12\x16\n" +
-	"\x06dbpath\x18\x02 \x01(\tR\x06dbpath\"Q\n" +
+	"\bparentId\x18\x01 \x01(\x03R\bparentId\"Q\n" +
 	"\x16GetChildFunctionsReply\x127\n" +
-	"\tfunctions\x18\x01 \x03(\v2\x19.analysis.v1.FunctionNodeR\tfunctions\".\n" +
-	"\x14GetGoroutineStatsReq\x12\x16\n" +
-	"\x06dbpath\x18\x01 \x01(\tR\x06dbpath\"f\n" +
+	"\tfunctions\x18\x01 \x03(\v2\x19.analysis.v1.FunctionNodeR\tfunctions\"\x16\n" +
+	"\x14GetGoroutineStatsReq\"f\n" +
 	"\x16GetGoroutineStatsReply\x12\x16\n" +
 	"\x06active\x18\x01 \x01(\x05R\x06active\x12\x18\n" +
 	"\aavgTime\x18\x02 \x01(\tR\aavgTime\x12\x1a\n" +
-	"\bmaxDepth\x18\x03 \x01(\x05R\bmaxDepth\"h\n" +
+	"\bmaxDepth\x18\x03 \x01(\x05R\bmaxDepth\"P\n" +
 	"\x16GetFunctionAnalysisReq\x12\"\n" +
 	"\ffunctionName\x18\x01 \x01(\tR\ffunctionName\x12\x12\n" +
-	"\x04type\x18\x02 \x01(\tR\x04type\x12\x16\n" +
-	"\x06dbpath\x18\x03 \x01(\tR\x06dbpath\"\xc1\x02\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\"\xc1\x02\n" +
 	"\x18GetFunctionAnalysisReply\x12N\n" +
 	"\bcallData\x18\x01 \x03(\v22.analysis.v1.GetFunctionAnalysisReply.FunctionNodeR\bcallData\x1a\xd4\x01\n" +
 	"\fFunctionNode\x12\x0e\n" +
@@ -4193,9 +4195,8 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"L\n" +
 	"\x16InstrumentProjectReply\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x81\x01\n" +
-	"\x0fGetTreeGraphReq\x12\x16\n" +
-	"\x06dbPath\x18\x01 \x01(\tR\x06dbPath\x12\"\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"i\n" +
+	"\x0fGetTreeGraphReq\x12\"\n" +
 	"\ffunctionName\x18\x02 \x01(\tR\ffunctionName\x12\x1c\n" +
 	"\tchainType\x18\x03 \x01(\tR\tchainType\x12\x14\n" +
 	"\x05depth\x18\x04 \x01(\x05R\x05depth\"\x85\x01\n" +
@@ -4205,14 +4206,12 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\tcollapsed\x18\x03 \x01(\bR\tcollapsed\x121\n" +
 	"\bchildren\x18\x04 \x03(\v2\x15.analysis.v1.TreeNodeR\bchildren\"@\n" +
 	"\x11GetTreeGraphReply\x12+\n" +
-	"\x05trees\x18\x01 \x03(\v2\x15.analysis.v1.TreeNodeR\x05trees\"@\n" +
-	"\x14GetTreeGraphByGIDReq\x12\x16\n" +
-	"\x06dbPath\x18\x01 \x01(\tR\x06dbPath\x12\x10\n" +
+	"\x05trees\x18\x01 \x03(\v2\x15.analysis.v1.TreeNodeR\x05trees\"(\n" +
+	"\x14GetTreeGraphByGIDReq\x12\x10\n" +
 	"\x03gid\x18\x02 \x01(\x04R\x03gid\"E\n" +
 	"\x16GetTreeGraphByGIDReply\x12+\n" +
-	"\x05trees\x18\x01 \x03(\v2\x15.analysis.v1.TreeNodeR\x05trees\"U\n" +
-	"\x17GetFunctionCallStatsReq\x12\x16\n" +
-	"\x06dbPath\x18\x01 \x01(\tR\x06dbPath\x12\"\n" +
+	"\x05trees\x18\x01 \x03(\v2\x15.analysis.v1.TreeNodeR\x05trees\"=\n" +
+	"\x17GetFunctionCallStatsReq\x12\"\n" +
 	"\ffunctionName\x18\x02 \x01(\tR\ffunctionName\"\x91\x02\n" +
 	"\x11FunctionCallStats\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
@@ -4227,9 +4226,8 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"timeStdDev\x18\t \x01(\x01R\n" +
 	"timeStdDev\"Q\n" +
 	"\x19GetFunctionCallStatsReply\x124\n" +
-	"\x05stats\x18\x01 \x03(\v2\x1e.analysis.v1.FunctionCallStatsR\x05stats\"v\n" +
-	"\x1aGetPerformanceAnomaliesReq\x12\x16\n" +
-	"\x06dbPath\x18\x01 \x01(\tR\x06dbPath\x12\"\n" +
+	"\x05stats\x18\x01 \x03(\v2\x1e.analysis.v1.FunctionCallStatsR\x05stats\"^\n" +
+	"\x1aGetPerformanceAnomaliesReq\x12\"\n" +
 	"\ffunctionName\x18\x02 \x01(\tR\ffunctionName\x12\x1c\n" +
 	"\tthreshold\x18\x03 \x01(\x01R\tthreshold\"\xa6\x02\n" +
 	"\x12PerformanceAnomaly\x12\x12\n" +
@@ -4243,10 +4241,9 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"]\n" +
 	"\x1cGetPerformanceAnomaliesReply\x12=\n" +
-	"\tanomalies\x18\x01 \x03(\v2\x1f.analysis.v1.PerformanceAnomalyR\tanomalies\"E\n" +
+	"\tanomalies\x18\x01 \x03(\v2\x1f.analysis.v1.PerformanceAnomalyR\tanomalies\"-\n" +
 	"\x12GetHotFunctionsReq\x12\x17\n" +
-	"\asort_by\x18\x01 \x01(\tR\x06sortBy\x12\x16\n" +
-	"\x06dbpath\x18\x02 \x01(\tR\x06dbpath\"\xfa\x01\n" +
+	"\asort_by\x18\x01 \x01(\tR\x06sortBy\"\xfa\x01\n" +
 	"\x14GetHotFunctionsReply\x12K\n" +
 	"\tfunctions\x18\x01 \x03(\v2-.analysis.v1.GetHotFunctionsReply.HotFunctionR\tfunctions\x1a\x94\x01\n" +
 	"\vHotFunction\x12\x12\n" +
@@ -4256,9 +4253,8 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"call_count\x18\x03 \x01(\x05R\tcallCount\x12\x1d\n" +
 	"\n" +
 	"total_time\x18\x04 \x01(\tR\ttotalTime\x12\x19\n" +
-	"\bavg_time\x18\x05 \x01(\tR\aavgTime\"X\n" +
-	"\x12SearchFunctionsReq\x12\x16\n" +
-	"\x06dbpath\x18\x01 \x01(\tR\x06dbpath\x12\x14\n" +
+	"\bavg_time\x18\x05 \x01(\tR\aavgTime\"@\n" +
+	"\x12SearchFunctionsReq\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\"\xb8\x01\n" +
 	"\x14SearchFunctionsReply\x12L\n" +
@@ -4266,9 +4262,8 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x1a<\n" +
 	"\fFunctionInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\apackage\x18\x02 \x01(\tR\apackage\"\x8d\x01\n" +
-	"\x1dGetFunctionInfoInGoroutineReq\x12\x16\n" +
-	"\x06dbpath\x18\x01 \x01(\tR\x06dbpath\x12\x10\n" +
+	"\apackage\x18\x02 \x01(\tR\apackage\"u\n" +
+	"\x1dGetFunctionInfoInGoroutineReq\x12\x10\n" +
 	"\x03gid\x18\x02 \x01(\x04R\x03gid\x12\x1e\n" +
 	"\n" +
 	"functionId\x18\x03 \x01(\x03R\n" +
@@ -4285,14 +4280,20 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
 	"\x05depth\x18\x03 \x01(\x05R\x05depth\x125\n" +
-	"\tparentIds\x18\x04 \x03(\v2\x17.analysis.v1.ParentInfoR\tparentIds\"K\n" +
-	"\x11GetModuleNamesReq\x12\x16\n" +
-	"\x06dbpath\x18\x01 \x01(\tR\x06dbpath\x12\x1e\n" +
+	"\tparentIds\x18\x04 \x03(\v2\x17.analysis.v1.ParentInfoR\tparentIds\"3\n" +
+	"\x11GetModuleNamesReq\x12\x1e\n" +
 	"\n" +
 	"maxSamples\x18\x02 \x01(\x05R\n" +
 	"maxSamples\"7\n" +
 	"\x13GetModuleNamesReply\x12 \n" +
-	"\vmoduleNames\x18\x01 \x03(\tR\vmoduleNames2\xbb\x10\n" +
+	"\vmoduleNames\x18\x01 \x03(\tR\vmoduleNames\"\x14\n" +
+	"\x12GetAnalysisPathReq\"F\n" +
+	"\x14GetAnalysisPathReply\x12\x16\n" +
+	"\x06dbpath\x18\x01 \x01(\tR\x06dbpath\x12\x16\n" +
+	"\x06exists\x18\x02 \x01(\bR\x06exists\"\x11\n" +
+	"\x0fClearSessionReq\"-\n" +
+	"\x11ClearSessionReply\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\x9a\x12\n" +
 	"\bAnalysis\x12d\n" +
 	"\vGetAnalysis\x12\x1c.analysis.v1.AnalysisRequest\x1a\x1a.analysis.v1.AnalysisReply\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/analysis/{name}\x12\x7f\n" +
 	"\x11InstrumentProject\x12!.analysis.v1.InstrumentProjectReq\x1a#.analysis.v1.InstrumentProjectReply\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/api/runtime/instrument\x12|\n" +
@@ -4310,7 +4311,9 @@ const file_analysis_v1_analysis_proto_rawDesc = "" +
 	"\x14GetFunctionCallStats\x12$.analysis.v1.GetFunctionCallStatsReq\x1a&.analysis.v1.GetFunctionCallStatsReply\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/api/runtime/function/stats\x12\x7f\n" +
 	"\x0fSearchFunctions\x12\x1f.analysis.v1.SearchFunctionsReq\x1a!.analysis.v1.SearchFunctionsReply\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/runtime/functions/search\x12\x9d\x01\n" +
 	"\x1aGetFunctionInfoInGoroutine\x12*.analysis.v1.GetFunctionInfoInGoroutineReq\x1a,.analysis.v1.GetFunctionInfoInGoroutineReply\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/api/runtime/function/info\x12s\n" +
-	"\x0eGetModuleNames\x12\x1e.analysis.v1.GetModuleNamesReq\x1a .analysis.v1.GetModuleNamesReply\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/api/runtime/modulesB2Z0github.com/toheart/goanalysis/api/analysis/v1;v1b\x06proto3"
+	"\x0eGetModuleNames\x12\x1e.analysis.v1.GetModuleNamesReq\x1a .analysis.v1.GetModuleNamesReply\"\x1f\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/api/runtime/modules\x12y\n" +
+	"\x0fGetAnalysisPath\x12\x1f.analysis.v1.GetAnalysisPathReq\x1a!.analysis.v1.GetAnalysisPathReply\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/session/analysis-path\x12b\n" +
+	"\fClearSession\x12\x1c.analysis.v1.ClearSessionReq\x1a\x1e.analysis.v1.ClearSessionReply\"\x14\x82\xd3\xe4\x93\x02\x0e*\f/api/sessionB2Z0github.com/toheart/goanalysis/api/analysis/v1;v1b\x06proto3"
 
 var (
 	file_analysis_v1_analysis_proto_rawDescOnce sync.Once
@@ -4324,7 +4327,7 @@ func file_analysis_v1_analysis_proto_rawDescGZIP() []byte {
 	return file_analysis_v1_analysis_proto_rawDescData
 }
 
-var file_analysis_v1_analysis_proto_msgTypes = make([]protoimpl.MessageInfo, 69)
+var file_analysis_v1_analysis_proto_msgTypes = make([]protoimpl.MessageInfo, 73)
 var file_analysis_v1_analysis_proto_goTypes = []any{
 	(*VerifyProjectPathReq)(nil),                  // 0: analysis.v1.VerifyProjectPathReq
 	(*VerifyProjectPathReply)(nil),                // 1: analysis.v1.VerifyProjectPathReply
@@ -4386,41 +4389,45 @@ var file_analysis_v1_analysis_proto_goTypes = []any{
 	(*GetFunctionInfoInGoroutineReply)(nil),       // 57: analysis.v1.GetFunctionInfoInGoroutineReply
 	(*GetModuleNamesReq)(nil),                     // 58: analysis.v1.GetModuleNamesReq
 	(*GetModuleNamesReply)(nil),                   // 59: analysis.v1.GetModuleNamesReply
-	(*GetGidsByFunctionNameReply_Body)(nil),       // 60: analysis.v1.GetGidsByFunctionNameReply.Body
-	(*AnalysisByGIDReply_TraceData)(nil),          // 61: analysis.v1.AnalysisByGIDReply.TraceData
-	(*GetAllGIDsReply_Body)(nil),                  // 62: analysis.v1.GetAllGIDsReply.Body
-	(*GetTracesByParentFuncReply_TraceData)(nil),  // 63: analysis.v1.GetTracesByParentFuncReply.TraceData
-	(*GetFunctionAnalysisReply_FunctionNode)(nil), // 64: analysis.v1.GetFunctionAnalysisReply.FunctionNode
-	nil,                                      // 65: analysis.v1.PerformanceAnomaly.DetailsEntry
-	(*GetHotFunctionsReply_HotFunction)(nil), // 66: analysis.v1.GetHotFunctionsReply.HotFunction
-	(*SearchFunctionsReply_FunctionInfo)(nil),            // 67: analysis.v1.SearchFunctionsReply.FunctionInfo
-	(*GetFunctionInfoInGoroutineReply_FunctionInfo)(nil), // 68: analysis.v1.GetFunctionInfoInGoroutineReply.FunctionInfo
+	(*GetAnalysisPathReq)(nil),                    // 60: analysis.v1.GetAnalysisPathReq
+	(*GetAnalysisPathReply)(nil),                  // 61: analysis.v1.GetAnalysisPathReply
+	(*ClearSessionReq)(nil),                       // 62: analysis.v1.ClearSessionReq
+	(*ClearSessionReply)(nil),                     // 63: analysis.v1.ClearSessionReply
+	(*GetGidsByFunctionNameReply_Body)(nil),       // 64: analysis.v1.GetGidsByFunctionNameReply.Body
+	(*AnalysisByGIDReply_TraceData)(nil),          // 65: analysis.v1.AnalysisByGIDReply.TraceData
+	(*GetAllGIDsReply_Body)(nil),                  // 66: analysis.v1.GetAllGIDsReply.Body
+	(*GetTracesByParentFuncReply_TraceData)(nil),  // 67: analysis.v1.GetTracesByParentFuncReply.TraceData
+	(*GetFunctionAnalysisReply_FunctionNode)(nil), // 68: analysis.v1.GetFunctionAnalysisReply.FunctionNode
+	nil,                                      // 69: analysis.v1.PerformanceAnomaly.DetailsEntry
+	(*GetHotFunctionsReply_HotFunction)(nil), // 70: analysis.v1.GetHotFunctionsReply.HotFunction
+	(*SearchFunctionsReply_FunctionInfo)(nil),            // 71: analysis.v1.SearchFunctionsReply.FunctionInfo
+	(*GetFunctionInfoInGoroutineReply_FunctionInfo)(nil), // 72: analysis.v1.GetFunctionInfoInGoroutineReply.FunctionInfo
 }
 var file_analysis_v1_analysis_proto_depIdxs = []int32{
-	60, // 0: analysis.v1.GetGidsByFunctionNameReply.body:type_name -> analysis.v1.GetGidsByFunctionNameReply.Body
-	61, // 1: analysis.v1.AnalysisByGIDReply.traceData:type_name -> analysis.v1.AnalysisByGIDReply.TraceData
-	62, // 2: analysis.v1.GetAllGIDsReply.body:type_name -> analysis.v1.GetAllGIDsReply.Body
+	64, // 0: analysis.v1.GetGidsByFunctionNameReply.body:type_name -> analysis.v1.GetGidsByFunctionNameReply.Body
+	65, // 1: analysis.v1.AnalysisByGIDReply.traceData:type_name -> analysis.v1.AnalysisByGIDReply.TraceData
+	66, // 2: analysis.v1.GetAllGIDsReply.body:type_name -> analysis.v1.GetAllGIDsReply.Body
 	11, // 3: analysis.v1.GetParamsByIDReply.params:type_name -> analysis.v1.TraceParams
 	17, // 4: analysis.v1.GetTraceGraphReply.nodes:type_name -> analysis.v1.GraphNode
 	18, // 5: analysis.v1.GetTraceGraphReply.edges:type_name -> analysis.v1.GraphEdge
-	63, // 6: analysis.v1.GetTracesByParentFuncReply.traceData:type_name -> analysis.v1.GetTracesByParentFuncReply.TraceData
+	67, // 6: analysis.v1.GetTracesByParentFuncReply.traceData:type_name -> analysis.v1.GetTracesByParentFuncReply.TraceData
 	24, // 7: analysis.v1.GetParentFunctionsReply.functions:type_name -> analysis.v1.FunctionNode
 	24, // 8: analysis.v1.GetChildFunctionsReply.functions:type_name -> analysis.v1.FunctionNode
-	64, // 9: analysis.v1.GetFunctionAnalysisReply.callData:type_name -> analysis.v1.GetFunctionAnalysisReply.FunctionNode
+	68, // 9: analysis.v1.GetFunctionAnalysisReply.callData:type_name -> analysis.v1.GetFunctionAnalysisReply.FunctionNode
 	35, // 10: analysis.v1.AnalyzeDbFileResponse.packageDependencies:type_name -> analysis.v1.PackageDependency
 	36, // 11: analysis.v1.AnalyzeDbFileResponse.hotFunctions:type_name -> analysis.v1.HotFunction
 	41, // 12: analysis.v1.TreeNode.children:type_name -> analysis.v1.TreeNode
 	41, // 13: analysis.v1.GetTreeGraphReply.trees:type_name -> analysis.v1.TreeNode
 	41, // 14: analysis.v1.GetTreeGraphByGIDReply.trees:type_name -> analysis.v1.TreeNode
 	46, // 15: analysis.v1.GetFunctionCallStatsReply.stats:type_name -> analysis.v1.FunctionCallStats
-	65, // 16: analysis.v1.PerformanceAnomaly.details:type_name -> analysis.v1.PerformanceAnomaly.DetailsEntry
+	69, // 16: analysis.v1.PerformanceAnomaly.details:type_name -> analysis.v1.PerformanceAnomaly.DetailsEntry
 	49, // 17: analysis.v1.GetPerformanceAnomaliesReply.anomalies:type_name -> analysis.v1.PerformanceAnomaly
-	66, // 18: analysis.v1.GetHotFunctionsReply.functions:type_name -> analysis.v1.GetHotFunctionsReply.HotFunction
-	67, // 19: analysis.v1.SearchFunctionsReply.functions:type_name -> analysis.v1.SearchFunctionsReply.FunctionInfo
-	68, // 20: analysis.v1.GetFunctionInfoInGoroutineReply.functionInfo:type_name -> analysis.v1.GetFunctionInfoInGoroutineReply.FunctionInfo
+	70, // 18: analysis.v1.GetHotFunctionsReply.functions:type_name -> analysis.v1.GetHotFunctionsReply.HotFunction
+	71, // 19: analysis.v1.SearchFunctionsReply.functions:type_name -> analysis.v1.SearchFunctionsReply.FunctionInfo
+	72, // 20: analysis.v1.GetFunctionInfoInGoroutineReply.functionInfo:type_name -> analysis.v1.GetFunctionInfoInGoroutineReply.FunctionInfo
 	11, // 21: analysis.v1.AnalysisByGIDReply.TraceData.params:type_name -> analysis.v1.TraceParams
 	11, // 22: analysis.v1.GetTracesByParentFuncReply.TraceData.params:type_name -> analysis.v1.TraceParams
-	64, // 23: analysis.v1.GetFunctionAnalysisReply.FunctionNode.children:type_name -> analysis.v1.GetFunctionAnalysisReply.FunctionNode
+	68, // 23: analysis.v1.GetFunctionAnalysisReply.FunctionNode.children:type_name -> analysis.v1.GetFunctionAnalysisReply.FunctionNode
 	56, // 24: analysis.v1.GetFunctionInfoInGoroutineReply.FunctionInfo.parentIds:type_name -> analysis.v1.ParentInfo
 	8,  // 25: analysis.v1.Analysis.GetAnalysis:input_type -> analysis.v1.AnalysisRequest
 	38, // 26: analysis.v1.Analysis.InstrumentProject:input_type -> analysis.v1.InstrumentProjectReq
@@ -4438,24 +4445,28 @@ var file_analysis_v1_analysis_proto_depIdxs = []int32{
 	53, // 38: analysis.v1.Analysis.SearchFunctions:input_type -> analysis.v1.SearchFunctionsReq
 	55, // 39: analysis.v1.Analysis.GetFunctionInfoInGoroutine:input_type -> analysis.v1.GetFunctionInfoInGoroutineReq
 	58, // 40: analysis.v1.Analysis.GetModuleNames:input_type -> analysis.v1.GetModuleNamesReq
-	9,  // 41: analysis.v1.Analysis.GetAnalysis:output_type -> analysis.v1.AnalysisReply
-	39, // 42: analysis.v1.Analysis.InstrumentProject:output_type -> analysis.v1.InstrumentProjectReply
-	12, // 43: analysis.v1.Analysis.GetAnalysisByGID:output_type -> analysis.v1.AnalysisByGIDReply
-	14, // 44: analysis.v1.Analysis.GetAllGIDs:output_type -> analysis.v1.GetAllGIDsReply
-	16, // 45: analysis.v1.Analysis.GetParamsByID:output_type -> analysis.v1.GetParamsByIDReply
-	3,  // 46: analysis.v1.Analysis.GetGidsByFunctionName:output_type -> analysis.v1.GetGidsByFunctionNameReply
-	1,  // 47: analysis.v1.Analysis.VerifyProjectPath:output_type -> analysis.v1.VerifyProjectPathReply
-	22, // 48: analysis.v1.Analysis.GetTracesByParentFunc:output_type -> analysis.v1.GetTracesByParentFuncReply
-	25, // 49: analysis.v1.Analysis.GetParentFunctions:output_type -> analysis.v1.GetParentFunctionsReply
-	27, // 50: analysis.v1.Analysis.GetChildFunctions:output_type -> analysis.v1.GetChildFunctionsReply
-	52, // 51: analysis.v1.Analysis.GetHotFunctions:output_type -> analysis.v1.GetHotFunctionsReply
-	29, // 52: analysis.v1.Analysis.GetGoroutineStats:output_type -> analysis.v1.GetGoroutineStatsReply
-	47, // 53: analysis.v1.Analysis.GetFunctionCallStats:output_type -> analysis.v1.GetFunctionCallStatsReply
-	54, // 54: analysis.v1.Analysis.SearchFunctions:output_type -> analysis.v1.SearchFunctionsReply
-	57, // 55: analysis.v1.Analysis.GetFunctionInfoInGoroutine:output_type -> analysis.v1.GetFunctionInfoInGoroutineReply
-	59, // 56: analysis.v1.Analysis.GetModuleNames:output_type -> analysis.v1.GetModuleNamesReply
-	41, // [41:57] is the sub-list for method output_type
-	25, // [25:41] is the sub-list for method input_type
+	60, // 41: analysis.v1.Analysis.GetAnalysisPath:input_type -> analysis.v1.GetAnalysisPathReq
+	62, // 42: analysis.v1.Analysis.ClearSession:input_type -> analysis.v1.ClearSessionReq
+	9,  // 43: analysis.v1.Analysis.GetAnalysis:output_type -> analysis.v1.AnalysisReply
+	39, // 44: analysis.v1.Analysis.InstrumentProject:output_type -> analysis.v1.InstrumentProjectReply
+	12, // 45: analysis.v1.Analysis.GetAnalysisByGID:output_type -> analysis.v1.AnalysisByGIDReply
+	14, // 46: analysis.v1.Analysis.GetAllGIDs:output_type -> analysis.v1.GetAllGIDsReply
+	16, // 47: analysis.v1.Analysis.GetParamsByID:output_type -> analysis.v1.GetParamsByIDReply
+	3,  // 48: analysis.v1.Analysis.GetGidsByFunctionName:output_type -> analysis.v1.GetGidsByFunctionNameReply
+	1,  // 49: analysis.v1.Analysis.VerifyProjectPath:output_type -> analysis.v1.VerifyProjectPathReply
+	22, // 50: analysis.v1.Analysis.GetTracesByParentFunc:output_type -> analysis.v1.GetTracesByParentFuncReply
+	25, // 51: analysis.v1.Analysis.GetParentFunctions:output_type -> analysis.v1.GetParentFunctionsReply
+	27, // 52: analysis.v1.Analysis.GetChildFunctions:output_type -> analysis.v1.GetChildFunctionsReply
+	52, // 53: analysis.v1.Analysis.GetHotFunctions:output_type -> analysis.v1.GetHotFunctionsReply
+	29, // 54: analysis.v1.Analysis.GetGoroutineStats:output_type -> analysis.v1.GetGoroutineStatsReply
+	47, // 55: analysis.v1.Analysis.GetFunctionCallStats:output_type -> analysis.v1.GetFunctionCallStatsReply
+	54, // 56: analysis.v1.Analysis.SearchFunctions:output_type -> analysis.v1.SearchFunctionsReply
+	57, // 57: analysis.v1.Analysis.GetFunctionInfoInGoroutine:output_type -> analysis.v1.GetFunctionInfoInGoroutineReply
+	59, // 58: analysis.v1.Analysis.GetModuleNames:output_type -> analysis.v1.GetModuleNamesReply
+	61, // 59: analysis.v1.Analysis.GetAnalysisPath:output_type -> analysis.v1.GetAnalysisPathReply
+	63, // 60: analysis.v1.Analysis.ClearSession:output_type -> analysis.v1.ClearSessionReply
+	43, // [43:61] is the sub-list for method output_type
+	25, // [25:43] is the sub-list for method input_type
 	25, // [25:25] is the sub-list for extension type_name
 	25, // [25:25] is the sub-list for extension extendee
 	0,  // [0:25] is the sub-list for field type_name
@@ -4472,7 +4483,7 @@ func file_analysis_v1_analysis_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_analysis_v1_analysis_proto_rawDesc), len(file_analysis_v1_analysis_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   69,
+			NumMessages:   73,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
