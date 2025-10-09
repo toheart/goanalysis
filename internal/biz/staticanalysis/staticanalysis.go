@@ -568,20 +568,26 @@ func (s *StaticAnalysisBiz) GetInitFunctions(ctx context.Context, req *v1.GetIni
 	}, nil
 }
 
-// isInitFunction 判断是否是 init 函数
+// isInitFunction 判断是否是 Go 包级 init 初始化函数
 func (s *StaticAnalysisBiz) isInitFunction(node *dos.FuncNode) bool {
-	// 检查函数名是否为 "init"
+	if node == nil {
+		return false
+	}
+
+	// 严格匹配：函数名为 "init"
 	if node.Name == "init" {
 		return true
 	}
 
-	// 检查完整名称中是否包含 init（处理匿名函数等情况）
-	if strings.Contains(node.FullName, ".init") {
+	// 兼容 SSA 可能生成的包装函数（如 init#1、init$1）
+	if strings.HasPrefix(node.Name, "init#") || strings.HasPrefix(node.Name, "init$") {
 		return true
 	}
 
-	// 检查函数签名是否符合 init 函数特征（无参数，无返回值）
-	if strings.Contains(node.Name, "init") && strings.Contains(node.Signature, "func()") {
+	// 某些情况下仅在 FullName 中体现（如 "pkg/path.init" 或 "pkg/path.init#1"）
+	if strings.HasSuffix(node.FullName, ".init") ||
+		strings.Contains(node.FullName, ".init#") ||
+		strings.Contains(node.FullName, ".init$") {
 		return true
 	}
 
