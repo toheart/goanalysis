@@ -225,7 +225,7 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 
 	// 创建一个支持CORS的处理器
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8080", "http://192.168.141.128:8082"}, // 允许前端域名和后端IP访问
+		AllowedOrigins:   []string{"http://localhost:8081", "http://192.168.141.128:8082"}, // 允许前端域名和后端IP访问
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		ExposedHeaders:   []string{"Set-Cookie"}, // 暴露Set-Cookie头给前端

@@ -116,6 +116,15 @@ func (p *ProgramAnalysis) GetNode(key string) *dos.FuncNode {
 func (p *ProgramAnalysis) Execute(ctx context.Context, statusChan chan []byte) error {
 	p.log.Info("execute call graph analysis")
 
+	// 首先获取模块名（必须在 analyzeImports 之前）
+	moduleName, err := p.GetModuleName()
+	if err != nil {
+		p.log.Errorf("get module name failed: %v", err)
+		return fmt.Errorf("get module name failed: %w", err)
+	}
+	p.moduleName = moduleName
+	p.log.Infof("analyzing module: %s", p.moduleName)
+
 	// 初始化数据库表
 	if err := p.data.InitTable(); err != nil {
 		return fmt.Errorf("failed to init database table: %w", err)
@@ -127,7 +136,7 @@ func (p *ProgramAnalysis) Execute(ctx context.Context, statusChan chan []byte) e
 		errChan <- p.consumeData(ctx, statusChan)
 	}()
 
-	// 分析import依赖关系
+	// 分析import依赖关系（必须在 moduleName 初始化之后）
 	if err := p.analyzeImports(); err != nil {
 		p.log.Errorf("failed to analyze imports: %v", err)
 		return fmt.Errorf("failed to analyze imports: %w", err)
@@ -633,15 +642,6 @@ func (p *ProgramAnalysis) consumeData(ctx context.Context, statusChan chan []byt
 		statusChan <- []byte("Starting to save data to database...")
 	}
 
-	// 保存包依赖数据
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := p.savePackageData(); err != nil {
-			p.log.Errorf("save package data failed: %v", err)
-		}
-	}()
-
 	// 启动goroutine处理节点保存
 	wg.Add(1)
 	go func() {
@@ -711,16 +711,18 @@ func (p *ProgramAnalysis) extractSourceCode(fn *ssa.Function) string {
 		return ""
 	}
 
-	// 获取函数结束位置（使用函数体的最后位置）
-	endPos := pos // 暂时使用起始位置，后续可以通过 AST 获取更精确的结束位置
+	// 获取函数结束位置 - 通过AST解析获取精确位置
+	endLine := p.getFunctionEndLine(pos.Filename, pos.Line)
+	if endLine == 0 {
+		// 如果无法通过AST获取，使用启发式方法
+		endLine = p.estimateFunctionEndLine(string(content), pos.Line)
+	}
 
 	// 按行分割内容
 	lines := strings.Split(string(content), "\n")
 
 	// 确保行号在有效范围内
 	startLine := pos.Line - 1 // 转换为0基索引
-	endLine := endPos.Line
-
 	if startLine < 0 || startLine >= len(lines) {
 		return ""
 	}
@@ -741,12 +743,23 @@ func (p *ProgramAnalysis) extractPosition(fn *ssa.Function) *dos.Position {
 	}
 
 	pos := fn.Prog.Fset.Position(fn.Pos())
-	endPos := pos // 暂时使用起始位置，后续可以通过 AST 获取更精确的结束位置
+
+	// 通过AST解析获取精确的函数结束位置
+	endLine := p.getFunctionEndLine(pos.Filename, pos.Line)
+	if endLine == 0 {
+		// 如果无法通过AST获取，使用启发式方法
+		content, err := ioutil.ReadFile(pos.Filename)
+		if err == nil {
+			endLine = p.estimateFunctionEndLine(string(content), pos.Line)
+		} else {
+			endLine = pos.Line // 回退到起始行
+		}
+	}
 
 	return &dos.Position{
 		Filename: pos.Filename,
 		Line:     pos.Line,
-		EndLine:  endPos.Line,
+		EndLine:  endLine,
 	}
 }
 
@@ -819,12 +832,19 @@ func (p *ProgramAnalysis) analyzeImports() error {
 		len(p.importAnalyzer.GetPackages()),
 		len(p.importAnalyzer.GetDependencies()))
 
+	// 分析完成后立即保存packages数据
+	if err := p.savePackageData(); err != nil {
+		p.log.Errorf("save package data failed: %v", err)
+		return fmt.Errorf("save package data failed: %w", err)
+	}
+
 	return nil
 }
 
 // savePackageData 保存包依赖数据
 func (p *ProgramAnalysis) savePackageData() error {
 	if p.importAnalyzer == nil {
+		p.log.Warn("importAnalyzer is nil, skipping package data save")
 		return nil
 	}
 
@@ -832,23 +852,114 @@ func (p *ProgramAnalysis) savePackageData() error {
 
 	// 批量保存包信息
 	packages := p.importAnalyzer.GetPackages()
+	p.log.Infof("got %d packages from analyzer", len(packages))
 	if len(packages) > 0 {
 		if err := p.data.BatchSavePackages(packages); err != nil {
 			p.log.Errorf("batch save packages failed: %v", err)
 			return err
 		}
-		p.log.Infof("saved %d packages", len(packages))
+		p.log.Infof("successfully saved %d packages", len(packages))
+	} else {
+		p.log.Warn("no packages to save")
 	}
 
 	// 批量保存包依赖关系
 	deps := p.importAnalyzer.GetDependencies()
+	p.log.Infof("got %d dependencies from analyzer", len(deps))
 	if len(deps) > 0 {
 		if err := p.data.BatchSavePackageDeps(deps); err != nil {
 			p.log.Errorf("batch save package deps failed: %v", err)
 			return err
 		}
-		p.log.Infof("saved %d package dependencies", len(deps))
+		p.log.Infof("successfully saved %d package dependencies", len(deps))
+	} else {
+		p.log.Warn("no package dependencies to save")
 	}
 
 	return nil
+}
+
+// getFunctionEndLine 通过AST解析获取函数的精确结束行号
+func (p *ProgramAnalysis) getFunctionEndLine(filename string, startLine int) int {
+	// 解析源文件的AST
+	fset := token.NewFileSet()
+	src, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return 0
+	}
+
+	file, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
+	if err != nil {
+		return 0
+	}
+
+	var endLine int
+
+	// 遍历AST查找匹配起始行的函数声明
+	ast.Inspect(file, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.FuncDecl:
+			if x.Pos() != 0 {
+				funcStartPos := fset.Position(x.Pos())
+				if funcStartPos.Line == startLine {
+					// 找到匹配的函数，获取结束位置
+					funcEndPos := fset.Position(x.End())
+					endLine = funcEndPos.Line
+					return false // 找到后停止遍历
+				}
+			}
+		}
+		return true
+	})
+
+	return endLine
+}
+
+// estimateFunctionEndLine 使用启发式方法估算函数结束行号
+func (p *ProgramAnalysis) estimateFunctionEndLine(content string, startLine int) int {
+	lines := strings.Split(content, "\n")
+	if startLine <= 0 || startLine > len(lines) {
+		return startLine
+	}
+
+	// 从函数开始行向下查找
+	braceDepth := 0
+	foundOpenBrace := false
+
+	for i := startLine - 1; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+
+		// 跳过空行和注释行
+		if line == "" || strings.HasPrefix(line, "//") || strings.HasPrefix(line, "/*") {
+			continue
+		}
+
+		// 计算大括号的深度
+		for _, char := range line {
+			switch char {
+			case '{':
+				braceDepth++
+				foundOpenBrace = true
+			case '}':
+				braceDepth--
+				// 如果找到了开括号且括号深度回到0，说明函数结束
+				if foundOpenBrace && braceDepth == 0 {
+					return i + 1 // 返回1基索引
+				}
+			}
+		}
+
+		// 如果没有找到开括号且遇到分号，可能是函数声明
+		if !foundOpenBrace && strings.HasSuffix(line, ";") {
+			return i + 1
+		}
+
+		// 限制搜索范围，避免无限循环
+		if i-startLine > 500 { // 最多向下搜索500行
+			break
+		}
+	}
+
+	// 如果无法确定结束位置，返回起始行后几行作为估计
+	return startLine + 10
 }
