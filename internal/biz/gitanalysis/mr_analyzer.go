@@ -215,6 +215,23 @@ func (a *MRAnalyzer) fetchAndProcessFile(task fileProcessTask) fileProcessResult
 		return result
 	}
 
+	// 根据变更类型标注函数语义与统计口径
+	// 中文注释：对新增/删除的函数，设置 IsValid 与 Reason，避免删除函数被计入有效改动
+	for _, fn := range functions {
+		switch task.ChangeType {
+		case dos.Added:
+			fn.IsValid = true
+			fn.Reason = "新增函数"
+		case dos.Deleted:
+			fn.IsValid = false
+			fn.Reason = "函数被删除"
+			if fn.Suggestion == "" {
+				fn.Suggestion = "检查潜在上游破坏性调用"
+			}
+		default:
+			// 其他类型维持提取默认值
+		}
+	}
 	result.Functions = functions
 	return result
 }
@@ -339,14 +356,6 @@ func (a *MRAnalyzer) AnalyzeMR(projectID, mrID int, autoNotes bool) (*dos.MrAnal
 	// 回填结果契约
 	result.Review = llmReview.Review
 	result.TestSuggestions = llmReview.TestSuggestions
-	result.Quality.CommitMessageScore = llmReview.CommitMsgScore
-	result.Quality.GoIssuesScore = llmReview.GoIssuesScore
-	if autoNotes {
-		err = a.CreateMRNotes(projectID, mrID, result)
-		if err != nil {
-			a.logger.Errorf("failed to create MR notes: %v", err)
-		}
-	}
 	return result, nil
 }
 
@@ -403,6 +412,16 @@ func (a *MRAnalyzer) CreateMRNotes(projectID int, mrID int, result *dos.MrAnalys
 	// 创建改动影响面评论
 	if err := a.git.CreateMergeRequestNote(projectID, mrID, result.GetAffectedFilesMd()); err != nil {
 		return err
+	}
+	// 创建测试建议评论
+	if err := a.git.CreateMergeRequestNote(projectID, mrID, result.GetTestSuggestionsMd()); err != nil {
+		a.logger.Warnf("Failed to create test suggestions note: %v", err)
+	}
+	// 创建结构化用例评论（若有）
+	if len(result.TestCases) > 0 {
+		if err := a.git.CreateMergeRequestNote(projectID, mrID, result.GetTestCasesMd()); err != nil {
+			a.logger.Warnf("Failed to create test cases note: %v", err)
+		}
 	}
 	return a.git.CreateMergeRequestNote(projectID, mrID, result.Review)
 }

@@ -11,6 +11,8 @@ import (
 type LLMClient interface {
 	AnalyzeFile(ctx context.Context, fileContent string) (dos.LLMResponseList, error)
 	AnalyzeMR(ctx context.Context, title, content string) (*dos.LLMReview, error)
+	// GenerateTestCases 基于有效函数及其上游影响生成结构化测试用例
+	GenerateTestCases(ctx context.Context, title, content string) ([]dos.TestCase, error)
 }
 
 // GitLabAdapter 定义GitLab访问适配接口，便于测试注入
