@@ -22,6 +22,9 @@ type MrAnalysisResult struct {
 	AffectedFiles     []AffectedFile     `json:"affected_files"`
 	AffectedFunctions []AffectedFunction `json:"affected_functions"`
 	Review            string             `json:"review"`
+	Impact            ImpactAnalysis     `json:"impact"`
+	Quality           QualityScore       `json:"quality"`
+	TestSuggestions   []TestSuggestion   `json:"test_suggestions"`
 }
 
 // AffectedFile 受影响的文件
@@ -35,6 +38,30 @@ type AffectedFunction struct {
 	Filename   string      `json:"file"`
 	ChangeType ChangeType  `json:"change_type"`
 	Functions  []*Function `json:"functions"`
+}
+
+// ImpactAnalysis 影响指标
+type ImpactAnalysis struct {
+	TotalChangedFiles     int `json:"total_changed_files"`
+	ValidChangedFunctions int `json:"valid_changed_functions"`
+	UpstreamCallers       int `json:"upstream_callers"`
+}
+
+// QualityScore 质量评分
+type QualityScore struct {
+	ReachScore         int    `json:"reach_score"`
+	CommitMessageScore int    `json:"commit_message_score"`
+	GoIssuesScore      int    `json:"go_issues_score"`
+	OverallScore       int    `json:"overall_score"`
+	Summary            string `json:"summary"`
+}
+
+// TestSuggestion 测试建议
+type TestSuggestion struct {
+	Title            string   `json:"title"`
+	Reason           string   `json:"reason"`
+	Priority         string   `json:"priority"`
+	RelatedFunctions []string `json:"related_functions"`
 }
 
 // SaveToFile 将分析结果保存到文件

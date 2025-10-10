@@ -39,9 +39,10 @@ type fileProcessTask struct {
 type MRAnalyzer struct {
 	sync.Mutex
 	conf   *conf.Biz
-	llm    *LLMAnalyzer
+	llm    LLMClient
 	logger *log.Helper
 	gCli   *gitlab.Client
+	git    GitLabAdapter
 }
 
 // NewMRAnalyzer 创建新的MR分析器
@@ -61,15 +62,22 @@ func NewMRAnalyzer(conf *conf.Biz, gitlabClient *gitlab.Client) (*MRAnalyzer, er
 		logger: log.NewHelper(log.With(log.GetLogger(), "module", "gitanalysis")),
 		llm:    llm,
 		gCli:   gitlabClient,
+		git:    newRealGitLabAdapter(gitlabClient),
 	}, nil
 }
 
-func (a *MRAnalyzer) GetMergeRequest(projectID, mrID int) (*gitlab.MergeRequest, error) {
-	mergeRequest, _, err := a.gCli.MergeRequests.GetMergeRequest(projectID, mrID, &gitlab.GetMergeRequestsOptions{})
-	if err != nil {
-		return nil, err
+// NewMRAnalyzerWithAdapters 仅用于测试，注入替身
+func NewMRAnalyzerWithAdapters(conf *conf.Biz, llm LLMClient, git GitLabAdapter) *MRAnalyzer {
+	return &MRAnalyzer{
+		conf:   conf,
+		logger: log.NewHelper(log.With(log.GetLogger(), "module", "gitanalysis")),
+		llm:    llm,
+		git:    git,
 	}
-	return mergeRequest, nil
+}
+
+func (a *MRAnalyzer) GetMergeRequest(projectID, mrID int) (*gitlab.MergeRequest, error) {
+	return a.git.GetMergeRequest(projectID, mrID)
 }
 
 // isGeneratedFile 判断文件是否为自动生成的文件
@@ -187,13 +195,7 @@ func (a *MRAnalyzer) fetchAndProcessFile(task fileProcessTask) fileProcessResult
 	}
 
 	// 非Modified, 获取文件内容
-	content, _, err := a.gCli.RepositoryFiles.GetRawFile(
-		task.ProjectID,
-		task.Path,
-		&gitlab.GetRawFileOptions{
-			Ref: gitlab.Ptr(task.Ref),
-		},
-	)
+	content, err := a.git.GetRawFile(task.ProjectID, task.Path, task.Ref)
 
 	if err != nil {
 		a.logger.Warnf("Failed to get file content for %s file %s: %v", string(task.ChangeType), task.Path, err)
@@ -226,7 +228,7 @@ func (a *MRAnalyzer) AnalyzeMR(projectID, mrID int, autoNotes bool) (*dos.MrAnal
 	}
 
 	// 获取MR信息
-	mergeRequest, _, err := a.gCli.MergeRequests.GetMergeRequest(projectID, mrID, &gitlab.GetMergeRequestsOptions{})
+	mergeRequest, err := a.git.GetMergeRequest(projectID, mrID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MR: %w", err)
 	}
@@ -238,15 +240,11 @@ func (a *MRAnalyzer) AnalyzeMR(projectID, mrID int, autoNotes bool) (*dos.MrAnal
 	// 分页获取MR变更
 	page := 1
 	for page > 0 {
-		mrWithChanges, resp, err := a.gCli.MergeRequests.ListMergeRequestDiffs(projectID, mrID, &gitlab.ListMergeRequestDiffsOptions{
-			ListOptions: gitlab.ListOptions{
-				Page: page,
-			},
-		})
+		mrWithChanges, nextPage, err := a.git.ListMergeRequestDiffs(projectID, mrID, page)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get MR changes: %w", err)
 		}
-		page = resp.NextPage
+		page = nextPage
 
 		// 处理变更文件
 		for _, change := range mrWithChanges {
@@ -333,12 +331,16 @@ func (a *MRAnalyzer) AnalyzeMR(projectID, mrID int, autoNotes bool) (*dos.MrAnal
 	}
 	a.logger.Infof("prepare to analyze MR: %s", mergeRequest.Title)
 	functions, _ := json.Marshal(result.AffectedFunctions)
-	// 最后进行Mr审查
-	review, err := a.llm.AnalyzeMR(context.Background(), mergeRequest.Title, string(functions))
+	// 最后进行Mr审查（JSON 返回）
+	llmReview, err := a.llm.AnalyzeMR(context.Background(), mergeRequest.Title, string(functions))
 	if err != nil {
 		return nil, fmt.Errorf("failed to analyze MR: %w", err)
 	}
-	result.Review = review
+	// 回填结果契约
+	result.Review = llmReview.Review
+	result.TestSuggestions = llmReview.TestSuggestions
+	result.Quality.CommitMessageScore = llmReview.CommitMsgScore
+	result.Quality.GoIssuesScore = llmReview.GoIssuesScore
 	if autoNotes {
 		err = a.CreateMRNotes(projectID, mrID, result)
 		if err != nil {
@@ -399,15 +401,8 @@ func (a *MRAnalyzer) extractFunctions(src string) ([]*dos.Function, error) {
 // CreateMRNotes 创建MR的notes
 func (a *MRAnalyzer) CreateMRNotes(projectID int, mrID int, result *dos.MrAnalysisResult) error {
 	// 创建改动影响面评论
-	_, _, err := a.gCli.Notes.CreateMergeRequestNote(projectID, mrID, &gitlab.CreateMergeRequestNoteOptions{
-		Body: gitlab.Ptr(result.GetAffectedFilesMd()),
-	})
-	if err != nil {
+	if err := a.git.CreateMergeRequestNote(projectID, mrID, result.GetAffectedFilesMd()); err != nil {
 		return err
 	}
-	// 创建AI审查结果评论
-	_, _, err = a.gCli.Notes.CreateMergeRequestNote(projectID, mrID, &gitlab.CreateMergeRequestNoteOptions{
-		Body: gitlab.Ptr(result.Review),
-	})
-	return err
+	return a.git.CreateMergeRequestNote(projectID, mrID, result.Review)
 }

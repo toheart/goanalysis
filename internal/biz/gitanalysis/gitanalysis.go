@@ -3,6 +3,7 @@ package gitanalysis
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -82,6 +83,9 @@ func (g *GitAnalysis) MRAnalyzer(projectID, mrID int, autoNotes bool) (*dos.MrAn
 		g.logger.Warnf("failed to analyze function call relations: %v", err)
 	}
 
+	// 基于分析结果计算影响指标与质量评分
+	g.computeImpactAndQuality(result)
+
 	return result, nil
 }
 
@@ -125,7 +129,7 @@ func (g *GitAnalysis) RepoCallGraph(project *gitapi.Project, rootDir string) (st
 	if err != nil {
 		return "", fmt.Errorf("init db failed: %w", err)
 	}
-	defer dbStore.Close()
+	// 注意：此处不立即关闭 dbStore，因为后续 AnalyzeFunctionCallRelations 仍需读取该 DB。
 
 	// 创建程序分析实例，使用 VTA 算法以获得更高精度
 	pa := callgraph.NewProgramAnalysis(
@@ -248,6 +252,24 @@ func (g *GitAnalysis) AnalyzeFunctionCallRelations(dbPath string, result *dos.Mr
 		calleeToCallers[edge.CalleeKey] = append(calleeToCallers[edge.CalleeKey], edge.CallerKey)
 	}
 
+	// 构建 key->函数名 映射，便于输出友好名称
+	allNodes, err := dbStore.GetAllFuncNodes()
+	if err != nil {
+		return fmt.Errorf("failed to get all function nodes: %w", err)
+	}
+	keyToName := make(map[string]string, len(allNodes))
+	for _, n := range allNodes {
+		// 优先使用节点的 Name（已是短名，如 pkg.Recv.Method），若为空可回退 FullName
+		name := n.Name
+		if name == "" {
+			name = n.FullName
+		}
+		if name == "" {
+			name = n.Key
+		}
+		keyToName[n.Key] = name
+	}
+
 	// 遍历分析结果中受影响的函数
 	for i, affectedFunction := range result.AffectedFunctions {
 		g.logger.Infof("analyzing call relations for file: %s", affectedFunction.Filename)
@@ -260,17 +282,16 @@ func (g *GitAnalysis) AnalyzeFunctionCallRelations(dbPath string, result *dos.Mr
 
 			g.logger.Infof("finding callers for function: %s", function.FunctionName)
 
-			// 查找调用当前函数的上级函数
-			callers, err := g.findAllCallers(dbStore, function.FunctionName, calleeToCallers, 3) // 最大深度3
+			// 计算从各上游到当前函数的调用链（文本形式，如 C->B->A），不限制深度
+			chains, err := g.findCallerChainsText(dbStore, function.FunctionName, calleeToCallers, keyToName)
 			if err != nil {
 				g.logger.Warnf("failed to find callers for function %s: %v", function.FunctionName, err)
 				continue
 			}
 
-			if len(callers) > 0 {
-				// 将找到的调用者填充到新字段
-				result.AffectedFunctions[i].Functions[j].UpstreamCallers = callers
-				g.logger.Infof("function %s has %d callers: %v", function.FunctionName, len(callers), callers)
+			if len(chains) > 0 {
+				result.AffectedFunctions[i].Functions[j].UpstreamCallers = chains
+				g.logger.Infof("function %s has %d caller chains", function.FunctionName, len(chains))
 			} else {
 				// 如果没有找到调用者，可能是入口函数
 				entryInfo := "此函数可能是入口函数，没有发现其他函数调用它"
@@ -288,11 +309,77 @@ func (g *GitAnalysis) AnalyzeFunctionCallRelations(dbPath string, result *dos.Mr
 	return nil
 }
 
+// findCallerChainsText 返回从上游到目标函数的调用链（文本），例如：C->B->A
+func (g *GitAnalysis) findCallerChainsText(dbStore repo.StaticDBStore, functionName string, calleeToCallers map[string][]string, keyToName map[string]string) ([]string, error) {
+	// 匹配可能对应的函数键
+	allNodes, err := dbStore.GetAllFuncNodes()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all function nodes: %w", err)
+	}
+
+	var matchingKeys []string
+	for _, node := range allNodes {
+		if node.Name == functionName ||
+			strings.Contains(node.Name, functionName) ||
+			strings.HasSuffix(node.Name, "."+functionName) {
+			matchingKeys = append(matchingKeys, node.Key)
+		}
+	}
+
+	// 深度优先遍历，收集所有链路（以 key 表示），然后转为名称文本
+	type void struct{}
+	seenChains := make(map[string]void)
+	var chains []string
+	for _, key := range matchingKeys {
+		var dfs func(curr string, path []string, visited map[string]bool)
+		dfs = func(curr string, path []string, visited map[string]bool) {
+			if visited[curr] {
+				return
+			}
+			visited[curr] = true
+
+			// 追加当前节点（从目标向上）
+			path = append(path, curr)
+
+			callers := calleeToCallers[curr]
+			if len(callers) == 0 {
+				// 到达最上游，反转为上游->...->目标
+				for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+					path[i], path[j] = path[j], path[i]
+				}
+				// 转名称
+				var segs []string
+				for _, k := range path {
+					name := keyToName[k]
+					if name == "" {
+						name = k
+					}
+					segs = append(segs, name)
+				}
+				chain := strings.Join(segs, "->")
+				if _, ok := seenChains[chain]; !ok {
+					seenChains[chain] = void{}
+					chains = append(chains, chain)
+				}
+				return
+			}
+
+			for _, caller := range callers {
+				// 每条分支使用独立 visited 复制，避免错误剪枝
+				nextVisited := make(map[string]bool, len(visited)+1)
+				for k, v := range visited {
+					nextVisited[k] = v
+				}
+				dfs(caller, append([]string{}, path...), nextVisited)
+			}
+		}
+		dfs(key, []string{}, make(map[string]bool))
+	}
+	return chains, nil
+}
+
 // findAllCallers 递归查找所有调用指定函数的上级函数
 func (g *GitAnalysis) findAllCallers(dbStore repo.StaticDBStore, functionName string, calleeToCallers map[string][]string, maxDepth int) ([]string, error) {
-	if maxDepth <= 0 {
-		return nil, nil
-	}
 
 	// 首先尝试通过函数名直接查找
 	var callers []string
@@ -335,7 +422,8 @@ func (g *GitAnalysis) findAllCallers(dbStore repo.StaticDBStore, functionName st
 
 // findCallersRecursive 递归查找调用者
 func (g *GitAnalysis) findCallersRecursive(functionKey string, calleeToCallers map[string][]string, visited map[string]bool, result *[]string, depth int) {
-	if depth <= 0 || visited[functionKey] {
+	// depth < 0 表示不限制深度；仅用 visited 防止循环
+	if (depth == 0) || visited[functionKey] {
 		return
 	}
 
@@ -345,7 +433,62 @@ func (g *GitAnalysis) findCallersRecursive(functionKey string, calleeToCallers m
 		for _, callerKey := range callerKeys {
 			*result = append(*result, callerKey)
 			// 递归查找上级调用者
-			g.findCallersRecursive(callerKey, calleeToCallers, visited, result, depth-1)
+			nextDepth := depth
+			if depth > 0 {
+				nextDepth = depth - 1
+			}
+			g.findCallersRecursive(callerKey, calleeToCallers, visited, result, nextDepth)
 		}
 	}
+}
+
+// computeImpactAndQuality 根据受影响函数与上游调用者，计算影响指标与质量评分
+func (g *GitAnalysis) computeImpactAndQuality(result *dos.MrAnalysisResult) {
+	// 统计有效函数与上游调用者
+	totalChangedFiles := len(result.AffectedFiles)
+	validChangedFunctions := 0
+	uniqueUpstream := make(map[string]struct{})
+
+	for _, af := range result.AffectedFunctions {
+		for _, fn := range af.Functions {
+			if fn.IsValid {
+				validChangedFunctions++
+				for _, caller := range fn.UpstreamCallers {
+					if caller == "" {
+						continue
+					}
+					uniqueUpstream[caller] = struct{}{}
+				}
+			}
+		}
+	}
+
+	upstreamCount := len(uniqueUpstream)
+	result.Impact = dos.ImpactAnalysis{
+		TotalChangedFiles:     totalChangedFiles,
+		ValidChangedFunctions: validChangedFunctions,
+		UpstreamCallers:       upstreamCount,
+	}
+
+	// 触达范围得分（0-100）
+	reachFromFuncs := math.Min(50, float64(validChangedFunctions*5))
+	reachFromCallers := math.Min(30, float64(upstreamCount*3))
+	reachFromFiles := math.Min(20, float64(totalChangedFiles*2))
+	reachScore := int(math.Round(reachFromFuncs + reachFromCallers + reachFromFiles))
+
+	// 汇总总体评分（权重：触达40%，提交说明30%，Go问题30%）
+	commitScore := result.Quality.CommitMessageScore
+	goIssueScore := result.Quality.GoIssuesScore
+	overall := int(math.Round(0.4*float64(reachScore) + 0.3*float64(commitScore) + 0.3*float64(goIssueScore)))
+
+	// 简要总结
+	summary := fmt.Sprintf("Reach=%d (files=%d, funcs=%d, callers=%d); CommitMsg=%d; GoIssues=%d",
+		reachScore, totalChangedFiles, validChangedFunctions, upstreamCount, commitScore, goIssueScore,
+	)
+
+	result.Quality.ReachScore = reachScore
+	result.Quality.OverallScore = overall
+	result.Quality.Summary = summary
+
+	g.logger.Infof("computed impact and quality: reach=%d, overall=%d", reachScore, overall)
 }
