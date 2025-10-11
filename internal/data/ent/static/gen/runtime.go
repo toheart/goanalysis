@@ -5,7 +5,10 @@ package gen
 import (
 	"time"
 
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcedge"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcnode"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/packagedep"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/pkg"
 	"github.com/toheart/goanalysis/internal/data/ent/static/schema"
 )
 
@@ -13,6 +16,12 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	funcedgeFields := schema.FuncEdge{}.Fields()
+	_ = funcedgeFields
+	// funcedgeDescCallType is the schema descriptor for call_type field.
+	funcedgeDescCallType := funcedgeFields[6].Descriptor()
+	// funcedge.DefaultCallType holds the default value on creation for the call_type field.
+	funcedge.DefaultCallType = funcedgeDescCallType.Default.(string)
 	funcnodeFields := schema.FuncNode{}.Fields()
 	_ = funcnodeFields
 	// funcnodeDescKey is the schema descriptor for key field.
@@ -28,15 +37,39 @@ func init() {
 	// funcnode.PkgValidator is a validator for the "pkg" field. It is called by the builders before save.
 	funcnode.PkgValidator = funcnodeDescPkg.Validators[0].(func(string) error)
 	// funcnodeDescName is the schema descriptor for name field.
-	funcnodeDescName := funcnodeFields[3].Descriptor()
+	funcnodeDescName := funcnodeFields[4].Descriptor()
 	// funcnode.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	funcnode.NameValidator = funcnodeDescName.Validators[0].(func(string) error)
 	// funcnodeDescCreatedAt is the schema descriptor for CreatedAt field.
-	funcnodeDescCreatedAt := funcnodeFields[4].Descriptor()
+	funcnodeDescCreatedAt := funcnodeFields[10].Descriptor()
 	// funcnode.DefaultCreatedAt holds the default value on creation for the CreatedAt field.
 	funcnode.DefaultCreatedAt = funcnodeDescCreatedAt.Default.(func() time.Time)
 	// funcnodeDescUpdatedAt is the schema descriptor for UpdatedAt field.
-	funcnodeDescUpdatedAt := funcnodeFields[5].Descriptor()
+	funcnodeDescUpdatedAt := funcnodeFields[11].Descriptor()
 	// funcnode.DefaultUpdatedAt holds the default value on creation for the UpdatedAt field.
 	funcnode.DefaultUpdatedAt = funcnodeDescUpdatedAt.Default.(func() time.Time)
+	packagedepFields := schema.PackageDep{}.Fields()
+	_ = packagedepFields
+	// packagedepDescImporterPkg is the schema descriptor for importer_pkg field.
+	packagedepDescImporterPkg := packagedepFields[0].Descriptor()
+	// packagedep.ImporterPkgValidator is a validator for the "importer_pkg" field. It is called by the builders before save.
+	packagedep.ImporterPkgValidator = packagedepDescImporterPkg.Validators[0].(func(string) error)
+	// packagedepDescImportedPkg is the schema descriptor for imported_pkg field.
+	packagedepDescImportedPkg := packagedepFields[1].Descriptor()
+	// packagedep.ImportedPkgValidator is a validator for the "imported_pkg" field. It is called by the builders before save.
+	packagedep.ImportedPkgValidator = packagedepDescImportedPkg.Validators[0].(func(string) error)
+	// packagedepDescImportCount is the schema descriptor for import_count field.
+	packagedepDescImportCount := packagedepFields[2].Descriptor()
+	// packagedep.DefaultImportCount holds the default value on creation for the import_count field.
+	packagedep.DefaultImportCount = packagedepDescImportCount.Default.(int)
+	pkgFields := schema.Pkg{}.Fields()
+	_ = pkgFields
+	// pkgDescPkgPath is the schema descriptor for pkg_path field.
+	pkgDescPkgPath := pkgFields[0].Descriptor()
+	// pkg.PkgPathValidator is a validator for the "pkg_path" field. It is called by the builders before save.
+	pkg.PkgPathValidator = pkgDescPkgPath.Validators[0].(func(string) error)
+	// pkgDescIsInternal is the schema descriptor for is_internal field.
+	pkgDescIsInternal := pkgFields[1].Descriptor()
+	// pkg.DefaultIsInternal holds the default value on creation for the is_internal field.
+	pkg.DefaultIsInternal = pkgDescIsInternal.Default.(bool)
 }

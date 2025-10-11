@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcedge"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/funcnode"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/packagedep"
+	"github.com/toheart/goanalysis/internal/data/ent/static/gen/pkg"
 	"github.com/toheart/goanalysis/internal/data/ent/static/gen/predicate"
 )
 
@@ -25,24 +27,30 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeFuncEdge = "FuncEdge"
-	TypeFuncNode = "FuncNode"
+	TypeFuncEdge   = "FuncEdge"
+	TypeFuncNode   = "FuncNode"
+	TypePackageDep = "PackageDep"
+	TypePkg        = "Pkg"
 )
 
 // FuncEdgeMutation represents an operation that mutates the FuncEdge nodes in the graph.
 type FuncEdgeMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	_CreatedAt    *time.Time
-	_UpdatedAt    *time.Time
-	_CallerKey    *string
-	_CalleeKey    *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*FuncEdge, error)
-	predicates    []predicate.FuncEdge
+	op                Op
+	typ               string
+	id                *int
+	_CreatedAt        *time.Time
+	_UpdatedAt        *time.Time
+	_CallerKey        *string
+	_CalleeKey        *string
+	call_site_file    *string
+	call_site_line    *int
+	addcall_site_line *int
+	call_type         *string
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*FuncEdge, error)
+	predicates        []predicate.FuncEdge
 }
 
 var _ ent.Mutation = (*FuncEdgeMutation)(nil)
@@ -287,6 +295,161 @@ func (m *FuncEdgeMutation) ResetCalleeKey() {
 	m._CalleeKey = nil
 }
 
+// SetCallSiteFile sets the "call_site_file" field.
+func (m *FuncEdgeMutation) SetCallSiteFile(s string) {
+	m.call_site_file = &s
+}
+
+// CallSiteFile returns the value of the "call_site_file" field in the mutation.
+func (m *FuncEdgeMutation) CallSiteFile() (r string, exists bool) {
+	v := m.call_site_file
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCallSiteFile returns the old "call_site_file" field's value of the FuncEdge entity.
+// If the FuncEdge object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncEdgeMutation) OldCallSiteFile(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCallSiteFile is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCallSiteFile requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCallSiteFile: %w", err)
+	}
+	return oldValue.CallSiteFile, nil
+}
+
+// ClearCallSiteFile clears the value of the "call_site_file" field.
+func (m *FuncEdgeMutation) ClearCallSiteFile() {
+	m.call_site_file = nil
+	m.clearedFields[funcedge.FieldCallSiteFile] = struct{}{}
+}
+
+// CallSiteFileCleared returns if the "call_site_file" field was cleared in this mutation.
+func (m *FuncEdgeMutation) CallSiteFileCleared() bool {
+	_, ok := m.clearedFields[funcedge.FieldCallSiteFile]
+	return ok
+}
+
+// ResetCallSiteFile resets all changes to the "call_site_file" field.
+func (m *FuncEdgeMutation) ResetCallSiteFile() {
+	m.call_site_file = nil
+	delete(m.clearedFields, funcedge.FieldCallSiteFile)
+}
+
+// SetCallSiteLine sets the "call_site_line" field.
+func (m *FuncEdgeMutation) SetCallSiteLine(i int) {
+	m.call_site_line = &i
+	m.addcall_site_line = nil
+}
+
+// CallSiteLine returns the value of the "call_site_line" field in the mutation.
+func (m *FuncEdgeMutation) CallSiteLine() (r int, exists bool) {
+	v := m.call_site_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCallSiteLine returns the old "call_site_line" field's value of the FuncEdge entity.
+// If the FuncEdge object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncEdgeMutation) OldCallSiteLine(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCallSiteLine is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCallSiteLine requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCallSiteLine: %w", err)
+	}
+	return oldValue.CallSiteLine, nil
+}
+
+// AddCallSiteLine adds i to the "call_site_line" field.
+func (m *FuncEdgeMutation) AddCallSiteLine(i int) {
+	if m.addcall_site_line != nil {
+		*m.addcall_site_line += i
+	} else {
+		m.addcall_site_line = &i
+	}
+}
+
+// AddedCallSiteLine returns the value that was added to the "call_site_line" field in this mutation.
+func (m *FuncEdgeMutation) AddedCallSiteLine() (r int, exists bool) {
+	v := m.addcall_site_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCallSiteLine clears the value of the "call_site_line" field.
+func (m *FuncEdgeMutation) ClearCallSiteLine() {
+	m.call_site_line = nil
+	m.addcall_site_line = nil
+	m.clearedFields[funcedge.FieldCallSiteLine] = struct{}{}
+}
+
+// CallSiteLineCleared returns if the "call_site_line" field was cleared in this mutation.
+func (m *FuncEdgeMutation) CallSiteLineCleared() bool {
+	_, ok := m.clearedFields[funcedge.FieldCallSiteLine]
+	return ok
+}
+
+// ResetCallSiteLine resets all changes to the "call_site_line" field.
+func (m *FuncEdgeMutation) ResetCallSiteLine() {
+	m.call_site_line = nil
+	m.addcall_site_line = nil
+	delete(m.clearedFields, funcedge.FieldCallSiteLine)
+}
+
+// SetCallType sets the "call_type" field.
+func (m *FuncEdgeMutation) SetCallType(s string) {
+	m.call_type = &s
+}
+
+// CallType returns the value of the "call_type" field in the mutation.
+func (m *FuncEdgeMutation) CallType() (r string, exists bool) {
+	v := m.call_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCallType returns the old "call_type" field's value of the FuncEdge entity.
+// If the FuncEdge object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncEdgeMutation) OldCallType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCallType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCallType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCallType: %w", err)
+	}
+	return oldValue.CallType, nil
+}
+
+// ResetCallType resets all changes to the "call_type" field.
+func (m *FuncEdgeMutation) ResetCallType() {
+	m.call_type = nil
+}
+
 // Where appends a list predicates to the FuncEdgeMutation builder.
 func (m *FuncEdgeMutation) Where(ps ...predicate.FuncEdge) {
 	m.predicates = append(m.predicates, ps...)
@@ -321,7 +484,7 @@ func (m *FuncEdgeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FuncEdgeMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 7)
 	if m._CreatedAt != nil {
 		fields = append(fields, funcedge.FieldCreatedAt)
 	}
@@ -333,6 +496,15 @@ func (m *FuncEdgeMutation) Fields() []string {
 	}
 	if m._CalleeKey != nil {
 		fields = append(fields, funcedge.FieldCalleeKey)
+	}
+	if m.call_site_file != nil {
+		fields = append(fields, funcedge.FieldCallSiteFile)
+	}
+	if m.call_site_line != nil {
+		fields = append(fields, funcedge.FieldCallSiteLine)
+	}
+	if m.call_type != nil {
+		fields = append(fields, funcedge.FieldCallType)
 	}
 	return fields
 }
@@ -350,6 +522,12 @@ func (m *FuncEdgeMutation) Field(name string) (ent.Value, bool) {
 		return m.CallerKey()
 	case funcedge.FieldCalleeKey:
 		return m.CalleeKey()
+	case funcedge.FieldCallSiteFile:
+		return m.CallSiteFile()
+	case funcedge.FieldCallSiteLine:
+		return m.CallSiteLine()
+	case funcedge.FieldCallType:
+		return m.CallType()
 	}
 	return nil, false
 }
@@ -367,6 +545,12 @@ func (m *FuncEdgeMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldCallerKey(ctx)
 	case funcedge.FieldCalleeKey:
 		return m.OldCalleeKey(ctx)
+	case funcedge.FieldCallSiteFile:
+		return m.OldCallSiteFile(ctx)
+	case funcedge.FieldCallSiteLine:
+		return m.OldCallSiteLine(ctx)
+	case funcedge.FieldCallType:
+		return m.OldCallType(ctx)
 	}
 	return nil, fmt.Errorf("unknown FuncEdge field %s", name)
 }
@@ -404,6 +588,27 @@ func (m *FuncEdgeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCalleeKey(v)
 		return nil
+	case funcedge.FieldCallSiteFile:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCallSiteFile(v)
+		return nil
+	case funcedge.FieldCallSiteLine:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCallSiteLine(v)
+		return nil
+	case funcedge.FieldCallType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCallType(v)
+		return nil
 	}
 	return fmt.Errorf("unknown FuncEdge field %s", name)
 }
@@ -411,13 +616,21 @@ func (m *FuncEdgeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *FuncEdgeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addcall_site_line != nil {
+		fields = append(fields, funcedge.FieldCallSiteLine)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *FuncEdgeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case funcedge.FieldCallSiteLine:
+		return m.AddedCallSiteLine()
+	}
 	return nil, false
 }
 
@@ -426,6 +639,13 @@ func (m *FuncEdgeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *FuncEdgeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case funcedge.FieldCallSiteLine:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCallSiteLine(v)
+		return nil
 	}
 	return fmt.Errorf("unknown FuncEdge numeric field %s", name)
 }
@@ -433,7 +653,14 @@ func (m *FuncEdgeMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *FuncEdgeMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(funcedge.FieldCallSiteFile) {
+		fields = append(fields, funcedge.FieldCallSiteFile)
+	}
+	if m.FieldCleared(funcedge.FieldCallSiteLine) {
+		fields = append(fields, funcedge.FieldCallSiteLine)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -446,6 +673,14 @@ func (m *FuncEdgeMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *FuncEdgeMutation) ClearField(name string) error {
+	switch name {
+	case funcedge.FieldCallSiteFile:
+		m.ClearCallSiteFile()
+		return nil
+	case funcedge.FieldCallSiteLine:
+		m.ClearCallSiteLine()
+		return nil
+	}
 	return fmt.Errorf("unknown FuncEdge nullable field %s", name)
 }
 
@@ -464,6 +699,15 @@ func (m *FuncEdgeMutation) ResetField(name string) error {
 		return nil
 	case funcedge.FieldCalleeKey:
 		m.ResetCalleeKey()
+		return nil
+	case funcedge.FieldCallSiteFile:
+		m.ResetCallSiteFile()
+		return nil
+	case funcedge.FieldCallSiteLine:
+		m.ResetCallSiteLine()
+		return nil
+	case funcedge.FieldCallType:
+		m.ResetCallType()
 		return nil
 	}
 	return fmt.Errorf("unknown FuncEdge field %s", name)
@@ -526,7 +770,15 @@ type FuncNodeMutation struct {
 	key           *string
 	full_name     *string
 	pkg           *string
+	pkg_path      *string
 	name          *string
+	filename      *string
+	start_line    *int
+	addstart_line *int
+	end_line      *int
+	addend_line   *int
+	signature     *string
+	source_code   *string
 	_CreatedAt    *time.Time
 	_UpdatedAt    *time.Time
 	clearedFields map[string]struct{}
@@ -741,6 +993,55 @@ func (m *FuncNodeMutation) ResetPkg() {
 	m.pkg = nil
 }
 
+// SetPkgPath sets the "pkg_path" field.
+func (m *FuncNodeMutation) SetPkgPath(s string) {
+	m.pkg_path = &s
+}
+
+// PkgPath returns the value of the "pkg_path" field in the mutation.
+func (m *FuncNodeMutation) PkgPath() (r string, exists bool) {
+	v := m.pkg_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPkgPath returns the old "pkg_path" field's value of the FuncNode entity.
+// If the FuncNode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncNodeMutation) OldPkgPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPkgPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPkgPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPkgPath: %w", err)
+	}
+	return oldValue.PkgPath, nil
+}
+
+// ClearPkgPath clears the value of the "pkg_path" field.
+func (m *FuncNodeMutation) ClearPkgPath() {
+	m.pkg_path = nil
+	m.clearedFields[funcnode.FieldPkgPath] = struct{}{}
+}
+
+// PkgPathCleared returns if the "pkg_path" field was cleared in this mutation.
+func (m *FuncNodeMutation) PkgPathCleared() bool {
+	_, ok := m.clearedFields[funcnode.FieldPkgPath]
+	return ok
+}
+
+// ResetPkgPath resets all changes to the "pkg_path" field.
+func (m *FuncNodeMutation) ResetPkgPath() {
+	m.pkg_path = nil
+	delete(m.clearedFields, funcnode.FieldPkgPath)
+}
+
 // SetName sets the "name" field.
 func (m *FuncNodeMutation) SetName(s string) {
 	m.name = &s
@@ -775,6 +1076,293 @@ func (m *FuncNodeMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *FuncNodeMutation) ResetName() {
 	m.name = nil
+}
+
+// SetFilename sets the "filename" field.
+func (m *FuncNodeMutation) SetFilename(s string) {
+	m.filename = &s
+}
+
+// Filename returns the value of the "filename" field in the mutation.
+func (m *FuncNodeMutation) Filename() (r string, exists bool) {
+	v := m.filename
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFilename returns the old "filename" field's value of the FuncNode entity.
+// If the FuncNode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncNodeMutation) OldFilename(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFilename is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFilename requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFilename: %w", err)
+	}
+	return oldValue.Filename, nil
+}
+
+// ClearFilename clears the value of the "filename" field.
+func (m *FuncNodeMutation) ClearFilename() {
+	m.filename = nil
+	m.clearedFields[funcnode.FieldFilename] = struct{}{}
+}
+
+// FilenameCleared returns if the "filename" field was cleared in this mutation.
+func (m *FuncNodeMutation) FilenameCleared() bool {
+	_, ok := m.clearedFields[funcnode.FieldFilename]
+	return ok
+}
+
+// ResetFilename resets all changes to the "filename" field.
+func (m *FuncNodeMutation) ResetFilename() {
+	m.filename = nil
+	delete(m.clearedFields, funcnode.FieldFilename)
+}
+
+// SetStartLine sets the "start_line" field.
+func (m *FuncNodeMutation) SetStartLine(i int) {
+	m.start_line = &i
+	m.addstart_line = nil
+}
+
+// StartLine returns the value of the "start_line" field in the mutation.
+func (m *FuncNodeMutation) StartLine() (r int, exists bool) {
+	v := m.start_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartLine returns the old "start_line" field's value of the FuncNode entity.
+// If the FuncNode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncNodeMutation) OldStartLine(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStartLine is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStartLine requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartLine: %w", err)
+	}
+	return oldValue.StartLine, nil
+}
+
+// AddStartLine adds i to the "start_line" field.
+func (m *FuncNodeMutation) AddStartLine(i int) {
+	if m.addstart_line != nil {
+		*m.addstart_line += i
+	} else {
+		m.addstart_line = &i
+	}
+}
+
+// AddedStartLine returns the value that was added to the "start_line" field in this mutation.
+func (m *FuncNodeMutation) AddedStartLine() (r int, exists bool) {
+	v := m.addstart_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearStartLine clears the value of the "start_line" field.
+func (m *FuncNodeMutation) ClearStartLine() {
+	m.start_line = nil
+	m.addstart_line = nil
+	m.clearedFields[funcnode.FieldStartLine] = struct{}{}
+}
+
+// StartLineCleared returns if the "start_line" field was cleared in this mutation.
+func (m *FuncNodeMutation) StartLineCleared() bool {
+	_, ok := m.clearedFields[funcnode.FieldStartLine]
+	return ok
+}
+
+// ResetStartLine resets all changes to the "start_line" field.
+func (m *FuncNodeMutation) ResetStartLine() {
+	m.start_line = nil
+	m.addstart_line = nil
+	delete(m.clearedFields, funcnode.FieldStartLine)
+}
+
+// SetEndLine sets the "end_line" field.
+func (m *FuncNodeMutation) SetEndLine(i int) {
+	m.end_line = &i
+	m.addend_line = nil
+}
+
+// EndLine returns the value of the "end_line" field in the mutation.
+func (m *FuncNodeMutation) EndLine() (r int, exists bool) {
+	v := m.end_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEndLine returns the old "end_line" field's value of the FuncNode entity.
+// If the FuncNode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncNodeMutation) OldEndLine(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEndLine is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEndLine requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEndLine: %w", err)
+	}
+	return oldValue.EndLine, nil
+}
+
+// AddEndLine adds i to the "end_line" field.
+func (m *FuncNodeMutation) AddEndLine(i int) {
+	if m.addend_line != nil {
+		*m.addend_line += i
+	} else {
+		m.addend_line = &i
+	}
+}
+
+// AddedEndLine returns the value that was added to the "end_line" field in this mutation.
+func (m *FuncNodeMutation) AddedEndLine() (r int, exists bool) {
+	v := m.addend_line
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEndLine clears the value of the "end_line" field.
+func (m *FuncNodeMutation) ClearEndLine() {
+	m.end_line = nil
+	m.addend_line = nil
+	m.clearedFields[funcnode.FieldEndLine] = struct{}{}
+}
+
+// EndLineCleared returns if the "end_line" field was cleared in this mutation.
+func (m *FuncNodeMutation) EndLineCleared() bool {
+	_, ok := m.clearedFields[funcnode.FieldEndLine]
+	return ok
+}
+
+// ResetEndLine resets all changes to the "end_line" field.
+func (m *FuncNodeMutation) ResetEndLine() {
+	m.end_line = nil
+	m.addend_line = nil
+	delete(m.clearedFields, funcnode.FieldEndLine)
+}
+
+// SetSignature sets the "signature" field.
+func (m *FuncNodeMutation) SetSignature(s string) {
+	m.signature = &s
+}
+
+// Signature returns the value of the "signature" field in the mutation.
+func (m *FuncNodeMutation) Signature() (r string, exists bool) {
+	v := m.signature
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSignature returns the old "signature" field's value of the FuncNode entity.
+// If the FuncNode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncNodeMutation) OldSignature(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSignature is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSignature requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSignature: %w", err)
+	}
+	return oldValue.Signature, nil
+}
+
+// ClearSignature clears the value of the "signature" field.
+func (m *FuncNodeMutation) ClearSignature() {
+	m.signature = nil
+	m.clearedFields[funcnode.FieldSignature] = struct{}{}
+}
+
+// SignatureCleared returns if the "signature" field was cleared in this mutation.
+func (m *FuncNodeMutation) SignatureCleared() bool {
+	_, ok := m.clearedFields[funcnode.FieldSignature]
+	return ok
+}
+
+// ResetSignature resets all changes to the "signature" field.
+func (m *FuncNodeMutation) ResetSignature() {
+	m.signature = nil
+	delete(m.clearedFields, funcnode.FieldSignature)
+}
+
+// SetSourceCode sets the "source_code" field.
+func (m *FuncNodeMutation) SetSourceCode(s string) {
+	m.source_code = &s
+}
+
+// SourceCode returns the value of the "source_code" field in the mutation.
+func (m *FuncNodeMutation) SourceCode() (r string, exists bool) {
+	v := m.source_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceCode returns the old "source_code" field's value of the FuncNode entity.
+// If the FuncNode object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *FuncNodeMutation) OldSourceCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceCode: %w", err)
+	}
+	return oldValue.SourceCode, nil
+}
+
+// ClearSourceCode clears the value of the "source_code" field.
+func (m *FuncNodeMutation) ClearSourceCode() {
+	m.source_code = nil
+	m.clearedFields[funcnode.FieldSourceCode] = struct{}{}
+}
+
+// SourceCodeCleared returns if the "source_code" field was cleared in this mutation.
+func (m *FuncNodeMutation) SourceCodeCleared() bool {
+	_, ok := m.clearedFields[funcnode.FieldSourceCode]
+	return ok
+}
+
+// ResetSourceCode resets all changes to the "source_code" field.
+func (m *FuncNodeMutation) ResetSourceCode() {
+	m.source_code = nil
+	delete(m.clearedFields, funcnode.FieldSourceCode)
 }
 
 // SetCreatedAt sets the "CreatedAt" field.
@@ -883,7 +1471,7 @@ func (m *FuncNodeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *FuncNodeMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 12)
 	if m.key != nil {
 		fields = append(fields, funcnode.FieldKey)
 	}
@@ -893,8 +1481,26 @@ func (m *FuncNodeMutation) Fields() []string {
 	if m.pkg != nil {
 		fields = append(fields, funcnode.FieldPkg)
 	}
+	if m.pkg_path != nil {
+		fields = append(fields, funcnode.FieldPkgPath)
+	}
 	if m.name != nil {
 		fields = append(fields, funcnode.FieldName)
+	}
+	if m.filename != nil {
+		fields = append(fields, funcnode.FieldFilename)
+	}
+	if m.start_line != nil {
+		fields = append(fields, funcnode.FieldStartLine)
+	}
+	if m.end_line != nil {
+		fields = append(fields, funcnode.FieldEndLine)
+	}
+	if m.signature != nil {
+		fields = append(fields, funcnode.FieldSignature)
+	}
+	if m.source_code != nil {
+		fields = append(fields, funcnode.FieldSourceCode)
 	}
 	if m._CreatedAt != nil {
 		fields = append(fields, funcnode.FieldCreatedAt)
@@ -916,8 +1522,20 @@ func (m *FuncNodeMutation) Field(name string) (ent.Value, bool) {
 		return m.FullName()
 	case funcnode.FieldPkg:
 		return m.Pkg()
+	case funcnode.FieldPkgPath:
+		return m.PkgPath()
 	case funcnode.FieldName:
 		return m.Name()
+	case funcnode.FieldFilename:
+		return m.Filename()
+	case funcnode.FieldStartLine:
+		return m.StartLine()
+	case funcnode.FieldEndLine:
+		return m.EndLine()
+	case funcnode.FieldSignature:
+		return m.Signature()
+	case funcnode.FieldSourceCode:
+		return m.SourceCode()
 	case funcnode.FieldCreatedAt:
 		return m.CreatedAt()
 	case funcnode.FieldUpdatedAt:
@@ -937,8 +1555,20 @@ func (m *FuncNodeMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldFullName(ctx)
 	case funcnode.FieldPkg:
 		return m.OldPkg(ctx)
+	case funcnode.FieldPkgPath:
+		return m.OldPkgPath(ctx)
 	case funcnode.FieldName:
 		return m.OldName(ctx)
+	case funcnode.FieldFilename:
+		return m.OldFilename(ctx)
+	case funcnode.FieldStartLine:
+		return m.OldStartLine(ctx)
+	case funcnode.FieldEndLine:
+		return m.OldEndLine(ctx)
+	case funcnode.FieldSignature:
+		return m.OldSignature(ctx)
+	case funcnode.FieldSourceCode:
+		return m.OldSourceCode(ctx)
 	case funcnode.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case funcnode.FieldUpdatedAt:
@@ -973,12 +1603,54 @@ func (m *FuncNodeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPkg(v)
 		return nil
+	case funcnode.FieldPkgPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPkgPath(v)
+		return nil
 	case funcnode.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case funcnode.FieldFilename:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFilename(v)
+		return nil
+	case funcnode.FieldStartLine:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartLine(v)
+		return nil
+	case funcnode.FieldEndLine:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEndLine(v)
+		return nil
+	case funcnode.FieldSignature:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSignature(v)
+		return nil
+	case funcnode.FieldSourceCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceCode(v)
 		return nil
 	case funcnode.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1001,13 +1673,26 @@ func (m *FuncNodeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *FuncNodeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addstart_line != nil {
+		fields = append(fields, funcnode.FieldStartLine)
+	}
+	if m.addend_line != nil {
+		fields = append(fields, funcnode.FieldEndLine)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *FuncNodeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case funcnode.FieldStartLine:
+		return m.AddedStartLine()
+	case funcnode.FieldEndLine:
+		return m.AddedEndLine()
+	}
 	return nil, false
 }
 
@@ -1016,6 +1701,20 @@ func (m *FuncNodeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *FuncNodeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case funcnode.FieldStartLine:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStartLine(v)
+		return nil
+	case funcnode.FieldEndLine:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEndLine(v)
+		return nil
 	}
 	return fmt.Errorf("unknown FuncNode numeric field %s", name)
 }
@@ -1023,7 +1722,26 @@ func (m *FuncNodeMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *FuncNodeMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(funcnode.FieldPkgPath) {
+		fields = append(fields, funcnode.FieldPkgPath)
+	}
+	if m.FieldCleared(funcnode.FieldFilename) {
+		fields = append(fields, funcnode.FieldFilename)
+	}
+	if m.FieldCleared(funcnode.FieldStartLine) {
+		fields = append(fields, funcnode.FieldStartLine)
+	}
+	if m.FieldCleared(funcnode.FieldEndLine) {
+		fields = append(fields, funcnode.FieldEndLine)
+	}
+	if m.FieldCleared(funcnode.FieldSignature) {
+		fields = append(fields, funcnode.FieldSignature)
+	}
+	if m.FieldCleared(funcnode.FieldSourceCode) {
+		fields = append(fields, funcnode.FieldSourceCode)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1036,6 +1754,26 @@ func (m *FuncNodeMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *FuncNodeMutation) ClearField(name string) error {
+	switch name {
+	case funcnode.FieldPkgPath:
+		m.ClearPkgPath()
+		return nil
+	case funcnode.FieldFilename:
+		m.ClearFilename()
+		return nil
+	case funcnode.FieldStartLine:
+		m.ClearStartLine()
+		return nil
+	case funcnode.FieldEndLine:
+		m.ClearEndLine()
+		return nil
+	case funcnode.FieldSignature:
+		m.ClearSignature()
+		return nil
+	case funcnode.FieldSourceCode:
+		m.ClearSourceCode()
+		return nil
+	}
 	return fmt.Errorf("unknown FuncNode nullable field %s", name)
 }
 
@@ -1052,8 +1790,26 @@ func (m *FuncNodeMutation) ResetField(name string) error {
 	case funcnode.FieldPkg:
 		m.ResetPkg()
 		return nil
+	case funcnode.FieldPkgPath:
+		m.ResetPkgPath()
+		return nil
 	case funcnode.FieldName:
 		m.ResetName()
+		return nil
+	case funcnode.FieldFilename:
+		m.ResetFilename()
+		return nil
+	case funcnode.FieldStartLine:
+		m.ResetStartLine()
+		return nil
+	case funcnode.FieldEndLine:
+		m.ResetEndLine()
+		return nil
+	case funcnode.FieldSignature:
+		m.ResetSignature()
+		return nil
+	case funcnode.FieldSourceCode:
+		m.ResetSourceCode()
 		return nil
 	case funcnode.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -1111,4 +1867,854 @@ func (m *FuncNodeMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *FuncNodeMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown FuncNode edge %s", name)
+}
+
+// PackageDepMutation represents an operation that mutates the PackageDep nodes in the graph.
+type PackageDepMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *int
+	importer_pkg    *string
+	imported_pkg    *string
+	import_count    *int
+	addimport_count *int
+	clearedFields   map[string]struct{}
+	done            bool
+	oldValue        func(context.Context) (*PackageDep, error)
+	predicates      []predicate.PackageDep
+}
+
+var _ ent.Mutation = (*PackageDepMutation)(nil)
+
+// packagedepOption allows management of the mutation configuration using functional options.
+type packagedepOption func(*PackageDepMutation)
+
+// newPackageDepMutation creates new mutation for the PackageDep entity.
+func newPackageDepMutation(c config, op Op, opts ...packagedepOption) *PackageDepMutation {
+	m := &PackageDepMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePackageDep,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPackageDepID sets the ID field of the mutation.
+func withPackageDepID(id int) packagedepOption {
+	return func(m *PackageDepMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *PackageDep
+		)
+		m.oldValue = func(ctx context.Context) (*PackageDep, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().PackageDep.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPackageDep sets the old PackageDep of the mutation.
+func withPackageDep(node *PackageDep) packagedepOption {
+	return func(m *PackageDepMutation) {
+		m.oldValue = func(context.Context) (*PackageDep, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PackageDepMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PackageDepMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("gen: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PackageDepMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PackageDepMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().PackageDep.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetImporterPkg sets the "importer_pkg" field.
+func (m *PackageDepMutation) SetImporterPkg(s string) {
+	m.importer_pkg = &s
+}
+
+// ImporterPkg returns the value of the "importer_pkg" field in the mutation.
+func (m *PackageDepMutation) ImporterPkg() (r string, exists bool) {
+	v := m.importer_pkg
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImporterPkg returns the old "importer_pkg" field's value of the PackageDep entity.
+// If the PackageDep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PackageDepMutation) OldImporterPkg(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImporterPkg is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImporterPkg requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImporterPkg: %w", err)
+	}
+	return oldValue.ImporterPkg, nil
+}
+
+// ResetImporterPkg resets all changes to the "importer_pkg" field.
+func (m *PackageDepMutation) ResetImporterPkg() {
+	m.importer_pkg = nil
+}
+
+// SetImportedPkg sets the "imported_pkg" field.
+func (m *PackageDepMutation) SetImportedPkg(s string) {
+	m.imported_pkg = &s
+}
+
+// ImportedPkg returns the value of the "imported_pkg" field in the mutation.
+func (m *PackageDepMutation) ImportedPkg() (r string, exists bool) {
+	v := m.imported_pkg
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImportedPkg returns the old "imported_pkg" field's value of the PackageDep entity.
+// If the PackageDep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PackageDepMutation) OldImportedPkg(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImportedPkg is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImportedPkg requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImportedPkg: %w", err)
+	}
+	return oldValue.ImportedPkg, nil
+}
+
+// ResetImportedPkg resets all changes to the "imported_pkg" field.
+func (m *PackageDepMutation) ResetImportedPkg() {
+	m.imported_pkg = nil
+}
+
+// SetImportCount sets the "import_count" field.
+func (m *PackageDepMutation) SetImportCount(i int) {
+	m.import_count = &i
+	m.addimport_count = nil
+}
+
+// ImportCount returns the value of the "import_count" field in the mutation.
+func (m *PackageDepMutation) ImportCount() (r int, exists bool) {
+	v := m.import_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImportCount returns the old "import_count" field's value of the PackageDep entity.
+// If the PackageDep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PackageDepMutation) OldImportCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImportCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImportCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImportCount: %w", err)
+	}
+	return oldValue.ImportCount, nil
+}
+
+// AddImportCount adds i to the "import_count" field.
+func (m *PackageDepMutation) AddImportCount(i int) {
+	if m.addimport_count != nil {
+		*m.addimport_count += i
+	} else {
+		m.addimport_count = &i
+	}
+}
+
+// AddedImportCount returns the value that was added to the "import_count" field in this mutation.
+func (m *PackageDepMutation) AddedImportCount() (r int, exists bool) {
+	v := m.addimport_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetImportCount resets all changes to the "import_count" field.
+func (m *PackageDepMutation) ResetImportCount() {
+	m.import_count = nil
+	m.addimport_count = nil
+}
+
+// Where appends a list predicates to the PackageDepMutation builder.
+func (m *PackageDepMutation) Where(ps ...predicate.PackageDep) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the PackageDepMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *PackageDepMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.PackageDep, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *PackageDepMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *PackageDepMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (PackageDep).
+func (m *PackageDepMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PackageDepMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.importer_pkg != nil {
+		fields = append(fields, packagedep.FieldImporterPkg)
+	}
+	if m.imported_pkg != nil {
+		fields = append(fields, packagedep.FieldImportedPkg)
+	}
+	if m.import_count != nil {
+		fields = append(fields, packagedep.FieldImportCount)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PackageDepMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case packagedep.FieldImporterPkg:
+		return m.ImporterPkg()
+	case packagedep.FieldImportedPkg:
+		return m.ImportedPkg()
+	case packagedep.FieldImportCount:
+		return m.ImportCount()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PackageDepMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case packagedep.FieldImporterPkg:
+		return m.OldImporterPkg(ctx)
+	case packagedep.FieldImportedPkg:
+		return m.OldImportedPkg(ctx)
+	case packagedep.FieldImportCount:
+		return m.OldImportCount(ctx)
+	}
+	return nil, fmt.Errorf("unknown PackageDep field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PackageDepMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case packagedep.FieldImporterPkg:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImporterPkg(v)
+		return nil
+	case packagedep.FieldImportedPkg:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImportedPkg(v)
+		return nil
+	case packagedep.FieldImportCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImportCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown PackageDep field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PackageDepMutation) AddedFields() []string {
+	var fields []string
+	if m.addimport_count != nil {
+		fields = append(fields, packagedep.FieldImportCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PackageDepMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case packagedep.FieldImportCount:
+		return m.AddedImportCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PackageDepMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case packagedep.FieldImportCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddImportCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown PackageDep numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PackageDepMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PackageDepMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PackageDepMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown PackageDep nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PackageDepMutation) ResetField(name string) error {
+	switch name {
+	case packagedep.FieldImporterPkg:
+		m.ResetImporterPkg()
+		return nil
+	case packagedep.FieldImportedPkg:
+		m.ResetImportedPkg()
+		return nil
+	case packagedep.FieldImportCount:
+		m.ResetImportCount()
+		return nil
+	}
+	return fmt.Errorf("unknown PackageDep field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PackageDepMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PackageDepMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PackageDepMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PackageDepMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PackageDepMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PackageDepMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PackageDepMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown PackageDep unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PackageDepMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown PackageDep edge %s", name)
+}
+
+// PkgMutation represents an operation that mutates the Pkg nodes in the graph.
+type PkgMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	pkg_path      *string
+	is_internal   *bool
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Pkg, error)
+	predicates    []predicate.Pkg
+}
+
+var _ ent.Mutation = (*PkgMutation)(nil)
+
+// pkgOption allows management of the mutation configuration using functional options.
+type pkgOption func(*PkgMutation)
+
+// newPkgMutation creates new mutation for the Pkg entity.
+func newPkgMutation(c config, op Op, opts ...pkgOption) *PkgMutation {
+	m := &PkgMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePkg,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPkgID sets the ID field of the mutation.
+func withPkgID(id int) pkgOption {
+	return func(m *PkgMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Pkg
+		)
+		m.oldValue = func(ctx context.Context) (*Pkg, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Pkg.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPkg sets the old Pkg of the mutation.
+func withPkg(node *Pkg) pkgOption {
+	return func(m *PkgMutation) {
+		m.oldValue = func(context.Context) (*Pkg, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PkgMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PkgMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("gen: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PkgMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PkgMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Pkg.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetPkgPath sets the "pkg_path" field.
+func (m *PkgMutation) SetPkgPath(s string) {
+	m.pkg_path = &s
+}
+
+// PkgPath returns the value of the "pkg_path" field in the mutation.
+func (m *PkgMutation) PkgPath() (r string, exists bool) {
+	v := m.pkg_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPkgPath returns the old "pkg_path" field's value of the Pkg entity.
+// If the Pkg object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PkgMutation) OldPkgPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPkgPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPkgPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPkgPath: %w", err)
+	}
+	return oldValue.PkgPath, nil
+}
+
+// ResetPkgPath resets all changes to the "pkg_path" field.
+func (m *PkgMutation) ResetPkgPath() {
+	m.pkg_path = nil
+}
+
+// SetIsInternal sets the "is_internal" field.
+func (m *PkgMutation) SetIsInternal(b bool) {
+	m.is_internal = &b
+}
+
+// IsInternal returns the value of the "is_internal" field in the mutation.
+func (m *PkgMutation) IsInternal() (r bool, exists bool) {
+	v := m.is_internal
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsInternal returns the old "is_internal" field's value of the Pkg entity.
+// If the Pkg object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PkgMutation) OldIsInternal(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsInternal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsInternal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsInternal: %w", err)
+	}
+	return oldValue.IsInternal, nil
+}
+
+// ResetIsInternal resets all changes to the "is_internal" field.
+func (m *PkgMutation) ResetIsInternal() {
+	m.is_internal = nil
+}
+
+// Where appends a list predicates to the PkgMutation builder.
+func (m *PkgMutation) Where(ps ...predicate.Pkg) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the PkgMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *PkgMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Pkg, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *PkgMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *PkgMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Pkg).
+func (m *PkgMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PkgMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.pkg_path != nil {
+		fields = append(fields, pkg.FieldPkgPath)
+	}
+	if m.is_internal != nil {
+		fields = append(fields, pkg.FieldIsInternal)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PkgMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case pkg.FieldPkgPath:
+		return m.PkgPath()
+	case pkg.FieldIsInternal:
+		return m.IsInternal()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PkgMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case pkg.FieldPkgPath:
+		return m.OldPkgPath(ctx)
+	case pkg.FieldIsInternal:
+		return m.OldIsInternal(ctx)
+	}
+	return nil, fmt.Errorf("unknown Pkg field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PkgMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case pkg.FieldPkgPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPkgPath(v)
+		return nil
+	case pkg.FieldIsInternal:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsInternal(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Pkg field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PkgMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PkgMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PkgMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Pkg numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PkgMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PkgMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PkgMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Pkg nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PkgMutation) ResetField(name string) error {
+	switch name {
+	case pkg.FieldPkgPath:
+		m.ResetPkgPath()
+		return nil
+	case pkg.FieldIsInternal:
+		m.ResetIsInternal()
+		return nil
+	}
+	return fmt.Errorf("unknown Pkg field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PkgMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PkgMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PkgMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PkgMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PkgMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PkgMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PkgMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Pkg unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PkgMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Pkg edge %s", name)
 }

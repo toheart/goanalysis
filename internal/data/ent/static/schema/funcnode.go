@@ -24,9 +24,30 @@ func (FuncNode) Fields() []ent.Field {
 			NotEmpty().
 			Comment("完整的函数路径，如 crypto/hmac.New$1"),
 		field.String("pkg").
-			NotEmpty(),
+			NotEmpty().
+			Comment("包导入路径，如 net/http"),
+		field.String("pkg_path").
+			Optional().
+			Comment("完整包路径，用于关联 PackageNode"),
 		field.String("name").
 			NotEmpty(),
+		// 源码位置信息（可选，合成/内建函数可能不存在）
+		field.String("filename").
+			Optional().
+			Comment("源文件路径"),
+		field.Int("start_line").
+			Optional().
+			Comment("函数开始行"),
+		field.Int("end_line").
+			Optional().
+			Comment("函数结束行"),
+		// LLM 分析增强字段
+		field.String("signature").
+			Optional().
+			Comment("函数签名，如 func(http.ResponseWriter, *http.Request)"),
+		field.Text("source_code").
+			Optional().
+			Comment("函数的源代码（压缩存储）"),
 		field.Time("CreatedAt").
 			Default(time.Now),
 		field.Time("UpdatedAt").
@@ -46,5 +67,10 @@ func (FuncNode) Indexes() []ent.Index {
 		index.Fields("key").
 			Unique(),
 		index.Fields("full_name"),
+		// 按文件与起始行的常用查询
+		index.Fields("filename"),
+		index.Fields("filename", "start_line"),
+		// 按包路径查询，用于关联包级分析
+		index.Fields("pkg_path"),
 	}
 }

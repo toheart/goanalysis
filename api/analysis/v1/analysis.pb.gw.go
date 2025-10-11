@@ -491,6 +491,44 @@ func local_request_Analysis_GetModuleNames_0(ctx context.Context, marshaler runt
 	return msg, metadata, err
 }
 
+func request_Analysis_GetAnalysisPath_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetAnalysisPathReq
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
+	msg, err := client.GetAnalysisPath(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_GetAnalysisPath_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetAnalysisPathReq
+		metadata runtime.ServerMetadata
+	)
+	msg, err := server.GetAnalysisPath(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_Analysis_ClearSession_0(ctx context.Context, marshaler runtime.Marshaler, client AnalysisClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ClearSessionReq
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
+	msg, err := client.ClearSession(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Analysis_ClearSession_0(ctx context.Context, marshaler runtime.Marshaler, server AnalysisServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ClearSessionReq
+		metadata runtime.ServerMetadata
+	)
+	msg, err := server.ClearSession(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 // RegisterAnalysisHandlerServer registers the http handlers for service Analysis to "mux".
 // UnaryRPC     :call AnalysisServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -817,6 +855,46 @@ func RegisterAnalysisHandlerServer(ctx context.Context, mux *runtime.ServeMux, s
 		}
 		forward_Analysis_GetModuleNames_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_Analysis_GetAnalysisPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysisPath", runtime.WithHTTPPathPattern("/api/session/analysis-path"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_GetAnalysisPath_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetAnalysisPath_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodDelete, pattern_Analysis_ClearSession_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/analysis.v1.Analysis/ClearSession", runtime.WithHTTPPathPattern("/api/session"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Analysis_ClearSession_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_ClearSession_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 
 	return nil
 }
@@ -1129,6 +1207,40 @@ func RegisterAnalysisHandlerClient(ctx context.Context, mux *runtime.ServeMux, c
 		}
 		forward_Analysis_GetModuleNames_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_Analysis_GetAnalysisPath_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/GetAnalysisPath", runtime.WithHTTPPathPattern("/api/session/analysis-path"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_GetAnalysisPath_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_GetAnalysisPath_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodDelete, pattern_Analysis_ClearSession_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/analysis.v1.Analysis/ClearSession", runtime.WithHTTPPathPattern("/api/session"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Analysis_ClearSession_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Analysis_ClearSession_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
@@ -1149,6 +1261,8 @@ var (
 	pattern_Analysis_SearchFunctions_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "functions", "search"}, ""))
 	pattern_Analysis_GetFunctionInfoInGoroutine_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "runtime", "function", "info"}, ""))
 	pattern_Analysis_GetModuleNames_0             = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "runtime", "modules"}, ""))
+	pattern_Analysis_GetAnalysisPath_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "session", "analysis-path"}, ""))
+	pattern_Analysis_ClearSession_0               = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"api", "session"}, ""))
 )
 
 var (
@@ -1168,4 +1282,6 @@ var (
 	forward_Analysis_SearchFunctions_0            = runtime.ForwardResponseMessage
 	forward_Analysis_GetFunctionInfoInGoroutine_0 = runtime.ForwardResponseMessage
 	forward_Analysis_GetModuleNames_0             = runtime.ForwardResponseMessage
+	forward_Analysis_GetAnalysisPath_0            = runtime.ForwardResponseMessage
+	forward_Analysis_ClearSession_0               = runtime.ForwardResponseMessage
 )

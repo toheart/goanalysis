@@ -12,6 +12,7 @@ import (
 	"github.com/toheart/goanalysis/internal/biz/analysis"
 	"github.com/toheart/goanalysis/internal/biz/chanMgr"
 	"github.com/toheart/goanalysis/internal/biz/filemanager"
+	"github.com/toheart/goanalysis/internal/biz/session"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
@@ -32,12 +33,13 @@ func wireApp(confServer *conf.Server, biz *conf.Biz, confData *conf.Data, logger
 		return nil, nil, err
 	}
 	fileBiz := filemanager.NewFileBiz(biz, logger, fileRepo)
+	manager := session.NewSessionManager(logger)
 	staticAnalysisService := service.NewStaticAnalysisService(staticAnalysisBiz, logger)
 	analysisBiz := analysis.NewAnalysisBiz(biz, dataData, logger)
-	analysisService := service.NewAnalysisService(analysisBiz, logger)
+	analysisService := service.NewAnalysisService(analysisBiz, manager, logger)
 	fileManagerService := service.NewFileManagerService(fileBiz, logger)
 	v := service.NewHttpServiceList(staticAnalysisService, analysisService, fileManagerService)
-	httpServer := server.NewHTTPServer(confServer, logger, staticAnalysisBiz, fileBiz, v...)
+	httpServer := server.NewHTTPServer(confServer, logger, staticAnalysisBiz, fileBiz, manager, v...)
 	grpcServer := server.NewGRPCServer(confServer, logger, v...)
 	v2 := server.NewServerList(httpServer, grpcServer)
 	app := newApp(logger, v2)

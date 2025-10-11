@@ -24,7 +24,13 @@ type FuncEdge struct {
 	// CallerKey holds the value of the "CallerKey" field.
 	CallerKey string `json:"CallerKey,omitempty"`
 	// CalleeKey holds the value of the "CalleeKey" field.
-	CalleeKey    string `json:"CalleeKey,omitempty"`
+	CalleeKey string `json:"CalleeKey,omitempty"`
+	// 调用发生的文件路径
+	CallSiteFile string `json:"call_site_file,omitempty"`
+	// 调用发生的行号
+	CallSiteLine int `json:"call_site_line,omitempty"`
+	// 调用类型: static, dynamic, go, defer
+	CallType     string `json:"call_type,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -33,9 +39,9 @@ func (*FuncEdge) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case funcedge.FieldID:
+		case funcedge.FieldID, funcedge.FieldCallSiteLine:
 			values[i] = new(sql.NullInt64)
-		case funcedge.FieldCallerKey, funcedge.FieldCalleeKey:
+		case funcedge.FieldCallerKey, funcedge.FieldCalleeKey, funcedge.FieldCallSiteFile, funcedge.FieldCallType:
 			values[i] = new(sql.NullString)
 		case funcedge.FieldCreatedAt, funcedge.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -84,6 +90,24 @@ func (fe *FuncEdge) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				fe.CalleeKey = value.String
 			}
+		case funcedge.FieldCallSiteFile:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field call_site_file", values[i])
+			} else if value.Valid {
+				fe.CallSiteFile = value.String
+			}
+		case funcedge.FieldCallSiteLine:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field call_site_line", values[i])
+			} else if value.Valid {
+				fe.CallSiteLine = int(value.Int64)
+			}
+		case funcedge.FieldCallType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field call_type", values[i])
+			} else if value.Valid {
+				fe.CallType = value.String
+			}
 		default:
 			fe.selectValues.Set(columns[i], values[i])
 		}
@@ -131,6 +155,15 @@ func (fe *FuncEdge) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("CalleeKey=")
 	builder.WriteString(fe.CalleeKey)
+	builder.WriteString(", ")
+	builder.WriteString("call_site_file=")
+	builder.WriteString(fe.CallSiteFile)
+	builder.WriteString(", ")
+	builder.WriteString("call_site_line=")
+	builder.WriteString(fmt.Sprintf("%v", fe.CallSiteLine))
+	builder.WriteString(", ")
+	builder.WriteString("call_type=")
+	builder.WriteString(fe.CallType)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -17,6 +17,16 @@ func (FuncEdge) Fields() []ent.Field {
 		field.Time("UpdatedAt"),
 		field.String("CallerKey"),
 		field.String("CalleeKey"),
+		// LLM 分析增强字段 - 调用上下文信息
+		field.String("call_site_file").
+			Optional().
+			Comment("调用发生的文件路径"),
+		field.Int("call_site_line").
+			Optional().
+			Comment("调用发生的行号"),
+		field.String("call_type").
+			Default("static").
+			Comment("调用类型: static, dynamic, go, defer"),
 	}
 }
 

@@ -37,15 +37,19 @@ func (nm *NodeManager) GetNode(key string) *dos.FuncNode {
 }
 
 // CreateNode 创建节点
-func (nm *NodeManager) CreateNode(nodeID int, fullName, pkg, name string) *dos.FuncNode {
+func (nm *NodeManager) CreateNode(nodeID int, fullName, pkg, pkgPath, name, signature string, position *dos.Position, sourceCode string) *dos.FuncNode {
 	// 生成短格式Key
 	key := fmt.Sprintf("n%d", nodeID)
 
 	return &dos.FuncNode{
-		Key:      key,
-		FullName: fullName,
-		Pkg:      pkg,
-		Name:     name,
+		Key:        key,
+		FullName:   fullName,
+		Pkg:        pkg,
+		PkgPath:    pkgPath,
+		Name:       name,
+		Signature:  signature,
+		Position:   position,
+		SourceCode: sourceCode,
 	}
 }
 
@@ -56,14 +60,14 @@ func (nm *NodeManager) AddNode(node *dos.FuncNode) {
 }
 
 // GetOrCreateNode 获取或创建节点
-func (nm *NodeManager) GetOrCreateNode(nodeID int, fullName, pkg, name string) *dos.FuncNode {
+func (nm *NodeManager) GetOrCreateNode(nodeID int, fullName, pkg, pkgPath, name, signature string, position *dos.Position, sourceCode string) *dos.FuncNode {
 	key := fmt.Sprintf("n%d", nodeID)
 
 	if nm.NodeExists(key) {
 		return nm.GetNode(key)
 	}
 
-	node := nm.CreateNode(nodeID, fullName, pkg, name)
+	node := nm.CreateNode(nodeID, fullName, pkg, pkgPath, name, signature, position, sourceCode)
 	nm.AddNode(node)
 	return node
 }

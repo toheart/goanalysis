@@ -36,9 +36,9 @@ func NewAnalysisBiz(conf *conf.Biz, data *data.Data, logger log.Logger) *Analysi
 	return &AnalysisBiz{conf: conf, data: data, log: log.NewHelper(logger)}
 }
 
-func (a *AnalysisBiz) GetTracesByGID(req *v1.AnalysisByGIDRequest) ([]dos.TraceData, error) {
-	a.log.Infof("get traces by gid: %s from db: %s", req.Gid, req.Dbpath)
-	traceDB, err := a.data.GetTraceDB(req.Dbpath)
+func (a *AnalysisBiz) GetTracesByGID(dbpath string, req *v1.AnalysisByGIDRequest) ([]dos.TraceData, error) {
+	a.log.Infof("get traces by gid: %d from db: %s", req.Gid, dbpath)
+	traceDB, err := a.data.GetTraceDB(dbpath)
 	if err != nil {
 		return nil, err
 	}

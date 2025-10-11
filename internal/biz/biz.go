@@ -5,6 +5,7 @@ import (
 	"github.com/toheart/goanalysis/internal/biz/analysis"
 	"github.com/toheart/goanalysis/internal/biz/chanMgr"
 	"github.com/toheart/goanalysis/internal/biz/filemanager"
+	"github.com/toheart/goanalysis/internal/biz/session"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 )
 
@@ -14,4 +15,5 @@ var ProviderSet = wire.NewSet(
 	staticanalysis.NewStaticAnalysisBiz,
 	chanMgr.NewChannelManager,
 	filemanager.NewFileBiz,
+	session.NewSessionManager,
 )

@@ -13,6 +13,7 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/toheart/goanalysis/internal/biz/entity"
 	"github.com/toheart/goanalysis/internal/biz/filemanager"
+	"github.com/toheart/goanalysis/internal/biz/session"
 	"github.com/toheart/goanalysis/internal/biz/staticanalysis"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/server/iface"
@@ -29,10 +30,11 @@ import (
 var _ transport.Server = (*HttpServer)(nil)
 
 type HttpServer struct {
-	server    *http.Server
-	log       *log.Helper
-	staticBiz *staticanalysis.StaticAnalysisBiz
-	fileBiz   *filemanager.FileBiz
+	server     *http.Server
+	log        *log.Helper
+	staticBiz  *staticanalysis.StaticAnalysisBiz
+	fileBiz    *filemanager.FileBiz
+	sessionMgr *session.Manager
 }
 
 func (h *HttpServer) Start(ctx context.Context) error {
@@ -193,25 +195,40 @@ func (h *HttpServer) createSPAFileServer(statikFS http.FileSystem) http.Handler 
 }
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.StaticAnalysisBiz, fileBiz *filemanager.FileBiz, services ...iface.InitGrpcHttp) *HttpServer {
+func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.StaticAnalysisBiz, fileBiz *filemanager.FileBiz, sessionMgr *session.Manager, services ...iface.InitGrpcHttp) *HttpServer {
 	logHelper := log.NewHelper(log.With(logger, "module", "http"))
 
 	h := &HttpServer{
-		log:       logHelper,
-		staticBiz: staticBiz,
-		fileBiz:   fileBiz,
+		log:        logHelper,
+		staticBiz:  staticBiz,
+		fileBiz:    fileBiz,
+		sessionMgr: sessionMgr,
 	}
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
-	mux := runtime.NewServeMux()
+
+	// 创建通用的 header 匹配器，允许所有 x-analysis- 前缀的 header 传递到 gRPC metadata
+	sessionHeaderMatcher := func(key string) (string, bool) {
+		lowerKey := strings.ToLower(key)
+		if strings.HasPrefix(lowerKey, session.AnalysisHeaderPrefix) {
+			// 直接返回小写的键名，保持一致
+			return lowerKey, true
+		}
+		return "", false
+	}
+
+	mux := runtime.NewServeMux(
+		runtime.WithIncomingHeaderMatcher(sessionHeaderMatcher),
+	)
 
 	// 创建一个支持CORS的处理器
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"}, // 允许所有来源，生产环境中应该限制为特定域名
+		AllowedOrigins:   []string{"http://localhost:8081", "http://192.168.141.128:8082"}, // 允许前端域名和后端IP访问
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Content-Type", "Content-Length", "Accept-Encoding", "Authorization", "X-CSRF-Token"},
+		AllowedHeaders:   []string{"*"},
+		ExposedHeaders:   []string{"Set-Cookie"}, // 暴露Set-Cookie头给前端
 		AllowCredentials: true,
 		MaxAge:           86400, // 预检请求结果缓存24小时
 	})
@@ -222,6 +239,8 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 	// 添加 SSE 端点
 	handler.HandleFunc("/api/static/analysis/", h.handleAnalysisEvents)
 	logHelper.Infof("SSE endpoint registered: /api/static/analysis/{taskId}")
+
+	// Session相关的API通过gRPC+grpc-gateway提供，不需要单独的HTTP处理器
 
 	// 使用 statik 嵌入的静态文件
 	statikFS, err := fs.New()
@@ -235,8 +254,10 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 	// 创建一个处理所有请求的处理器
 	rootHandler := h.BaseHandler(mux, fileServer)
 
-	// 将根处理器包装在CORS处理器中
-	handler.Handle("/", corsHandler.Handler(rootHandler))
+	// 将根处理器包装在session中间件和CORS处理器中
+	// 使用grpc-gateway中间件来处理session信息注入到gRPC metadata
+	grpcGatewayMiddleware := session.GRPCGatewayMiddleware(sessionMgr, logger)
+	handler.Handle("/", corsHandler.Handler(grpcGatewayMiddleware(rootHandler)))
 	logHelper.Infof("Root handler with CORS and embedded static file serving registered")
 
 	serverAddr := c.Http.Addr
@@ -248,9 +269,19 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, staticBiz *staticanalysis.
 	logHelper.Infof("HTTP server configuration completed, listening address: %s", serverAddr)
 
 	for _, item := range services {
-		if err := item.RegisterHttp(mux, c.Grpc.Addr, opts); err != nil {
+		if err := item.RegisterHttp(mux, "127.0.0.1:9000", opts); err != nil {
 			panic(err)
 		}
+	}
+
+	// 注册自定义的验证路径处理器（验证成功时自动缓存到session）
+	if err := session.RegisterVerifyPathHandler(mux, sessionMgr, "127.0.0.1:9000", opts, logger); err != nil {
+		logHelper.Errorf("Failed to register verify path handler: %v", err)
+	}
+
+	// 注册自定义的数据库分析处理器（分析成功时自动缓存数据库路径到session）
+	if err := session.RegisterAnalyzeDbFileHandler(mux, sessionMgr, "127.0.0.1:9000", opts, logger); err != nil {
+		logHelper.Errorf("Failed to register analyze db file handler: %v", err)
 	}
 
 	// 添加Prometheus 接口

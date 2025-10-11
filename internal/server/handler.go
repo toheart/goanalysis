@@ -22,7 +22,7 @@ func (h *HttpServer) BaseHandler(mux *runtime.ServeMux, fileServer http.Handler)
 			return
 		}
 
-		if r.URL.Path == "/runtime/file/upload" {
+		if r.URL.Path == "/api/runtime/file/upload" {
 			h.HandleChunkUpload(w, r)
 			return
 		}

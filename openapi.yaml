@@ -422,6 +422,34 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/analysis.v1.VerifyProjectPathReply'
+    /api/session:
+        delete:
+            tags:
+                - Analysis
+            description: ClearSession 清除session
+            operationId: Analysis_ClearSession
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.ClearSessionReply'
+    /api/session/analysis-path:
+        get:
+            tags:
+                - Analysis
+            description: |-
+                Session管理相关API
+                 GetAnalysisPath 从session中获取分析路径
+            operationId: Analysis_GetAnalysisPath
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/analysis.v1.GetAnalysisPathReply'
     /api/static/analyze:
         post:
             tags:
@@ -473,207 +501,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/staticanalysis.v1.GetStaticDbFilesResponse'
-    /api/static/function-downstream:
-        post:
-            tags:
-                - StaticAnalysis
-            description: 获取函数下游调用关系
-            operationId: StaticAnalysis_GetFunctionDownstream
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/staticanalysis.v1.GetFunctionDownstreamRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetFunctionDownstreamResponse'
-    /api/static/function-fullchain:
-        post:
-            tags:
-                - StaticAnalysis
-            description: 获取函数全链路调用关系
-            operationId: StaticAnalysis_GetFunctionFullChain
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/staticanalysis.v1.GetFunctionFullChainRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetFunctionFullChainResponse'
-    /api/static/function-upstream:
-        post:
-            tags:
-                - StaticAnalysis
-            description: 获取函数上游调用关系
-            operationId: StaticAnalysis_GetFunctionUpstream
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/staticanalysis.v1.GetFunctionUpstreamRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetFunctionUpstreamResponse'
-    /api/static/function/analysis:
-        post:
-            tags:
-                - StaticAnalysis
-            description: 获取函数调用关系分析
-            operationId: StaticAnalysis_GetFunctionAnalysis
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/staticanalysis.v1.GetFunctionAnalysisReq'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetFunctionAnalysisReply'
-    /api/static/function/graph:
-        get:
-            tags:
-                - StaticAnalysis
-            description: 获取函数调用关系图
-            operationId: StaticAnalysis_GetFunctionCallGraph
-            parameters:
-                - name: functionKey
-                  in: query
-                  schema:
-                    type: string
-                - name: depth
-                  in: query
-                  schema:
-                    type: integer
-                    format: int32
-                - name: direction
-                  in: query
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetFunctionCallGraphReply'
-    /api/static/function/{functionKey}/graph:
-        get:
-            tags:
-                - StaticAnalysis
-            description: 获取函数调用关系图
-            operationId: StaticAnalysis_GetFunctionCallGraph
-            parameters:
-                - name: functionKey
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-                - name: depth
-                  in: query
-                  schema:
-                    type: integer
-                    format: int32
-                - name: direction
-                  in: query
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetFunctionCallGraphReply'
-    /api/static/gitlab/clone:
-        post:
-            tags:
-                - StaticAnalysis
-            description: 克隆GitLab仓库
-            operationId: StaticAnalysis_CloneGitLabRepository
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/staticanalysis.v1.CloneGitLabRepositoryRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.CloneGitLabRepositoryResponse'
-    /api/static/gitlab/repositories:
-        get:
-            tags:
-                - StaticAnalysis
-            description: 获取GitLab仓库列表
-            operationId: StaticAnalysis_ListGitLabRepositories
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.ListGitLabRepositoriesResponse'
-    /api/static/hot-functions:
-        post:
-            tags:
-                - StaticAnalysis
-            description: 分页获取热点函数
-            operationId: StaticAnalysis_GetHotFunctions
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/staticanalysis.v1.GetHotFunctionsRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetHotFunctionsResponse'
-    /api/static/package-dependencies:
-        post:
-            tags:
-                - StaticAnalysis
-            description: 分页获取包依赖关系
-            operationId: StaticAnalysis_GetPackageDependencies
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/staticanalysis.v1.GetPackageDependenciesRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetPackageDependenciesResponse'
     /api/static/search-functions:
         post:
             tags:
@@ -712,17 +539,17 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/staticanalysis.v1.GetAnalysisTaskStatusResponse'
-    /api/static/tree-graph:
+    /api/static/viz/callgraph:
         post:
             tags:
                 - StaticAnalysis
-            description: 获取静态分析树状图数据
-            operationId: StaticAnalysis_GetTreeGraph
+            description: 获取调用图数据
+            operationId: StaticAnalysis_GetCallGraph
             requestBody:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/staticanalysis.v1.GetTreeGraphReq'
+                            $ref: '#/components/schemas/staticanalysis.v1.GetCallGraphRequest'
                 required: true
             responses:
                 "200":
@@ -730,7 +557,117 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/staticanalysis.v1.GetTreeGraphReply'
+                                $ref: '#/components/schemas/staticanalysis.v1.GetCallGraphResponse'
+    /api/static/viz/callpaths:
+        post:
+            tags:
+                - StaticAnalysis
+            description: 获取函数调用路径
+            operationId: StaticAnalysis_GetFunctionCallPaths
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/staticanalysis.v1.GetFunctionCallPathsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/staticanalysis.v1.GetFunctionCallPathsResponse'
+    /api/static/viz/function/{functionKey}:
+        get:
+            tags:
+                - StaticAnalysis
+            description: 获取函数详细信息
+            operationId: StaticAnalysis_GetFunctionDetails
+            parameters:
+                - name: functionKey
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/staticanalysis.v1.GetFunctionDetailsResponse'
+    /api/static/viz/hotfunctions:
+        get:
+            tags:
+                - StaticAnalysis
+            description: 获取热点函数分析
+            operationId: StaticAnalysis_GetHotFunctions
+            parameters:
+                - name: limit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: sortBy
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/staticanalysis.v1.GetHotFunctionsResponse'
+    /api/static/viz/initfunctions:
+        get:
+            tags:
+                - StaticAnalysis
+            description: 获取Init函数列表
+            operationId: StaticAnalysis_GetInitFunctions
+            parameters:
+                - name: limit
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: packageFilter
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/staticanalysis.v1.GetInitFunctionsResponse'
+    /api/static/viz/packages:
+        get:
+            tags:
+                - StaticAnalysis
+            description: 获取包依赖关系
+            operationId: StaticAnalysis_GetPackageDependencies
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/staticanalysis.v1.GetPackageDependenciesResponse'
+    /api/static/viz/statistics:
+        get:
+            tags:
+                - StaticAnalysis
+            description: 获取全局统计信息
+            operationId: StaticAnalysis_GetGlobalStatistics
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/staticanalysis.v1.GetGlobalStatisticsResponse'
 components:
     schemas:
         analysis.v1.AnalysisByGIDReply:
@@ -771,10 +708,9 @@ components:
             properties:
                 gid:
                     type: string
-                dbpath:
-                    type: string
                 depth:
                     type: integer
+                    description: dbpath参数已移除，从session中获取
                     format: int32
                 createTime:
                     type: string
@@ -789,9 +725,13 @@ components:
             properties:
                 name:
                     type: string
-                dbpath:
-                    type: string
             description: The request message containing the user's name.
+        analysis.v1.ClearSessionReply:
+            type: object
+            properties:
+                success:
+                    type: boolean
+            description: ClearSessionReply 清除session响应
         analysis.v1.FunctionCallStats:
             type: object
             properties:
@@ -877,8 +817,14 @@ components:
                     format: int32
                 includeMetrics:
                     type: boolean
+        analysis.v1.GetAnalysisPathReply:
+            type: object
+            properties:
                 dbpath:
                     type: string
+                exists:
+                    type: boolean
+            description: GetAnalysisPathReply 获取分析路径响应
         analysis.v1.GetChildFunctionsReply:
             type: object
             properties:
@@ -892,8 +838,6 @@ components:
             properties:
                 parentId:
                     type: string
-                dbpath:
-                    type: string
             description: GetChildFunctionsReq 获取函数的子函数的请求
         analysis.v1.GetFunctionCallStatsReply:
             type: object
@@ -906,10 +850,9 @@ components:
         analysis.v1.GetFunctionCallStatsReq:
             type: object
             properties:
-                dbPath:
-                    type: string
                 functionName:
                     type: string
+                    description: dbPath参数已移除，从session中获取
             description: 获取函数调用统计请求
         analysis.v1.GetFunctionInfoInGoroutineReply:
             type: object
@@ -934,10 +877,9 @@ components:
         analysis.v1.GetFunctionInfoInGoroutineReq:
             type: object
             properties:
-                dbpath:
-                    type: string
                 gid:
                     type: string
+                    description: dbpath参数已移除，从session中获取
                 functionId:
                     type: string
                 currentDepth:
@@ -975,10 +917,9 @@ components:
             properties:
                 functionName:
                     type: string
-                path:
-                    type: string
                 includeMetrics:
                     type: boolean
+                    description: path参数已移除，从session中获取
         analysis.v1.GetGoroutineStatsReply:
             type: object
             properties:
@@ -993,9 +934,7 @@ components:
             description: GetGoroutineStatsReply 获取Goroutine统计信息的响应
         analysis.v1.GetGoroutineStatsReq:
             type: object
-            properties:
-                dbpath:
-                    type: string
+            properties: {}
             description: GetGoroutineStatsReq 获取Goroutine统计信息的请求
         analysis.v1.GetHotFunctionsReply:
             type: object
@@ -1024,8 +963,6 @@ components:
             properties:
                 sortBy:
                     type: string
-                dbpath:
-                    type: string
             description: GetHotFunctionsReq 获取热点函数的请求
         analysis.v1.GetModuleNamesReply:
             type: object
@@ -1038,10 +975,9 @@ components:
         analysis.v1.GetModuleNamesReq:
             type: object
             properties:
-                dbpath:
-                    type: string
                 maxSamples:
                     type: integer
+                    description: dbpath参数已移除，从session中获取
                     format: int32
             description: GetModuleNamesReq 获取模块名称请求
         analysis.v1.GetParamsByIDReply:
@@ -1057,8 +993,6 @@ components:
                 id:
                     type: integer
                     format: int32
-                dbpath:
-                    type: string
         analysis.v1.GetParentFunctionsReply:
             type: object
             properties:
@@ -1069,10 +1003,9 @@ components:
         analysis.v1.GetParentFunctionsReq:
             type: object
             properties:
-                dbpath:
-                    type: string
                 functionName:
                     type: string
+                    description: dbpath参数已移除，从session中获取
         analysis.v1.GetTracesByParentFuncReply:
             type: object
             properties:
@@ -1112,8 +1045,6 @@ components:
             type: object
             properties:
                 parentId:
-                    type: string
-                dbpath:
                     type: string
             description: GetTracesByParentFuncReq 根据父函数ID获取函数调用的请求
         analysis.v1.InstrumentProjectReply:
@@ -1162,10 +1093,9 @@ components:
         analysis.v1.SearchFunctionsReq:
             type: object
             properties:
-                dbpath:
-                    type: string
                 query:
                     type: string
+                    description: dbpath参数已移除，从session中获取
                 limit:
                     type: integer
                     format: int32
@@ -1275,14 +1205,6 @@ components:
                 totalPackages:
                     type: integer
                     format: int32
-                packageDependencies:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.PackageDependency'
-                hotFunctions:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.HotFunction'
             description: 分析数据库文件响应
         staticanalysis.v1.AnalyzeProjectPathRequest:
             type: object
@@ -1304,24 +1226,29 @@ components:
                 taskId:
                     type: string
             description: 分析项目路径响应
-        staticanalysis.v1.CloneGitLabRepositoryRequest:
+        staticanalysis.v1.CallPath:
             type: object
             properties:
-                repoUrl:
-                    type: string
-                branch:
-                    type: string
-            description: 克隆GitLab仓库请求
-        staticanalysis.v1.CloneGitLabRepositoryResponse:
+                functionKeys:
+                    type: array
+                    items:
+                        type: string
+                pathLength:
+                    type: integer
+                    format: int32
+                confidence:
+                    type: number
+                    format: float
+            description: 调用路径
+        staticanalysis.v1.CallSite:
             type: object
             properties:
-                success:
-                    type: boolean
-                message:
+                file:
                     type: string
-                targetDir:
-                    type: string
-            description: 克隆GitLab仓库响应
+                line:
+                    type: integer
+                    format: int32
+            description: 调用点信息
         staticanalysis.v1.DbFileInfo:
             type: object
             properties:
@@ -1334,6 +1261,63 @@ components:
                 createTime:
                     type: string
             description: 静态分析数据库文件信息
+        staticanalysis.v1.DetailedHotFunction:
+            type: object
+            properties:
+                key:
+                    type: string
+                name:
+                    type: string
+                package:
+                    type: string
+                signature:
+                    type: string
+                doc:
+                    type: string
+                position:
+                    $ref: '#/components/schemas/staticanalysis.v1.NodePosition'
+                callerCount:
+                    type: integer
+                    format: int32
+                calleeCount:
+                    type: integer
+                    format: int32
+                importanceScore:
+                    type: number
+                    format: float
+                topCallers:
+                    type: array
+                    items:
+                        type: string
+                topCallees:
+                    type: array
+                    items:
+                        type: string
+            description: 详细热点函数信息
+        staticanalysis.v1.FunctionDetail:
+            type: object
+            properties:
+                key:
+                    type: string
+                name:
+                    type: string
+                package:
+                    type: string
+                fullName:
+                    type: string
+                signature:
+                    type: string
+                doc:
+                    type: string
+                position:
+                    $ref: '#/components/schemas/staticanalysis.v1.NodePosition'
+                metrics:
+                    $ref: '#/components/schemas/staticanalysis.v1.NodeMetrics'
+                callSites:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.CallSite'
+            description: 函数详细信息
         staticanalysis.v1.FunctionInfo:
             type: object
             properties:
@@ -1359,95 +1343,18 @@ components:
                     type: number
                     format: float
             description: 获取分析任务状态响应
-        staticanalysis.v1.GetFunctionAnalysisReply:
+        staticanalysis.v1.GetCallGraphRequest:
             type: object
             properties:
-                callData:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GetFunctionAnalysisReply_FunctionNode'
-            description: 获取函数调用关系分析的响应
-        staticanalysis.v1.GetFunctionAnalysisReply_FunctionNode:
-            type: object
-            properties:
-                id:
+                rootFunction:
                     type: string
-                name:
-                    type: string
-                package:
-                    type: string
-                callCount:
+                maxDepth:
                     type: integer
                     format: int32
-                avgTime:
-                    type: string
-                children:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GetFunctionAnalysisReply_FunctionNode'
-        staticanalysis.v1.GetFunctionAnalysisReq:
-            type: object
-            properties:
-                functionName:
-                    type: string
-                type:
-                    type: string
-                path:
-                    type: string
-            description: 获取函数调用关系分析的请求
-        staticanalysis.v1.GetFunctionCallGraphReply:
-            type: object
-            properties:
-                nodes:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GetFunctionCallGraphReply_GraphNode'
-                edges:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GetFunctionCallGraphReply_GraphEdge'
-            description: 获取函数调用关系图的响应
-        staticanalysis.v1.GetFunctionCallGraphReply_GraphEdge:
-            type: object
-            properties:
-                source:
-                    type: string
-                target:
-                    type: string
-                label:
-                    type: string
-                edgeType:
-                    type: string
-        staticanalysis.v1.GetFunctionCallGraphReply_GraphNode:
-            type: object
-            properties:
-                key:
-                    type: string
-                name:
-                    type: string
-                package:
-                    type: string
-                callCount:
-                    type: integer
-                    format: int32
-                avgTime:
-                    type: string
-                nodeType:
-                    type: string
-        staticanalysis.v1.GetFunctionDownstreamRequest:
-            type: object
-            properties:
-                dbPath:
-                    type: string
-                functionKey:
-                    type: string
-                functionPackage:
-                    type: string
-                depth:
-                    type: integer
-                    format: int32
-            description: 获取函数下游调用关系请求
-        staticanalysis.v1.GetFunctionDownstreamResponse:
+                includeExternal:
+                    type: boolean
+            description: 获取调用图请求
+        staticanalysis.v1.GetCallGraphResponse:
             type: object
             properties:
                 nodes:
@@ -1458,116 +1365,111 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/staticanalysis.v1.GraphEdge'
-            description: 获取函数下游调用关系响应
-        staticanalysis.v1.GetFunctionFullChainRequest:
-            type: object
-            properties:
-                dbPath:
-                    type: string
-                functionKey:
-                    type: string
-            description: 获取函数全链路调用关系请求
-        staticanalysis.v1.GetFunctionFullChainResponse:
-            type: object
-            properties:
-                nodes:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GraphNode'
-                edges:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GraphEdge'
-            description: 获取函数全链路调用关系响应
-        staticanalysis.v1.GetFunctionUpstreamRequest:
-            type: object
-            properties:
-                dbPath:
-                    type: string
-                functionKey:
-                    type: string
-                functionPackage:
-                    type: string
-                depth:
+                totalNodes:
                     type: integer
                     format: int32
-            description: 获取函数上游调用关系请求
-        staticanalysis.v1.GetFunctionUpstreamResponse:
-            type: object
-            properties:
-                nodes:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GraphNode'
-                edges:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GraphEdge'
-            description: 获取函数上游调用关系响应
-        staticanalysis.v1.GetHotFunctionsRequest:
-            type: object
-            properties:
-                dbPath:
+                totalEdges:
+                    type: integer
+                    format: int32
+                rootNode:
                     type: string
-                page:
+            description: 调用图响应
+        staticanalysis.v1.GetFunctionCallPathsRequest:
+            type: object
+            properties:
+                fromFunction:
+                    type: string
+                toFunction:
+                    type: string
+                maxPaths:
                     type: integer
                     format: int32
-                pageSize:
+                maxDepth:
                     type: integer
                     format: int32
-            description: 分页获取热点函数请求
+            description: 获取函数调用路径请求
+        staticanalysis.v1.GetFunctionCallPathsResponse:
+            type: object
+            properties:
+                paths:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.CallPath'
+                hasMore:
+                    type: boolean
+            description: 函数调用路径响应
+        staticanalysis.v1.GetFunctionDetailsResponse:
+            type: object
+            properties:
+                function:
+                    $ref: '#/components/schemas/staticanalysis.v1.FunctionDetail'
+                callers:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.FunctionDetail'
+                callees:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.FunctionDetail'
+            description: 函数详细信息响应
+        staticanalysis.v1.GetGlobalStatisticsResponse:
+            type: object
+            properties:
+                totalFunctions:
+                    type: integer
+                    format: int32
+                totalPackages:
+                    type: integer
+                    format: int32
+                totalEdges:
+                    type: integer
+                    format: int32
+                avgCallDepth:
+                    type: number
+                    format: float
+                maxCallDepth:
+                    type: integer
+                    format: int32
+                hotFunctions:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.HotFunction'
+                packageStats:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.PackageStatistic'
+            description: 全局统计信息响应
         staticanalysis.v1.GetHotFunctionsResponse:
             type: object
             properties:
                 functions:
                     type: array
                     items:
-                        $ref: '#/components/schemas/staticanalysis.v1.HotFunction'
-                total:
-                    type: integer
-                    format: int32
-                page:
-                    type: integer
-                    format: int32
-                pageSize:
-                    type: integer
-                    format: int32
-                pageCount:
-                    type: integer
-                    format: int32
-            description: 分页获取热点函数响应
-        staticanalysis.v1.GetPackageDependenciesRequest:
+                        $ref: '#/components/schemas/staticanalysis.v1.DetailedHotFunction'
+            description: 热点函数响应
+        staticanalysis.v1.GetInitFunctionsResponse:
             type: object
             properties:
-                dbPath:
-                    type: string
-                page:
+                initFunctions:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.InitFunction'
+                totalCount:
                     type: integer
                     format: int32
-                pageSize:
-                    type: integer
-                    format: int32
-            description: 分页获取包依赖关系请求
+            description: 获取Init函数列表响应
         staticanalysis.v1.GetPackageDependenciesResponse:
             type: object
             properties:
+                packages:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.PackageNode'
                 dependencies:
                     type: array
                     items:
                         $ref: '#/components/schemas/staticanalysis.v1.PackageDependency'
-                total:
-                    type: integer
-                    format: int32
-                page:
-                    type: integer
-                    format: int32
-                pageSize:
-                    type: integer
-                    format: int32
-                pageCount:
-                    type: integer
-                    format: int32
-            description: 分页获取包依赖关系响应
+            description: 包依赖关系响应
         staticanalysis.v1.GetStaticDbFilesResponse:
             type: object
             properties:
@@ -1576,68 +1478,47 @@ components:
                     items:
                         $ref: '#/components/schemas/staticanalysis.v1.DbFileInfo'
             description: 获取静态分析数据库文件列表响应
-        staticanalysis.v1.GetTreeGraphReply:
-            type: object
-            properties:
-                root:
-                    $ref: '#/components/schemas/staticanalysis.v1.TreeNode'
-            description: 获取树状图响应
-        staticanalysis.v1.GetTreeGraphReq:
-            type: object
-            properties:
-                dbPath:
-                    type: string
-                functionKey:
-                    type: string
-            description: 获取树状图请求
-        staticanalysis.v1.GitLabRepository:
-            type: object
-            properties:
-                id:
-                    type: integer
-                    format: int32
-                name:
-                    type: string
-                fullName:
-                    type: string
-                description:
-                    type: string
-                defaultBranch:
-                    type: string
-                webUrl:
-                    type: string
-                sshUrl:
-                    type: string
-                httpUrl:
-                    type: string
-                visibility:
-                    type: string
-                lastActivity:
-                    type: string
-            description: GitLab仓库信息
         staticanalysis.v1.GraphEdge:
             type: object
             properties:
+                id:
+                    type: string
                 source:
                     type: string
                 target:
                     type: string
-                value:
-                    type: integer
-                    format: int32
-            description: 图边
-        staticanalysis.v1.GraphNode:
-            type: object
-            properties:
-                key:
-                    type: string
-                name:
-                    type: string
-                package:
+                callType:
                     type: string
                 callCount:
                     type: integer
                     format: int32
+                callSites:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/staticanalysis.v1.CallSite'
+            description: 图边
+        staticanalysis.v1.GraphNode:
+            type: object
+            properties:
+                id:
+                    type: string
+                label:
+                    type: string
+                package:
+                    type: string
+                fullName:
+                    type: string
+                signature:
+                    type: string
+                doc:
+                    type: string
+                position:
+                    $ref: '#/components/schemas/staticanalysis.v1.NodePosition'
+                metrics:
+                    $ref: '#/components/schemas/staticanalysis.v1.NodeMetrics'
+                type:
+                    type: integer
+                    format: enum
             description: 图节点
         staticanalysis.v1.HotFunction:
             type: object
@@ -1648,34 +1529,123 @@ components:
                     type: string
                 package:
                     type: string
-                callCount:
+                callerCount:
                     type: integer
                     format: int32
-            description: 热点函数
-        staticanalysis.v1.ListGitLabRepositoriesResponse:
+                calleeCount:
+                    type: integer
+                    format: int32
+                importanceScore:
+                    type: number
+                    format: float
+            description: 热点函数信息
+        staticanalysis.v1.InitFunction:
             type: object
             properties:
-                repositories:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.GitLabRepository'
-            description: 获取GitLab仓库列表响应
+                key:
+                    type: string
+                name:
+                    type: string
+                package:
+                    type: string
+                position:
+                    $ref: '#/components/schemas/staticanalysis.v1.NodePosition'
+                signature:
+                    type: string
+                doc:
+                    type: string
+                fullName:
+                    type: string
+            description: Init函数信息
+        staticanalysis.v1.NodeMetrics:
+            type: object
+            properties:
+                callerCount:
+                    type: integer
+                    format: int32
+                calleeCount:
+                    type: integer
+                    format: int32
+                depthLevel:
+                    type: integer
+                    format: int32
+                centrality:
+                    type: number
+                    format: float
+            description: 节点度量信息
+        staticanalysis.v1.NodePosition:
+            type: object
+            properties:
+                filename:
+                    type: string
+                startLine:
+                    type: integer
+                    format: int32
+                endLine:
+                    type: integer
+                    format: int32
+            description: 节点位置信息
         staticanalysis.v1.PackageDependency:
             type: object
             properties:
-                source:
+                sourcePackage:
                     type: string
-                target:
+                targetPackage:
                     type: string
-                count:
+                callCount:
                     type: integer
                     format: int32
+                dependencyStrength:
+                    type: number
+                    format: float
+                callFunctions:
+                    type: array
+                    items:
+                        type: string
             description: 包依赖关系
+        staticanalysis.v1.PackageNode:
+            type: object
+            properties:
+                name:
+                    type: string
+                functionCount:
+                    type: integer
+                    format: int32
+                internalCallCount:
+                    type: integer
+                    format: int32
+                externalCallCount:
+                    type: integer
+                    format: int32
+                complexity:
+                    type: number
+                    format: float
+                subPackages:
+                    type: array
+                    items:
+                        type: string
+            description: 包节点
+        staticanalysis.v1.PackageStatistic:
+            type: object
+            properties:
+                packageName:
+                    type: string
+                functionCount:
+                    type: integer
+                    format: int32
+                internalCalls:
+                    type: integer
+                    format: int32
+                externalCalls:
+                    type: integer
+                    format: int32
+                complexityScore:
+                    type: number
+                    format: float
+            description: 包统计信息
         staticanalysis.v1.SearchFunctionsRequest:
             type: object
             properties:
-                dbPath:
-                    type: string
                 query:
                     type: string
             description: 模糊搜索函数请求
@@ -1687,20 +1657,6 @@ components:
                     items:
                         $ref: '#/components/schemas/staticanalysis.v1.FunctionInfo'
             description: 模糊搜索函数响应
-        staticanalysis.v1.TreeNode:
-            type: object
-            properties:
-                name:
-                    type: string
-                value:
-                    type: string
-                collapsed:
-                    type: boolean
-                children:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/staticanalysis.v1.TreeNode'
-            description: 树状图节点
 tags:
     - name: Analysis
       description: The greeting service definition.

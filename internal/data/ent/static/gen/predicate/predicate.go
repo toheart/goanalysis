@@ -11,3 +11,9 @@ type FuncEdge func(*sql.Selector)
 
 // FuncNode is the predicate function for funcnode builders.
 type FuncNode func(*sql.Selector)
+
+// PackageDep is the predicate function for packagedep builders.
+type PackageDep func(*sql.Selector)
+
+// Pkg is the predicate function for pkg builders.
+type Pkg func(*sql.Selector)

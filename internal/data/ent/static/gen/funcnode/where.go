@@ -69,9 +69,39 @@ func Pkg(v string) predicate.FuncNode {
 	return predicate.FuncNode(sql.FieldEQ(FieldPkg, v))
 }
 
+// PkgPath applies equality check predicate on the "pkg_path" field. It's identical to PkgPathEQ.
+func PkgPath(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldPkgPath, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.FuncNode {
 	return predicate.FuncNode(sql.FieldEQ(FieldName, v))
+}
+
+// Filename applies equality check predicate on the "filename" field. It's identical to FilenameEQ.
+func Filename(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldFilename, v))
+}
+
+// StartLine applies equality check predicate on the "start_line" field. It's identical to StartLineEQ.
+func StartLine(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldStartLine, v))
+}
+
+// EndLine applies equality check predicate on the "end_line" field. It's identical to EndLineEQ.
+func EndLine(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldEndLine, v))
+}
+
+// Signature applies equality check predicate on the "signature" field. It's identical to SignatureEQ.
+func Signature(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldSignature, v))
+}
+
+// SourceCode applies equality check predicate on the "source_code" field. It's identical to SourceCodeEQ.
+func SourceCode(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldSourceCode, v))
 }
 
 // CreatedAt applies equality check predicate on the "CreatedAt" field. It's identical to CreatedAtEQ.
@@ -279,6 +309,81 @@ func PkgContainsFold(v string) predicate.FuncNode {
 	return predicate.FuncNode(sql.FieldContainsFold(FieldPkg, v))
 }
 
+// PkgPathEQ applies the EQ predicate on the "pkg_path" field.
+func PkgPathEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldPkgPath, v))
+}
+
+// PkgPathNEQ applies the NEQ predicate on the "pkg_path" field.
+func PkgPathNEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNEQ(FieldPkgPath, v))
+}
+
+// PkgPathIn applies the In predicate on the "pkg_path" field.
+func PkgPathIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIn(FieldPkgPath, vs...))
+}
+
+// PkgPathNotIn applies the NotIn predicate on the "pkg_path" field.
+func PkgPathNotIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotIn(FieldPkgPath, vs...))
+}
+
+// PkgPathGT applies the GT predicate on the "pkg_path" field.
+func PkgPathGT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGT(FieldPkgPath, v))
+}
+
+// PkgPathGTE applies the GTE predicate on the "pkg_path" field.
+func PkgPathGTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGTE(FieldPkgPath, v))
+}
+
+// PkgPathLT applies the LT predicate on the "pkg_path" field.
+func PkgPathLT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLT(FieldPkgPath, v))
+}
+
+// PkgPathLTE applies the LTE predicate on the "pkg_path" field.
+func PkgPathLTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLTE(FieldPkgPath, v))
+}
+
+// PkgPathContains applies the Contains predicate on the "pkg_path" field.
+func PkgPathContains(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContains(FieldPkgPath, v))
+}
+
+// PkgPathHasPrefix applies the HasPrefix predicate on the "pkg_path" field.
+func PkgPathHasPrefix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasPrefix(FieldPkgPath, v))
+}
+
+// PkgPathHasSuffix applies the HasSuffix predicate on the "pkg_path" field.
+func PkgPathHasSuffix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasSuffix(FieldPkgPath, v))
+}
+
+// PkgPathIsNil applies the IsNil predicate on the "pkg_path" field.
+func PkgPathIsNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIsNull(FieldPkgPath))
+}
+
+// PkgPathNotNil applies the NotNil predicate on the "pkg_path" field.
+func PkgPathNotNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotNull(FieldPkgPath))
+}
+
+// PkgPathEqualFold applies the EqualFold predicate on the "pkg_path" field.
+func PkgPathEqualFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEqualFold(FieldPkgPath, v))
+}
+
+// PkgPathContainsFold applies the ContainsFold predicate on the "pkg_path" field.
+func PkgPathContainsFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContainsFold(FieldPkgPath, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.FuncNode {
 	return predicate.FuncNode(sql.FieldEQ(FieldName, v))
@@ -342,6 +447,331 @@ func NameEqualFold(v string) predicate.FuncNode {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.FuncNode {
 	return predicate.FuncNode(sql.FieldContainsFold(FieldName, v))
+}
+
+// FilenameEQ applies the EQ predicate on the "filename" field.
+func FilenameEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldFilename, v))
+}
+
+// FilenameNEQ applies the NEQ predicate on the "filename" field.
+func FilenameNEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNEQ(FieldFilename, v))
+}
+
+// FilenameIn applies the In predicate on the "filename" field.
+func FilenameIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIn(FieldFilename, vs...))
+}
+
+// FilenameNotIn applies the NotIn predicate on the "filename" field.
+func FilenameNotIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotIn(FieldFilename, vs...))
+}
+
+// FilenameGT applies the GT predicate on the "filename" field.
+func FilenameGT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGT(FieldFilename, v))
+}
+
+// FilenameGTE applies the GTE predicate on the "filename" field.
+func FilenameGTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGTE(FieldFilename, v))
+}
+
+// FilenameLT applies the LT predicate on the "filename" field.
+func FilenameLT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLT(FieldFilename, v))
+}
+
+// FilenameLTE applies the LTE predicate on the "filename" field.
+func FilenameLTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLTE(FieldFilename, v))
+}
+
+// FilenameContains applies the Contains predicate on the "filename" field.
+func FilenameContains(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContains(FieldFilename, v))
+}
+
+// FilenameHasPrefix applies the HasPrefix predicate on the "filename" field.
+func FilenameHasPrefix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasPrefix(FieldFilename, v))
+}
+
+// FilenameHasSuffix applies the HasSuffix predicate on the "filename" field.
+func FilenameHasSuffix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasSuffix(FieldFilename, v))
+}
+
+// FilenameIsNil applies the IsNil predicate on the "filename" field.
+func FilenameIsNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIsNull(FieldFilename))
+}
+
+// FilenameNotNil applies the NotNil predicate on the "filename" field.
+func FilenameNotNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotNull(FieldFilename))
+}
+
+// FilenameEqualFold applies the EqualFold predicate on the "filename" field.
+func FilenameEqualFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEqualFold(FieldFilename, v))
+}
+
+// FilenameContainsFold applies the ContainsFold predicate on the "filename" field.
+func FilenameContainsFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContainsFold(FieldFilename, v))
+}
+
+// StartLineEQ applies the EQ predicate on the "start_line" field.
+func StartLineEQ(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldStartLine, v))
+}
+
+// StartLineNEQ applies the NEQ predicate on the "start_line" field.
+func StartLineNEQ(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNEQ(FieldStartLine, v))
+}
+
+// StartLineIn applies the In predicate on the "start_line" field.
+func StartLineIn(vs ...int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIn(FieldStartLine, vs...))
+}
+
+// StartLineNotIn applies the NotIn predicate on the "start_line" field.
+func StartLineNotIn(vs ...int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotIn(FieldStartLine, vs...))
+}
+
+// StartLineGT applies the GT predicate on the "start_line" field.
+func StartLineGT(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGT(FieldStartLine, v))
+}
+
+// StartLineGTE applies the GTE predicate on the "start_line" field.
+func StartLineGTE(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGTE(FieldStartLine, v))
+}
+
+// StartLineLT applies the LT predicate on the "start_line" field.
+func StartLineLT(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLT(FieldStartLine, v))
+}
+
+// StartLineLTE applies the LTE predicate on the "start_line" field.
+func StartLineLTE(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLTE(FieldStartLine, v))
+}
+
+// StartLineIsNil applies the IsNil predicate on the "start_line" field.
+func StartLineIsNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIsNull(FieldStartLine))
+}
+
+// StartLineNotNil applies the NotNil predicate on the "start_line" field.
+func StartLineNotNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotNull(FieldStartLine))
+}
+
+// EndLineEQ applies the EQ predicate on the "end_line" field.
+func EndLineEQ(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldEndLine, v))
+}
+
+// EndLineNEQ applies the NEQ predicate on the "end_line" field.
+func EndLineNEQ(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNEQ(FieldEndLine, v))
+}
+
+// EndLineIn applies the In predicate on the "end_line" field.
+func EndLineIn(vs ...int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIn(FieldEndLine, vs...))
+}
+
+// EndLineNotIn applies the NotIn predicate on the "end_line" field.
+func EndLineNotIn(vs ...int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotIn(FieldEndLine, vs...))
+}
+
+// EndLineGT applies the GT predicate on the "end_line" field.
+func EndLineGT(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGT(FieldEndLine, v))
+}
+
+// EndLineGTE applies the GTE predicate on the "end_line" field.
+func EndLineGTE(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGTE(FieldEndLine, v))
+}
+
+// EndLineLT applies the LT predicate on the "end_line" field.
+func EndLineLT(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLT(FieldEndLine, v))
+}
+
+// EndLineLTE applies the LTE predicate on the "end_line" field.
+func EndLineLTE(v int) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLTE(FieldEndLine, v))
+}
+
+// EndLineIsNil applies the IsNil predicate on the "end_line" field.
+func EndLineIsNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIsNull(FieldEndLine))
+}
+
+// EndLineNotNil applies the NotNil predicate on the "end_line" field.
+func EndLineNotNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotNull(FieldEndLine))
+}
+
+// SignatureEQ applies the EQ predicate on the "signature" field.
+func SignatureEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldSignature, v))
+}
+
+// SignatureNEQ applies the NEQ predicate on the "signature" field.
+func SignatureNEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNEQ(FieldSignature, v))
+}
+
+// SignatureIn applies the In predicate on the "signature" field.
+func SignatureIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIn(FieldSignature, vs...))
+}
+
+// SignatureNotIn applies the NotIn predicate on the "signature" field.
+func SignatureNotIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotIn(FieldSignature, vs...))
+}
+
+// SignatureGT applies the GT predicate on the "signature" field.
+func SignatureGT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGT(FieldSignature, v))
+}
+
+// SignatureGTE applies the GTE predicate on the "signature" field.
+func SignatureGTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGTE(FieldSignature, v))
+}
+
+// SignatureLT applies the LT predicate on the "signature" field.
+func SignatureLT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLT(FieldSignature, v))
+}
+
+// SignatureLTE applies the LTE predicate on the "signature" field.
+func SignatureLTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLTE(FieldSignature, v))
+}
+
+// SignatureContains applies the Contains predicate on the "signature" field.
+func SignatureContains(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContains(FieldSignature, v))
+}
+
+// SignatureHasPrefix applies the HasPrefix predicate on the "signature" field.
+func SignatureHasPrefix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasPrefix(FieldSignature, v))
+}
+
+// SignatureHasSuffix applies the HasSuffix predicate on the "signature" field.
+func SignatureHasSuffix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasSuffix(FieldSignature, v))
+}
+
+// SignatureIsNil applies the IsNil predicate on the "signature" field.
+func SignatureIsNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIsNull(FieldSignature))
+}
+
+// SignatureNotNil applies the NotNil predicate on the "signature" field.
+func SignatureNotNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotNull(FieldSignature))
+}
+
+// SignatureEqualFold applies the EqualFold predicate on the "signature" field.
+func SignatureEqualFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEqualFold(FieldSignature, v))
+}
+
+// SignatureContainsFold applies the ContainsFold predicate on the "signature" field.
+func SignatureContainsFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContainsFold(FieldSignature, v))
+}
+
+// SourceCodeEQ applies the EQ predicate on the "source_code" field.
+func SourceCodeEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEQ(FieldSourceCode, v))
+}
+
+// SourceCodeNEQ applies the NEQ predicate on the "source_code" field.
+func SourceCodeNEQ(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNEQ(FieldSourceCode, v))
+}
+
+// SourceCodeIn applies the In predicate on the "source_code" field.
+func SourceCodeIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIn(FieldSourceCode, vs...))
+}
+
+// SourceCodeNotIn applies the NotIn predicate on the "source_code" field.
+func SourceCodeNotIn(vs ...string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotIn(FieldSourceCode, vs...))
+}
+
+// SourceCodeGT applies the GT predicate on the "source_code" field.
+func SourceCodeGT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGT(FieldSourceCode, v))
+}
+
+// SourceCodeGTE applies the GTE predicate on the "source_code" field.
+func SourceCodeGTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldGTE(FieldSourceCode, v))
+}
+
+// SourceCodeLT applies the LT predicate on the "source_code" field.
+func SourceCodeLT(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLT(FieldSourceCode, v))
+}
+
+// SourceCodeLTE applies the LTE predicate on the "source_code" field.
+func SourceCodeLTE(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldLTE(FieldSourceCode, v))
+}
+
+// SourceCodeContains applies the Contains predicate on the "source_code" field.
+func SourceCodeContains(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContains(FieldSourceCode, v))
+}
+
+// SourceCodeHasPrefix applies the HasPrefix predicate on the "source_code" field.
+func SourceCodeHasPrefix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasPrefix(FieldSourceCode, v))
+}
+
+// SourceCodeHasSuffix applies the HasSuffix predicate on the "source_code" field.
+func SourceCodeHasSuffix(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldHasSuffix(FieldSourceCode, v))
+}
+
+// SourceCodeIsNil applies the IsNil predicate on the "source_code" field.
+func SourceCodeIsNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldIsNull(FieldSourceCode))
+}
+
+// SourceCodeNotNil applies the NotNil predicate on the "source_code" field.
+func SourceCodeNotNil() predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldNotNull(FieldSourceCode))
+}
+
+// SourceCodeEqualFold applies the EqualFold predicate on the "source_code" field.
+func SourceCodeEqualFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldEqualFold(FieldSourceCode, v))
+}
+
+// SourceCodeContainsFold applies the ContainsFold predicate on the "source_code" field.
+func SourceCodeContainsFold(v string) predicate.FuncNode {
+	return predicate.FuncNode(sql.FieldContainsFold(FieldSourceCode, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "CreatedAt" field.

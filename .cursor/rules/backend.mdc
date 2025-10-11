@@ -1,0 +1,91 @@
+---
+globs: **/*.go,go.mod,go.sum,cmd/**,internal/**,api/**,configs/**,third_party/**
+---
+## 后端开发规则（Go）
+
+**目标**：帮助 AI 在后端 Go 代码库内精准导航与生成代码。
+
+- **日志规范**：日志必须使用英文，且区分等级：`Debug`/`Info`/`Warn`/`Error`/`Fatal`。
+- **注释语言**：所有代码注释使用中文。
+- **错误处理**：优先返回明确错误，禁止无意义的 `panic`；错误需向上返回并带上下文。
+- **包结构认知**：入口为 [main.go](mdc:main.go)，HTTP/GRPC 服务器在 [internal/server/http.go](mdc:internal/server/http.go)，业务逻辑在 [internal/biz](mdc:internal/biz)，数据层在 [internal/data](mdc:internal/data)。
+- **API 契约**：Protobuf/OpenAPI 位于 [api/](mdc:api) 与 [openapi.yaml](mdc:openapi.yaml)。
+- **配置**：配置定义与默认值在 [internal/conf](mdc:internal/conf) 与 [configs/](mdc:configs)。
+- **静态分析域**：调用图、静态分析相关位于 [internal/biz/callgraph](mdc:internal/biz/callgraph) 与 [internal/biz/staticanalysis](mdc:internal/biz/staticanalysis)。
+- **依赖管理**：修改导入与模块时同步维护 [go.mod](mdc:go.mod)/[go.sum](mdc:go.sum)。
+- **代码风格**：遵循 `gofmt`/`goimports`；函数名与变量名使用完整有意义的英文，避免缩写；控制流优先早返回。
+- **并发与资源**：使用 `context.Context` 贯穿调用链；涉及 IO/DB 必须可取消；避免数据竞争。
+
+### 生成代码注意
+- 不要输出示例或帮助文档，除非明确要求。
+- 仅在必要的地方使用 Markdown 代码块；引用代码文件请使用 `[path](mdc:path)`。
+- 生成日志时使用英文并匹配等级；注释使用中文。
+
+## 目录结构概览
+
+- 应用入口： [main.go](mdc:main.go)
+- 命令行与进程 wiring： [cmd/](mdc:cmd)
+- 配置定义与加载： [internal/conf](mdc:internal/conf) 与 [configs/](mdc:configs)
+- 传输层（HTTP/gRPC 网关）： [internal/server/http.go](mdc:internal/server/http.go)
+- 接口契约（Protobuf/OpenAPI）： [api/](mdc:api) 与 [openapi.yaml](mdc:openapi.yaml)
+- 领域与用例： [internal/biz](mdc:internal/biz)
+  - 静态分析/调用图： [internal/biz/callgraph](mdc:internal/biz/callgraph)
+  - 分析服务： [internal/biz/analysis](mdc:internal/biz/analysis)
+  - 会话管理/鉴权： [internal/biz/session](mdc:internal/biz/session)
+- 数据访问与存储： [internal/data](mdc:internal/data)
+  - Ent 生成代码（静态/运行时）： [internal/data/ent](mdc:internal/data/ent)
+  - SQLite 适配： [internal/data/sqlite](mdc:internal/data/sqlite)
+- 服务编排： [internal/service](mdc:internal/service)
+- 文档与示例： [docs/](mdc:docs)
+- 静态资源/内嵌： [statik/](mdc:statik)
+
+## DDD 分层与依赖约束
+
+遵循简化的分层架构，外层依赖内层，禁止反向依赖：
+
+1. 接口与传输层（Interface/Transport）
+   - 位置：`internal/server`, `api/`, `cmd/`
+   - 依赖：可以依赖 `service` 与 `biz` 的用例接口；禁止直接依赖 `data` 的具体实现。
+
+2. 应用服务层（Application Service）
+   - 位置：`internal/service`
+   - 职责：编排用例流程、事务边界、跨聚合协作；不包含领域规则。
+   - 依赖：依赖 `biz` 定义的用例与领域接口；不直接依赖 `data` 细节。
+
+3. 领域层（Domain / Biz）
+   - 位置：`internal/biz`
+   - 职责：领域模型、实体/值对象、领域服务、用例（应用接口）；仅定义仓储接口。
+   - 依赖：零对外依赖或只依赖稳定库；通过接口与 `data` 交互。
+
+4. 基础设施层（Infrastructure / Data）
+   - 位置：`internal/data`
+   - 职责：仓储实现、ORM/Ent、数据库/外部系统适配。
+   - 依赖：可以依赖第三方库；实现 `biz` 的仓储接口；不得反向依赖 `service` 或 `server`。
+
+### 具体到本项目的映射
+
+- 领域与用例：
+  - 调用图： [internal/biz/callgraph](mdc:internal/biz/callgraph)
+  - 静态分析： [internal/biz/staticanalysis](mdc:internal/biz/staticanalysis)
+  - 分析编排： [internal/biz/analysis](mdc:internal/biz/analysis)
+  - 会话： [internal/biz/session](mdc:internal/biz/session)
+
+- 基础设施：
+  - Ent 静态元模型： [internal/data/ent/static](mdc:internal/data/ent/static)
+  - 运行时跟踪模型： [internal/data/ent/runtime](mdc:internal/data/ent/runtime)
+  - SQLite 适配： [internal/data/sqlite](mdc:internal/data/sqlite)
+
+- 应用服务：
+  - gRPC/HTTP 适配服务： [internal/service](mdc:internal/service)
+
+- 接口与传输：
+  - gRPC/HTTP 服务器： [internal/server/http.go](mdc:internal/server/http.go)
+  - CLI 与进程： [cmd/](mdc:cmd)
+  - Protobuf/OpenAPI： [api/](mdc:api), [openapi.yaml](mdc:openapi.yaml)
+
+### 依赖方向检查建议
+- `internal/server` → 仅依赖 `internal/service` 与 `internal/biz` 接口
+- `internal/service` → 依赖 `internal/biz`，不直接依赖 `internal/data`
+- `internal/biz` → 仅暴露接口，不依赖 `internal/data` 实现
+- `internal/data` → 实现 `internal/biz` 接口，不依赖 `internal/service`/`internal/server`
+

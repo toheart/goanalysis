@@ -19,8 +19,20 @@ const (
 	FieldFullName = "full_name"
 	// FieldPkg holds the string denoting the pkg field in the database.
 	FieldPkg = "pkg"
+	// FieldPkgPath holds the string denoting the pkg_path field in the database.
+	FieldPkgPath = "pkg_path"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldFilename holds the string denoting the filename field in the database.
+	FieldFilename = "filename"
+	// FieldStartLine holds the string denoting the start_line field in the database.
+	FieldStartLine = "start_line"
+	// FieldEndLine holds the string denoting the end_line field in the database.
+	FieldEndLine = "end_line"
+	// FieldSignature holds the string denoting the signature field in the database.
+	FieldSignature = "signature"
+	// FieldSourceCode holds the string denoting the source_code field in the database.
+	FieldSourceCode = "source_code"
 	// FieldCreatedAt holds the string denoting the createdat field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
@@ -35,7 +47,13 @@ var Columns = []string{
 	FieldKey,
 	FieldFullName,
 	FieldPkg,
+	FieldPkgPath,
 	FieldName,
+	FieldFilename,
+	FieldStartLine,
+	FieldEndLine,
+	FieldSignature,
+	FieldSourceCode,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -88,9 +106,39 @@ func ByPkg(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPkg, opts...).ToFunc()
 }
 
+// ByPkgPath orders the results by the pkg_path field.
+func ByPkgPath(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPkgPath, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByFilename orders the results by the filename field.
+func ByFilename(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFilename, opts...).ToFunc()
+}
+
+// ByStartLine orders the results by the start_line field.
+func ByStartLine(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStartLine, opts...).ToFunc()
+}
+
+// ByEndLine orders the results by the end_line field.
+func ByEndLine(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEndLine, opts...).ToFunc()
+}
+
+// BySignature orders the results by the signature field.
+func BySignature(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSignature, opts...).ToFunc()
+}
+
+// BySourceCode orders the results by the source_code field.
+func BySourceCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSourceCode, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the CreatedAt field.

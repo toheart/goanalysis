@@ -44,6 +44,48 @@ func (fec *FuncEdgeCreate) SetCalleeKey(s string) *FuncEdgeCreate {
 	return fec
 }
 
+// SetCallSiteFile sets the "call_site_file" field.
+func (fec *FuncEdgeCreate) SetCallSiteFile(s string) *FuncEdgeCreate {
+	fec.mutation.SetCallSiteFile(s)
+	return fec
+}
+
+// SetNillableCallSiteFile sets the "call_site_file" field if the given value is not nil.
+func (fec *FuncEdgeCreate) SetNillableCallSiteFile(s *string) *FuncEdgeCreate {
+	if s != nil {
+		fec.SetCallSiteFile(*s)
+	}
+	return fec
+}
+
+// SetCallSiteLine sets the "call_site_line" field.
+func (fec *FuncEdgeCreate) SetCallSiteLine(i int) *FuncEdgeCreate {
+	fec.mutation.SetCallSiteLine(i)
+	return fec
+}
+
+// SetNillableCallSiteLine sets the "call_site_line" field if the given value is not nil.
+func (fec *FuncEdgeCreate) SetNillableCallSiteLine(i *int) *FuncEdgeCreate {
+	if i != nil {
+		fec.SetCallSiteLine(*i)
+	}
+	return fec
+}
+
+// SetCallType sets the "call_type" field.
+func (fec *FuncEdgeCreate) SetCallType(s string) *FuncEdgeCreate {
+	fec.mutation.SetCallType(s)
+	return fec
+}
+
+// SetNillableCallType sets the "call_type" field if the given value is not nil.
+func (fec *FuncEdgeCreate) SetNillableCallType(s *string) *FuncEdgeCreate {
+	if s != nil {
+		fec.SetCallType(*s)
+	}
+	return fec
+}
+
 // Mutation returns the FuncEdgeMutation object of the builder.
 func (fec *FuncEdgeCreate) Mutation() *FuncEdgeMutation {
 	return fec.mutation
@@ -51,6 +93,7 @@ func (fec *FuncEdgeCreate) Mutation() *FuncEdgeMutation {
 
 // Save creates the FuncEdge in the database.
 func (fec *FuncEdgeCreate) Save(ctx context.Context) (*FuncEdge, error) {
+	fec.defaults()
 	return withHooks(ctx, fec.sqlSave, fec.mutation, fec.hooks)
 }
 
@@ -76,6 +119,14 @@ func (fec *FuncEdgeCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (fec *FuncEdgeCreate) defaults() {
+	if _, ok := fec.mutation.CallType(); !ok {
+		v := funcedge.DefaultCallType
+		fec.mutation.SetCallType(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (fec *FuncEdgeCreate) check() error {
 	if _, ok := fec.mutation.CreatedAt(); !ok {
@@ -89,6 +140,9 @@ func (fec *FuncEdgeCreate) check() error {
 	}
 	if _, ok := fec.mutation.CalleeKey(); !ok {
 		return &ValidationError{Name: "CalleeKey", err: errors.New(`gen: missing required field "FuncEdge.CalleeKey"`)}
+	}
+	if _, ok := fec.mutation.CallType(); !ok {
+		return &ValidationError{Name: "call_type", err: errors.New(`gen: missing required field "FuncEdge.call_type"`)}
 	}
 	return nil
 }
@@ -132,6 +186,18 @@ func (fec *FuncEdgeCreate) createSpec() (*FuncEdge, *sqlgraph.CreateSpec) {
 		_spec.SetField(funcedge.FieldCalleeKey, field.TypeString, value)
 		_node.CalleeKey = value
 	}
+	if value, ok := fec.mutation.CallSiteFile(); ok {
+		_spec.SetField(funcedge.FieldCallSiteFile, field.TypeString, value)
+		_node.CallSiteFile = value
+	}
+	if value, ok := fec.mutation.CallSiteLine(); ok {
+		_spec.SetField(funcedge.FieldCallSiteLine, field.TypeInt, value)
+		_node.CallSiteLine = value
+	}
+	if value, ok := fec.mutation.CallType(); ok {
+		_spec.SetField(funcedge.FieldCallType, field.TypeString, value)
+		_node.CallType = value
+	}
 	return _node, _spec
 }
 
@@ -153,6 +219,7 @@ func (fecb *FuncEdgeCreateBulk) Save(ctx context.Context) ([]*FuncEdge, error) {
 	for i := range fecb.builders {
 		func(i int, root context.Context) {
 			builder := fecb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*FuncEdgeMutation)
 				if !ok {

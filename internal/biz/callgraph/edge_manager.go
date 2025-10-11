@@ -22,22 +22,25 @@ func (em *EdgeManager) GetEdgeChan() <-chan *dos.FuncEdge {
 }
 
 // AddEdge 添加边
-func (em *EdgeManager) AddEdge(callerKey, calleeKey string) {
+func (em *EdgeManager) AddEdge(callerKey, calleeKey, callSiteFile string, callSiteLine int, callType string) {
 	em.edgeChan <- &dos.FuncEdge{
-		CallerKey: callerKey,
-		CalleeKey: calleeKey,
+		CallerKey:    callerKey,
+		CalleeKey:    calleeKey,
+		CallSiteFile: callSiteFile,
+		CallSiteLine: callSiteLine,
+		CallType:     callType,
 	}
 }
 
 // BuildRelationship 建立节点间的父子关系
-func (em *EdgeManager) BuildRelationship(caller, callee *dos.FuncNode) {
+func (em *EdgeManager) BuildRelationship(caller, callee *dos.FuncNode, callSiteFile string, callSiteLine int, callType string) {
 	if caller != nil && callee != nil {
 		// 建立父子关系
 		caller.Childrens = append(caller.Childrens, callee)
 		callee.Parents = append(callee.Parents, caller)
 
 		// 添加边到通道
-		em.AddEdge(caller.Key, callee.Key)
+		em.AddEdge(caller.Key, callee.Key, callSiteFile, callSiteLine, callType)
 	}
 }
 

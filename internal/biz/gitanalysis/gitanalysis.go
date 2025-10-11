@@ -2,12 +2,15 @@ package gitanalysis
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-kratos/kratos/v2/log"
@@ -58,28 +61,85 @@ func (g *GitAnalysis) MRAnalyzer(projectID, mrID int, autoNotes bool) (*dos.MrAn
 		return nil, err
 	}
 
-	// 克隆仓库
-	_, err = g.CloneRepository(project, mergeRequest.TargetBranch)
-	if err != nil {
-		return nil, err
-	}
-
-	// 对克隆仓库进行静态分析
-	dbPath, err := g.RepoCallGraph(project, "")
-	if err != nil {
-		return nil, err
-	}
-
-	// 进行MR分析，获取LLM分析结果
+	// 先进行 MR 分析，得到变更类型列表，便于判断是否需要 Target 分支分析
 	result, err := analyzer.AnalyzeMR(projectID, mrID, autoNotes)
 	if err != nil {
 		return nil, err
 	}
+	hasDeleted := false
+	for _, f := range result.AffectedFiles {
+		if f.ChangeType == dos.Deleted {
+			hasDeleted = true
+			break
+		}
+	}
 
-	// 使用静态分析数据库查找受影响函数的调用关系
-	err = g.AnalyzeFunctionCallRelations(dbPath, result)
+	// 克隆并分析 Source 分支（合入后的形态）
+	if _, err = g.CloneRepository(project, mergeRequest.SourceBranch); err != nil {
+		return nil, err
+	}
+	dbPathSource, err := g.RepoCallGraph(project, "")
 	if err != nil {
+		return nil, err
+	}
+	if err := g.AnalyzeFunctionCallRelations(dbPathSource, result); err != nil {
 		g.logger.Warnf("failed to analyze function call relations: %v", err)
+	}
+
+	// 如存在删除变更，再分析 Target 分支（现网形态，用于定位破坏性调用点）
+	if hasDeleted {
+		// 中文注释：优先无切换读取远端引用的提交哈希，命中 DB 则直接复用，避免 checkout
+		var dbPathTarget string
+		targetCommit, refErr := g.getRemoteCommitHash(project, mergeRequest.TargetBranch)
+		if refErr == nil {
+			candidate := g.CallDbPath(strconv.Itoa(projectID), targetCommit)
+			if _, stErr := os.Stat(candidate); stErr == nil {
+				g.logger.Infof("reuse existing target callgraph db: %s", candidate)
+				dbPathTarget = candidate
+			}
+		}
+		if dbPathTarget == "" {
+			// 回退：切换到 Target 分支并生成/复用 DB
+			if _, err = g.CloneRepository(project, mergeRequest.TargetBranch); err != nil {
+				return nil, err
+			}
+			p, err := g.RepoCallGraph(project, "")
+			if err != nil {
+				return nil, err
+			}
+			dbPathTarget = p
+		}
+		if err := g.analyzeDeletedFunctionCallRelations(dbPathTarget, result); err != nil {
+			g.logger.Warnf("failed to analyze deleted function callers: %v", err)
+		}
+	}
+
+	// 基于分析结果计算影响指标
+	g.computeImpact(result)
+
+	// 在拥有上游调用链与影响面后，生成结构化测试用例
+	// 将受影响函数与调用链序列化传递给 LLM，生成专用测试用例
+	if len(result.AffectedFunctions) > 0 {
+		// 序列化上下文（仅必要字段）
+		b, _ := json.Marshal(struct {
+			AffectedFunctions []dos.AffectedFunction `json:"affected_functions"`
+			Impact            dos.ImpactAnalysis     `json:"impact"`
+		}{AffectedFunctions: result.AffectedFunctions, Impact: result.Impact})
+
+		// 生成测试用例
+		cases, err := analyzer.llm.GenerateTestCases(context.Background(), mergeRequest.Title, string(b))
+		if err != nil {
+			g.logger.Warnf("failed to generate test cases: %v", err)
+		} else {
+			result.TestCases = cases
+		}
+	}
+
+	// 自动发布 MR 笔记（包含影响面、建议、用例与 Review）
+	if autoNotes {
+		if err := analyzer.CreateMRNotes(projectID, mrID, result); err != nil {
+			g.logger.Warnf("failed to create MR notes: %v", err)
+		}
 	}
 
 	return result, nil
@@ -118,21 +178,31 @@ func (g *GitAnalysis) RepoCallGraph(project *gitapi.Project, rootDir string) (st
 	if err != nil {
 		return "", fmt.Errorf("get HEAD failed: %w", err)
 	}
-	// 获取最新commit
-	dbPath := g.CallDbPath(project.Name, ref.Hash().String())
+	// 获取最新commit并计算 DB 路径（使用 projectID 维度存储）
+	dbPath := g.CallDbPath(strconv.Itoa(project.ID), ref.Hash().String())
+
+	// 若该 commit 的 DB 已存在，则跳过重新分析
+	if _, err := os.Stat(dbPath); err == nil {
+		g.logger.Infof("reuse existing callgraph db: %s", dbPath)
+		return dbPath, nil
+	}
+
+	// 确保 DB 目录存在
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+		return "", fmt.Errorf("prepare db directory failed: %w", err)
+	}
 	// 初始化静态分析数据库
 	dbStore, err := g.data.GetFuncNodeDB(dbPath)
 	if err != nil {
 		return "", fmt.Errorf("init db failed: %w", err)
 	}
-	defer dbStore.Close()
 
-	// 创建程序分析实例，使用默认的 RTA 算法
+	// 创建程序分析实例，使用 VTA 算法以获得更高精度
 	pa := callgraph.NewProgramAnalysis(
 		rootDir,
 		g.logger,
 		dbStore,
-		callgraph.WithAlgo(callgraph.CallGraphTypeRta),
+		callgraph.WithAlgo(callgraph.CallGraphTypeVta),
 		callgraph.WithIgnorePaths("vendor,third_party"),
 	)
 	err = pa.Execute(context.Background(), statusChan)
@@ -161,7 +231,7 @@ func (g *GitAnalysis) CloneRepository(project *gitapi.Project, branchName string
 		cloneOptions := &git.CloneOptions{
 			URL:      project.HTTPURLToRepo,
 			Progress: os.Stdout,
-			Auth:     &http.BasicAuth{Password: g.conf.Gitlab.Token},
+			Auth:     &http.BasicAuth{Username: "git", Password: g.conf.Gitlab.Token},
 		}
 
 		// 克隆仓库
@@ -176,40 +246,37 @@ func (g *GitAnalysis) CloneRepository(project *gitapi.Project, branchName string
 		if err != nil {
 			return nil, fmt.Errorf("open repository failed: %w", err)
 		}
-
-		// 获取工作区
-		worktree, err := repo.Worktree()
-		if err != nil {
-			return nil, fmt.Errorf("get worktree failed: %w", err)
-		}
-
-		// 拉取最新代码
-		err = worktree.Pull(&git.PullOptions{
-			RemoteName: "origin",
-			Progress:   os.Stdout,
-			Auth:       &http.BasicAuth{Password: g.conf.Gitlab.Token},
-		})
-		if err != nil && err != git.NoErrAlreadyUpToDate {
-			return nil, fmt.Errorf("pull latest changes failed: %w", err)
-		}
 	}
 
 	// 如果指定了分支名,则切换到该分支
 	if branchName != "" {
 		g.logger.Infof("switch to branch: %s", branchName)
 
+		// 先确保远端分支引用存在（fetch 指定分支）
+		_ = repo.Fetch(&git.FetchOptions{
+			RemoteName: "origin",
+			Progress:   os.Stdout,
+			Auth:       &http.BasicAuth{Username: "git", Password: g.conf.Gitlab.Token},
+			RefSpecs:   []config.RefSpec{config.RefSpec("+refs/heads/" + branchName + ":refs/remotes/origin/" + branchName)},
+		})
+
 		// 获取工作区
 		worktree, err := repo.Worktree()
 		if err != nil {
 			return nil, fmt.Errorf("get worktree failed: %w", err)
 		}
 
-		// 切换到指定分支
-		err = worktree.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.NewBranchReferenceName(branchName),
-		})
-		if err != nil {
-			return nil, fmt.Errorf("switch to branch %s failed: %w", branchName, err)
+		// 优先直接切换（本地存在时）
+		if err := worktree.Checkout(&git.CheckoutOptions{Branch: plumbing.NewBranchReferenceName(branchName)}); err != nil {
+			// 本地不存在：基于远端引用创建本地分支
+			remoteRef := plumbing.NewRemoteReferenceName("origin", branchName)
+			rref, rerr := repo.Reference(remoteRef, true)
+			if rerr != nil {
+				return nil, fmt.Errorf("switch to branch %s failed: reference not found", branchName)
+			}
+			if err := worktree.Checkout(&git.CheckoutOptions{Branch: plumbing.NewBranchReferenceName(branchName), Create: true, Hash: rref.Hash(), Force: true}); err != nil {
+				return nil, fmt.Errorf("create local branch from remote failed: %w", err)
+			}
 		}
 	}
 
@@ -221,8 +288,28 @@ func (g *GitAnalysis) ClonePath(name string) string {
 	return filepath.Join(g.conf.Gitlab.CloneDir, name)
 }
 
-func (g *GitAnalysis) CallDbPath(name string, commit string) string {
-	return filepath.Join(g.conf.Gitlab.CloneDir, name, commit+".db")
+func (g *GitAnalysis) CallDbPath(projectID string, commit string) string {
+	return filepath.Join(g.conf.Gitlab.CloneDir, "db", projectID, commit+".db")
+}
+
+// 获取远端分支的 commit 哈希（尽量不切换本地工作区）
+func (g *GitAnalysis) getRemoteCommitHash(project *gitapi.Project, branch string) (string, error) {
+	repo, err := git.PlainOpen(g.ClonePath(project.Name))
+	if err != nil {
+		return "", fmt.Errorf("open repo failed: %w", err)
+	}
+	// 确保已 fetch 对应分支引用
+	_ = repo.Fetch(&git.FetchOptions{
+		RemoteName: "origin",
+		Progress:   os.Stdout,
+		Auth:       &http.BasicAuth{Username: "git", Password: g.conf.Gitlab.Token},
+		RefSpecs:   []config.RefSpec{config.RefSpec("+refs/heads/" + branch + ":refs/remotes/origin/" + branch)},
+	})
+	ref, err := repo.Reference(plumbing.NewRemoteReferenceName("origin", branch), true)
+	if err != nil {
+		return "", err
+	}
+	return ref.Hash().String(), nil
 }
 
 // AnalyzeFunctionCallRelations 分析函数调用关系，为MR分析结果中的有效改动函数查找上级调用者
@@ -248,6 +335,24 @@ func (g *GitAnalysis) AnalyzeFunctionCallRelations(dbPath string, result *dos.Mr
 		calleeToCallers[edge.CalleeKey] = append(calleeToCallers[edge.CalleeKey], edge.CallerKey)
 	}
 
+	// 构建 key->函数名 映射，便于输出友好名称
+	allNodes, err := dbStore.GetAllFuncNodes()
+	if err != nil {
+		return fmt.Errorf("failed to get all function nodes: %w", err)
+	}
+	keyToName := make(map[string]string, len(allNodes))
+	for _, n := range allNodes {
+		// 优先使用节点的 Name（已是短名，如 pkg.Recv.Method），若为空可回退 FullName
+		name := n.Name
+		if name == "" {
+			name = n.FullName
+		}
+		if name == "" {
+			name = n.Key
+		}
+		keyToName[n.Key] = name
+	}
+
 	// 遍历分析结果中受影响的函数
 	for i, affectedFunction := range result.AffectedFunctions {
 		g.logger.Infof("analyzing call relations for file: %s", affectedFunction.Filename)
@@ -260,22 +365,16 @@ func (g *GitAnalysis) AnalyzeFunctionCallRelations(dbPath string, result *dos.Mr
 
 			g.logger.Infof("finding callers for function: %s", function.FunctionName)
 
-			// 查找调用当前函数的上级函数
-			callers, err := g.findAllCallers(dbStore, function.FunctionName, calleeToCallers, 3) // 最大深度3
+			// 计算从各上游到当前函数的调用链（文本形式，如 C->B->A），不限制深度
+			chains, err := g.findCallerChainsText(dbStore, function.FunctionName, calleeToCallers, keyToName)
 			if err != nil {
 				g.logger.Warnf("failed to find callers for function %s: %v", function.FunctionName, err)
 				continue
 			}
 
-			if len(callers) > 0 {
-				// 将调用者信息添加到建议中
-				callersInfo := fmt.Sprintf("此函数被以下%d个函数调用: %v", len(callers), callers)
-				if function.Suggestion != "" {
-					result.AffectedFunctions[i].Functions[j].Suggestion += "; " + callersInfo
-				} else {
-					result.AffectedFunctions[i].Functions[j].Suggestion = callersInfo
-				}
-				g.logger.Infof("function %s has %d callers: %v", function.FunctionName, len(callers), callers)
+			if len(chains) > 0 {
+				result.AffectedFunctions[i].Functions[j].UpstreamCallers = chains
+				g.logger.Infof("function %s has %d caller chains", function.FunctionName, len(chains))
 			} else {
 				// 如果没有找到调用者，可能是入口函数
 				entryInfo := "此函数可能是入口函数，没有发现其他函数调用它"
@@ -293,11 +392,90 @@ func (g *GitAnalysis) AnalyzeFunctionCallRelations(dbPath string, result *dos.Mr
 	return nil
 }
 
+// findCallerChainsText 返回从上游到目标函数的调用链（文本），例如：C->B->A
+func (g *GitAnalysis) findCallerChainsText(dbStore repo.StaticDBStore, functionName string, calleeToCallers map[string][]string, keyToName map[string]string) ([]string, error) {
+	// 中文注释：优先进行严格匹配（完整等值、后缀包含接收者限定），再回退模糊匹配，降低误匹配
+	allNodes, err := dbStore.GetAllFuncNodes()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all function nodes: %w", err)
+	}
+
+	var matchingKeys []string
+	for _, node := range allNodes {
+		// 严格等值匹配（包含接收者/包前缀的完整名）
+		if node.Name == functionName {
+			matchingKeys = append(matchingKeys, node.Key)
+			continue
+		}
+		// 带接收者的后缀匹配：如 pkg.Type.Method 或 Type.Method
+		if strings.HasSuffix(node.Name, "."+functionName) {
+			matchingKeys = append(matchingKeys, node.Key)
+			continue
+		}
+	}
+	// 回退模糊匹配（仅当严格匹配为空时）
+	if len(matchingKeys) == 0 {
+		for _, node := range allNodes {
+			if strings.Contains(node.Name, functionName) {
+				matchingKeys = append(matchingKeys, node.Key)
+			}
+		}
+	}
+
+	// 深度优先遍历，收集所有链路（以 key 表示），然后转为名称文本
+	type void struct{}
+	seenChains := make(map[string]void)
+	var chains []string
+	for _, key := range matchingKeys {
+		var dfs func(curr string, path []string, visited map[string]bool)
+		dfs = func(curr string, path []string, visited map[string]bool) {
+			if visited[curr] {
+				return
+			}
+			visited[curr] = true
+
+			// 追加当前节点（从目标向上）
+			path = append(path, curr)
+
+			callers := calleeToCallers[curr]
+			if len(callers) == 0 {
+				// 到达最上游，反转为上游->...->目标
+				for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+					path[i], path[j] = path[j], path[i]
+				}
+				// 转名称
+				var segs []string
+				for _, k := range path {
+					name := keyToName[k]
+					if name == "" {
+						name = k
+					}
+					segs = append(segs, name)
+				}
+				chain := strings.Join(segs, "->")
+				if _, ok := seenChains[chain]; !ok {
+					seenChains[chain] = void{}
+					chains = append(chains, chain)
+				}
+				return
+			}
+
+			for _, caller := range callers {
+				// 每条分支使用独立 visited 复制，避免错误剪枝
+				nextVisited := make(map[string]bool, len(visited)+1)
+				for k, v := range visited {
+					nextVisited[k] = v
+				}
+				dfs(caller, append([]string{}, path...), nextVisited)
+			}
+		}
+		dfs(key, []string{}, make(map[string]bool))
+	}
+	return chains, nil
+}
+
 // findAllCallers 递归查找所有调用指定函数的上级函数
 func (g *GitAnalysis) findAllCallers(dbStore repo.StaticDBStore, functionName string, calleeToCallers map[string][]string, maxDepth int) ([]string, error) {
-	if maxDepth <= 0 {
-		return nil, nil
-	}
 
 	// 首先尝试通过函数名直接查找
 	var callers []string
@@ -320,9 +498,26 @@ func (g *GitAnalysis) findAllCallers(dbStore repo.StaticDBStore, functionName st
 		}
 	}
 
-	// 对每个匹配的函数键，递归查找调用者
+	// 对每个匹配的函数键，递归查找调用者（内联递归，移除未使用的辅助方法）
+	var dfs func(curr string, depth int)
+	dfs = func(curr string, depth int) {
+		if (depth == 0) || visited[curr] {
+			return
+		}
+		visited[curr] = true
+		if callerKeys, exists := calleeToCallers[curr]; exists {
+			for _, ck := range callerKeys {
+				callers = append(callers, ck)
+				nextDepth := depth
+				if depth > 0 {
+					nextDepth = depth - 1
+				}
+				dfs(ck, nextDepth)
+			}
+		}
+	}
 	for _, key := range matchingKeys {
-		g.findCallersRecursive(key, calleeToCallers, visited, &callers, maxDepth)
+		dfs(key, maxDepth)
 	}
 
 	// 去重
@@ -339,18 +534,93 @@ func (g *GitAnalysis) findAllCallers(dbStore repo.StaticDBStore, functionName st
 }
 
 // findCallersRecursive 递归查找调用者
-func (g *GitAnalysis) findCallersRecursive(functionKey string, calleeToCallers map[string][]string, visited map[string]bool, result *[]string, depth int) {
-	if depth <= 0 || visited[functionKey] {
-		return
+// 删除：findCallersRecursive（逻辑已内联到 findAllCallers）
+
+// analyzeDeletedFunctionCallRelations 使用 Target 分支的 DB，为删除的函数查找上游调用者
+func (g *GitAnalysis) analyzeDeletedFunctionCallRelations(dbPath string, result *dos.MrAnalysisResult) error {
+	g.logger.Infof("analyzing deleted function callers using db: %s", dbPath)
+
+	dbStore, err := g.data.GetFuncNodeDB(dbPath)
+	if err != nil {
+		return fmt.Errorf("failed to get database connection: %w", err)
+	}
+	defer dbStore.Close()
+
+	allEdges, err := dbStore.GetAllFuncEdges()
+	if err != nil {
+		return fmt.Errorf("failed to get function edges: %w", err)
+	}
+	calleeToCallers := make(map[string][]string)
+	for _, edge := range allEdges {
+		calleeToCallers[edge.CalleeKey] = append(calleeToCallers[edge.CalleeKey], edge.CallerKey)
 	}
 
-	visited[functionKey] = true
+	allNodes, err := dbStore.GetAllFuncNodes()
+	if err != nil {
+		return fmt.Errorf("failed to get all function nodes: %w", err)
+	}
+	keyToName := make(map[string]string, len(allNodes))
+	for _, n := range allNodes {
+		name := n.Name
+		if name == "" {
+			name = n.FullName
+		}
+		if name == "" {
+			name = n.Key
+		}
+		keyToName[n.Key] = name
+	}
 
-	if callerKeys, exists := calleeToCallers[functionKey]; exists {
-		for _, callerKey := range callerKeys {
-			*result = append(*result, callerKey)
-			// 递归查找上级调用者
-			g.findCallersRecursive(callerKey, calleeToCallers, visited, result, depth-1)
+	// 仅处理 Deleted 的函数
+	for i, af := range result.AffectedFunctions {
+		if af.ChangeType != dos.Deleted {
+			continue
+		}
+		for j, fn := range af.Functions {
+			chains, err := g.findCallerChainsText(dbStore, fn.FunctionName, calleeToCallers, keyToName)
+			if err != nil {
+				g.logger.Warnf("failed to find callers for deleted function %s: %v", fn.FunctionName, err)
+				continue
+			}
+			if len(chains) > 0 {
+				result.AffectedFunctions[i].Functions[j].UpstreamCallers = chains
+				if fn.Suggestion == "" {
+					result.AffectedFunctions[i].Functions[j].Suggestion = "可能存在破坏性调用，需要更新调用点"
+				}
+			}
 		}
 	}
+	g.logger.Info("deleted function callers analysis completed")
+	return nil
+}
+
+// computeImpact 根据受影响函数与上游调用者，计算影响指标
+func (g *GitAnalysis) computeImpact(result *dos.MrAnalysisResult) {
+	// 统计有效函数与上游调用者
+	totalChangedFiles := len(result.AffectedFiles)
+	validChangedFunctions := 0
+	uniqueUpstream := make(map[string]struct{})
+
+	for _, af := range result.AffectedFunctions {
+		for _, fn := range af.Functions {
+			if fn.IsValid {
+				validChangedFunctions++
+				for _, caller := range fn.UpstreamCallers {
+					if caller == "" {
+						continue
+					}
+					uniqueUpstream[caller] = struct{}{}
+				}
+			}
+		}
+	}
+
+	upstreamCount := len(uniqueUpstream)
+	result.Impact = dos.ImpactAnalysis{
+		TotalChangedFiles:     totalChangedFiles,
+		ValidChangedFunctions: validChangedFunctions,
+		UpstreamCallers:       upstreamCount,
+	}
+
+	g.logger.Infof("computed impact: files=%d, funcs=%d, callers=%d", totalChangedFiles, validChangedFunctions, upstreamCount)
 }

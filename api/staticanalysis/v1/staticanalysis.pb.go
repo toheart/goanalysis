@@ -22,6 +22,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// 节点类型
+type NodeType int32
+
+const (
+	NodeType_NORMAL      NodeType = 0
+	NodeType_ENTRY_POINT NodeType = 1 // 入口函数
+	NodeType_HOT_SPOT    NodeType = 2 // 热点函数
+	NodeType_EXTERNAL    NodeType = 3 // 外部函数
+)
+
+// Enum value maps for NodeType.
+var (
+	NodeType_name = map[int32]string{
+		0: "NORMAL",
+		1: "ENTRY_POINT",
+		2: "HOT_SPOT",
+		3: "EXTERNAL",
+	}
+	NodeType_value = map[string]int32{
+		"NORMAL":      0,
+		"ENTRY_POINT": 1,
+		"HOT_SPOT":    2,
+		"EXTERNAL":    3,
+	}
+)
+
+func (x NodeType) Enum() *NodeType {
+	p := new(NodeType)
+	*p = x
+	return p
+}
+
+func (x NodeType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NodeType) Descriptor() protoreflect.EnumDescriptor {
+	return file_staticanalysis_v1_staticanalysis_proto_enumTypes[0].Descriptor()
+}
+
+func (NodeType) Type() protoreflect.EnumType {
+	return &file_staticanalysis_v1_staticanalysis_proto_enumTypes[0]
+}
+
+func (x NodeType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NodeType.Descriptor instead.
+func (NodeType) EnumDescriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{0}
+}
+
 // 获取静态分析数据库文件列表请求
 type GetStaticDbFilesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -446,151 +499,19 @@ func (x *AnalyzeDbFileRequest) GetDbPath() string {
 	return ""
 }
 
-// 包依赖关系
-type PackageDependency struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Source        string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	Target        string                 `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
-	Count         int32                  `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PackageDependency) Reset() {
-	*x = PackageDependency{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PackageDependency) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PackageDependency) ProtoMessage() {}
-
-func (x *PackageDependency) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PackageDependency.ProtoReflect.Descriptor instead.
-func (*PackageDependency) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *PackageDependency) GetSource() string {
-	if x != nil {
-		return x.Source
-	}
-	return ""
-}
-
-func (x *PackageDependency) GetTarget() string {
-	if x != nil {
-		return x.Target
-	}
-	return ""
-}
-
-func (x *PackageDependency) GetCount() int32 {
-	if x != nil {
-		return x.Count
-	}
-	return 0
-}
-
-// 热点函数
-type HotFunction struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`                               // 函数唯一标识
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                             // 函数名称
-	Package       string                 `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`                       // 包名
-	CallCount     int32                  `protobuf:"varint,4,opt,name=call_count,json=callCount,proto3" json:"call_count,omitempty"` // 调用次数
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *HotFunction) Reset() {
-	*x = HotFunction{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *HotFunction) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*HotFunction) ProtoMessage() {}
-
-func (x *HotFunction) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use HotFunction.ProtoReflect.Descriptor instead.
-func (*HotFunction) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *HotFunction) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *HotFunction) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *HotFunction) GetPackage() string {
-	if x != nil {
-		return x.Package
-	}
-	return ""
-}
-
-func (x *HotFunction) GetCallCount() int32 {
-	if x != nil {
-		return x.CallCount
-	}
-	return 0
-}
-
 // 分析数据库文件响应
 type AnalyzeDbFileResponse struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	TotalFunctions      int32                  `protobuf:"varint,1,opt,name=total_functions,json=totalFunctions,proto3" json:"total_functions,omitempty"`
-	TotalCalls          int32                  `protobuf:"varint,2,opt,name=total_calls,json=totalCalls,proto3" json:"total_calls,omitempty"`
-	TotalPackages       int32                  `protobuf:"varint,3,opt,name=total_packages,json=totalPackages,proto3" json:"total_packages,omitempty"`
-	PackageDependencies []*PackageDependency   `protobuf:"bytes,4,rep,name=package_dependencies,json=packageDependencies,proto3" json:"package_dependencies,omitempty"`
-	HotFunctions        []*HotFunction         `protobuf:"bytes,5,rep,name=hot_functions,json=hotFunctions,proto3" json:"hot_functions,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TotalFunctions int32                  `protobuf:"varint,1,opt,name=total_functions,json=totalFunctions,proto3" json:"total_functions,omitempty"`
+	TotalCalls     int32                  `protobuf:"varint,2,opt,name=total_calls,json=totalCalls,proto3" json:"total_calls,omitempty"`
+	TotalPackages  int32                  `protobuf:"varint,3,opt,name=total_packages,json=totalPackages,proto3" json:"total_packages,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AnalyzeDbFileResponse) Reset() {
 	*x = AnalyzeDbFileResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[10]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -602,7 +523,7 @@ func (x *AnalyzeDbFileResponse) String() string {
 func (*AnalyzeDbFileResponse) ProtoMessage() {}
 
 func (x *AnalyzeDbFileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[10]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +536,7 @@ func (x *AnalyzeDbFileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnalyzeDbFileResponse.ProtoReflect.Descriptor instead.
 func (*AnalyzeDbFileResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{10}
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *AnalyzeDbFileResponse) GetTotalFunctions() int32 {
@@ -639,919 +560,6 @@ func (x *AnalyzeDbFileResponse) GetTotalPackages() int32 {
 	return 0
 }
 
-func (x *AnalyzeDbFileResponse) GetPackageDependencies() []*PackageDependency {
-	if x != nil {
-		return x.PackageDependencies
-	}
-	return nil
-}
-
-func (x *AnalyzeDbFileResponse) GetHotFunctions() []*HotFunction {
-	if x != nil {
-		return x.HotFunctions
-	}
-	return nil
-}
-
-// 获取热点函数的请求
-type GetHotFunctionsReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SortBy        string                 `protobuf:"bytes,1,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"` // 排序方式: "calls" 或 "time"
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetHotFunctionsReq) Reset() {
-	*x = GetHotFunctionsReq{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetHotFunctionsReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetHotFunctionsReq) ProtoMessage() {}
-
-func (x *GetHotFunctionsReq) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetHotFunctionsReq.ProtoReflect.Descriptor instead.
-func (*GetHotFunctionsReq) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *GetHotFunctionsReq) GetSortBy() string {
-	if x != nil {
-		return x.SortBy
-	}
-	return ""
-}
-
-// 获取热点函数的响应
-type GetHotFunctionsReply struct {
-	state         protoimpl.MessageState              `protogen:"open.v1"`
-	Functions     []*GetHotFunctionsReply_HotFunction `protobuf:"bytes,1,rep,name=functions,proto3" json:"functions,omitempty"` // 热点函数列表
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetHotFunctionsReply) Reset() {
-	*x = GetHotFunctionsReply{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetHotFunctionsReply) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetHotFunctionsReply) ProtoMessage() {}
-
-func (x *GetHotFunctionsReply) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetHotFunctionsReply.ProtoReflect.Descriptor instead.
-func (*GetHotFunctionsReply) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *GetHotFunctionsReply) GetFunctions() []*GetHotFunctionsReply_HotFunction {
-	if x != nil {
-		return x.Functions
-	}
-	return nil
-}
-
-// 获取函数调用关系分析的请求
-type GetFunctionAnalysisReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FunctionName  string                 `protobuf:"bytes,1,opt,name=functionName,proto3" json:"functionName,omitempty"` // 函数名称
-	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`                 // 查询类型: "caller" 或 "callee"
-	Path          string                 `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`                 // 项目路径
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionAnalysisReq) Reset() {
-	*x = GetFunctionAnalysisReq{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionAnalysisReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionAnalysisReq) ProtoMessage() {}
-
-func (x *GetFunctionAnalysisReq) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionAnalysisReq.ProtoReflect.Descriptor instead.
-func (*GetFunctionAnalysisReq) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *GetFunctionAnalysisReq) GetFunctionName() string {
-	if x != nil {
-		return x.FunctionName
-	}
-	return ""
-}
-
-func (x *GetFunctionAnalysisReq) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *GetFunctionAnalysisReq) GetPath() string {
-	if x != nil {
-		return x.Path
-	}
-	return ""
-}
-
-// 获取函数调用关系分析的响应
-type GetFunctionAnalysisReply struct {
-	state         protoimpl.MessageState                   `protogen:"open.v1"`
-	CallData      []*GetFunctionAnalysisReply_FunctionNode `protobuf:"bytes,1,rep,name=callData,proto3" json:"callData,omitempty"` // 调用关系数据
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionAnalysisReply) Reset() {
-	*x = GetFunctionAnalysisReply{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionAnalysisReply) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionAnalysisReply) ProtoMessage() {}
-
-func (x *GetFunctionAnalysisReply) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionAnalysisReply.ProtoReflect.Descriptor instead.
-func (*GetFunctionAnalysisReply) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *GetFunctionAnalysisReply) GetCallData() []*GetFunctionAnalysisReply_FunctionNode {
-	if x != nil {
-		return x.CallData
-	}
-	return nil
-}
-
-// 获取函数调用关系图的请求
-type GetFunctionCallGraphReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FunctionKey   string                 `protobuf:"bytes,1,opt,name=function_key,json=functionKey,proto3" json:"function_key,omitempty"` // 函数唯一标识符(短格式key)
-	Depth         int32                  `protobuf:"varint,2,opt,name=depth,proto3" json:"depth,omitempty"`                               // 调用深度，默认为2
-	Direction     string                 `protobuf:"bytes,3,opt,name=direction,proto3" json:"direction,omitempty"`                        // 方向: "caller"(调用者), "callee"(被调用), "both"(双向)
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionCallGraphReq) Reset() {
-	*x = GetFunctionCallGraphReq{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionCallGraphReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionCallGraphReq) ProtoMessage() {}
-
-func (x *GetFunctionCallGraphReq) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionCallGraphReq.ProtoReflect.Descriptor instead.
-func (*GetFunctionCallGraphReq) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *GetFunctionCallGraphReq) GetFunctionKey() string {
-	if x != nil {
-		return x.FunctionKey
-	}
-	return ""
-}
-
-func (x *GetFunctionCallGraphReq) GetDepth() int32 {
-	if x != nil {
-		return x.Depth
-	}
-	return 0
-}
-
-func (x *GetFunctionCallGraphReq) GetDirection() string {
-	if x != nil {
-		return x.Direction
-	}
-	return ""
-}
-
-// 获取函数调用关系图的响应
-type GetFunctionCallGraphReply struct {
-	state         protoimpl.MessageState                 `protogen:"open.v1"`
-	Nodes         []*GetFunctionCallGraphReply_GraphNode `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"` // 图节点
-	Edges         []*GetFunctionCallGraphReply_GraphEdge `protobuf:"bytes,2,rep,name=edges,proto3" json:"edges,omitempty"` // 图边
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionCallGraphReply) Reset() {
-	*x = GetFunctionCallGraphReply{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionCallGraphReply) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionCallGraphReply) ProtoMessage() {}
-
-func (x *GetFunctionCallGraphReply) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionCallGraphReply.ProtoReflect.Descriptor instead.
-func (*GetFunctionCallGraphReply) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *GetFunctionCallGraphReply) GetNodes() []*GetFunctionCallGraphReply_GraphNode {
-	if x != nil {
-		return x.Nodes
-	}
-	return nil
-}
-
-func (x *GetFunctionCallGraphReply) GetEdges() []*GetFunctionCallGraphReply_GraphEdge {
-	if x != nil {
-		return x.Edges
-	}
-	return nil
-}
-
-// GitLab仓库信息
-type GitLabRepository struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`                                           // 仓库ID
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                                        // 仓库名称
-	FullName      string                 `protobuf:"bytes,3,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`                // 完整名称
-	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`                          // 描述
-	DefaultBranch string                 `protobuf:"bytes,5,opt,name=default_branch,json=defaultBranch,proto3" json:"default_branch,omitempty"` // 默认分支
-	WebUrl        string                 `protobuf:"bytes,6,opt,name=web_url,json=webUrl,proto3" json:"web_url,omitempty"`                      // Web URL
-	SshUrl        string                 `protobuf:"bytes,7,opt,name=ssh_url,json=sshUrl,proto3" json:"ssh_url,omitempty"`                      // SSH URL
-	HttpUrl       string                 `protobuf:"bytes,8,opt,name=http_url,json=httpUrl,proto3" json:"http_url,omitempty"`                   // HTTP URL
-	Visibility    string                 `protobuf:"bytes,9,opt,name=visibility,proto3" json:"visibility,omitempty"`                            // 可见性
-	LastActivity  string                 `protobuf:"bytes,10,opt,name=last_activity,json=lastActivity,proto3" json:"last_activity,omitempty"`   // 最后活动时间
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GitLabRepository) Reset() {
-	*x = GitLabRepository{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GitLabRepository) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GitLabRepository) ProtoMessage() {}
-
-func (x *GitLabRepository) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GitLabRepository.ProtoReflect.Descriptor instead.
-func (*GitLabRepository) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{17}
-}
-
-func (x *GitLabRepository) GetId() int32 {
-	if x != nil {
-		return x.Id
-	}
-	return 0
-}
-
-func (x *GitLabRepository) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *GitLabRepository) GetFullName() string {
-	if x != nil {
-		return x.FullName
-	}
-	return ""
-}
-
-func (x *GitLabRepository) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *GitLabRepository) GetDefaultBranch() string {
-	if x != nil {
-		return x.DefaultBranch
-	}
-	return ""
-}
-
-func (x *GitLabRepository) GetWebUrl() string {
-	if x != nil {
-		return x.WebUrl
-	}
-	return ""
-}
-
-func (x *GitLabRepository) GetSshUrl() string {
-	if x != nil {
-		return x.SshUrl
-	}
-	return ""
-}
-
-func (x *GitLabRepository) GetHttpUrl() string {
-	if x != nil {
-		return x.HttpUrl
-	}
-	return ""
-}
-
-func (x *GitLabRepository) GetVisibility() string {
-	if x != nil {
-		return x.Visibility
-	}
-	return ""
-}
-
-func (x *GitLabRepository) GetLastActivity() string {
-	if x != nil {
-		return x.LastActivity
-	}
-	return ""
-}
-
-// 获取GitLab仓库列表请求
-type ListGitLabRepositoriesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListGitLabRepositoriesRequest) Reset() {
-	*x = ListGitLabRepositoriesRequest{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListGitLabRepositoriesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListGitLabRepositoriesRequest) ProtoMessage() {}
-
-func (x *ListGitLabRepositoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListGitLabRepositoriesRequest.ProtoReflect.Descriptor instead.
-func (*ListGitLabRepositoriesRequest) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{18}
-}
-
-// 获取GitLab仓库列表响应
-type ListGitLabRepositoriesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Repositories  []*GitLabRepository    `protobuf:"bytes,1,rep,name=repositories,proto3" json:"repositories,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListGitLabRepositoriesResponse) Reset() {
-	*x = ListGitLabRepositoriesResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListGitLabRepositoriesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListGitLabRepositoriesResponse) ProtoMessage() {}
-
-func (x *ListGitLabRepositoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListGitLabRepositoriesResponse.ProtoReflect.Descriptor instead.
-func (*ListGitLabRepositoriesResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *ListGitLabRepositoriesResponse) GetRepositories() []*GitLabRepository {
-	if x != nil {
-		return x.Repositories
-	}
-	return nil
-}
-
-// 克隆GitLab仓库请求
-type CloneGitLabRepositoryRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RepoUrl       string                 `protobuf:"bytes,1,opt,name=repo_url,json=repoUrl,proto3" json:"repo_url,omitempty"` // 仓库URL
-	Branch        string                 `protobuf:"bytes,2,opt,name=branch,proto3" json:"branch,omitempty"`                  // 分支名称
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CloneGitLabRepositoryRequest) Reset() {
-	*x = CloneGitLabRepositoryRequest{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CloneGitLabRepositoryRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CloneGitLabRepositoryRequest) ProtoMessage() {}
-
-func (x *CloneGitLabRepositoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CloneGitLabRepositoryRequest.ProtoReflect.Descriptor instead.
-func (*CloneGitLabRepositoryRequest) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *CloneGitLabRepositoryRequest) GetRepoUrl() string {
-	if x != nil {
-		return x.RepoUrl
-	}
-	return ""
-}
-
-func (x *CloneGitLabRepositoryRequest) GetBranch() string {
-	if x != nil {
-		return x.Branch
-	}
-	return ""
-}
-
-// 克隆GitLab仓库响应
-type CloneGitLabRepositoryResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`                     // 是否成功
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`                      // 消息
-	TargetDir     string                 `protobuf:"bytes,3,opt,name=target_dir,json=targetDir,proto3" json:"target_dir,omitempty"` // 目标目录
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CloneGitLabRepositoryResponse) Reset() {
-	*x = CloneGitLabRepositoryResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CloneGitLabRepositoryResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CloneGitLabRepositoryResponse) ProtoMessage() {}
-
-func (x *CloneGitLabRepositoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CloneGitLabRepositoryResponse.ProtoReflect.Descriptor instead.
-func (*CloneGitLabRepositoryResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *CloneGitLabRepositoryResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *CloneGitLabRepositoryResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *CloneGitLabRepositoryResponse) GetTargetDir() string {
-	if x != nil {
-		return x.TargetDir
-	}
-	return ""
-}
-
-// 分页获取包依赖关系请求
-type GetPackageDependenciesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=db_path,json=dbPath,proto3" json:"db_path,omitempty"`        // 数据库路径
-	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`                         // 页码
-	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 每页大小
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetPackageDependenciesRequest) Reset() {
-	*x = GetPackageDependenciesRequest{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetPackageDependenciesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetPackageDependenciesRequest) ProtoMessage() {}
-
-func (x *GetPackageDependenciesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetPackageDependenciesRequest.ProtoReflect.Descriptor instead.
-func (*GetPackageDependenciesRequest) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *GetPackageDependenciesRequest) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
-}
-
-func (x *GetPackageDependenciesRequest) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *GetPackageDependenciesRequest) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-// 分页获取包依赖关系响应
-type GetPackageDependenciesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Dependencies  []*PackageDependency   `protobuf:"bytes,1,rep,name=dependencies,proto3" json:"dependencies,omitempty"`             // 包依赖关系列表
-	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`                          // 总记录数
-	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`                            // 当前页码
-	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`    // 每页大小
-	PageCount     int32                  `protobuf:"varint,5,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"` // 总页数
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetPackageDependenciesResponse) Reset() {
-	*x = GetPackageDependenciesResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetPackageDependenciesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetPackageDependenciesResponse) ProtoMessage() {}
-
-func (x *GetPackageDependenciesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetPackageDependenciesResponse.ProtoReflect.Descriptor instead.
-func (*GetPackageDependenciesResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *GetPackageDependenciesResponse) GetDependencies() []*PackageDependency {
-	if x != nil {
-		return x.Dependencies
-	}
-	return nil
-}
-
-func (x *GetPackageDependenciesResponse) GetTotal() int32 {
-	if x != nil {
-		return x.Total
-	}
-	return 0
-}
-
-func (x *GetPackageDependenciesResponse) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *GetPackageDependenciesResponse) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-func (x *GetPackageDependenciesResponse) GetPageCount() int32 {
-	if x != nil {
-		return x.PageCount
-	}
-	return 0
-}
-
-// 分页获取热点函数请求
-type GetHotFunctionsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=db_path,json=dbPath,proto3" json:"db_path,omitempty"`        // 数据库路径
-	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`                         // 页码
-	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"` // 每页大小
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetHotFunctionsRequest) Reset() {
-	*x = GetHotFunctionsRequest{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[24]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetHotFunctionsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetHotFunctionsRequest) ProtoMessage() {}
-
-func (x *GetHotFunctionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[24]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetHotFunctionsRequest.ProtoReflect.Descriptor instead.
-func (*GetHotFunctionsRequest) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *GetHotFunctionsRequest) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
-}
-
-func (x *GetHotFunctionsRequest) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *GetHotFunctionsRequest) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-// 分页获取热点函数响应
-type GetHotFunctionsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Functions     []*HotFunction         `protobuf:"bytes,1,rep,name=functions,proto3" json:"functions,omitempty"`                   // 热点函数列表
-	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`                          // 总记录数
-	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`                            // 当前页码
-	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`    // 每页大小
-	PageCount     int32                  `protobuf:"varint,5,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"` // 总页数
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetHotFunctionsResponse) Reset() {
-	*x = GetHotFunctionsResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[25]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetHotFunctionsResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetHotFunctionsResponse) ProtoMessage() {}
-
-func (x *GetHotFunctionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[25]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetHotFunctionsResponse.ProtoReflect.Descriptor instead.
-func (*GetHotFunctionsResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *GetHotFunctionsResponse) GetFunctions() []*HotFunction {
-	if x != nil {
-		return x.Functions
-	}
-	return nil
-}
-
-func (x *GetHotFunctionsResponse) GetTotal() int32 {
-	if x != nil {
-		return x.Total
-	}
-	return 0
-}
-
-func (x *GetHotFunctionsResponse) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *GetHotFunctionsResponse) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-func (x *GetHotFunctionsResponse) GetPageCount() int32 {
-	if x != nil {
-		return x.PageCount
-	}
-	return 0
-}
-
 // 函数信息
 type FunctionInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1565,7 +573,7 @@ type FunctionInfo struct {
 
 func (x *FunctionInfo) Reset() {
 	*x = FunctionInfo{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[26]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1577,7 +585,7 @@ func (x *FunctionInfo) String() string {
 func (*FunctionInfo) ProtoMessage() {}
 
 func (x *FunctionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[26]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1590,7 +598,7 @@ func (x *FunctionInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FunctionInfo.ProtoReflect.Descriptor instead.
 func (*FunctionInfo) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{26}
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *FunctionInfo) GetKey() string {
@@ -1624,15 +632,14 @@ func (x *FunctionInfo) GetCallCount() int32 {
 // 模糊搜索函数请求
 type SearchFunctionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=db_path,json=dbPath,proto3" json:"db_path,omitempty"` // 数据库路径
-	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`                 // 搜索关键词
+	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"` // 搜索关键词
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SearchFunctionsRequest) Reset() {
 	*x = SearchFunctionsRequest{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[27]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1644,7 +651,7 @@ func (x *SearchFunctionsRequest) String() string {
 func (*SearchFunctionsRequest) ProtoMessage() {}
 
 func (x *SearchFunctionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[27]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1657,14 +664,7 @@ func (x *SearchFunctionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchFunctionsRequest.ProtoReflect.Descriptor instead.
 func (*SearchFunctionsRequest) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{27}
-}
-
-func (x *SearchFunctionsRequest) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SearchFunctionsRequest) GetQuery() string {
@@ -1684,7 +684,7 @@ type SearchFunctionsResponse struct {
 
 func (x *SearchFunctionsResponse) Reset() {
 	*x = SearchFunctionsResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[28]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1696,7 +696,7 @@ func (x *SearchFunctionsResponse) String() string {
 func (*SearchFunctionsResponse) ProtoMessage() {}
 
 func (x *SearchFunctionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[28]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1709,7 +709,7 @@ func (x *SearchFunctionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchFunctionsResponse.ProtoReflect.Descriptor instead.
 func (*SearchFunctionsResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{28}
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SearchFunctionsResponse) GetFunctions() []*FunctionInfo {
@@ -1719,32 +719,28 @@ func (x *SearchFunctionsResponse) GetFunctions() []*FunctionInfo {
 	return nil
 }
 
-// 获取函数上游调用关系请求
-type GetFunctionUpstreamRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	DbPath          string                 `protobuf:"bytes,1,opt,name=db_path,json=dbPath,proto3" json:"db_path,omitempty"`                            // 数据库路径
-	FunctionKey     string                 `protobuf:"bytes,2,opt,name=function_key,json=functionKey,proto3" json:"function_key,omitempty"`             // 函数唯一标识符(短格式key)
-	FunctionPackage string                 `protobuf:"bytes,3,opt,name=function_package,json=functionPackage,proto3" json:"function_package,omitempty"` // 函数包名
-	Depth           int32                  `protobuf:"varint,4,opt,name=depth,proto3" json:"depth,omitempty"`                                           // 查询深度，默认为2
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+// 获取全局统计信息请求
+type GetGlobalStatisticsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetFunctionUpstreamRequest) Reset() {
-	*x = GetFunctionUpstreamRequest{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[29]
+func (x *GetGlobalStatisticsRequest) Reset() {
+	*x = GetGlobalStatisticsRequest{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetFunctionUpstreamRequest) String() string {
+func (x *GetGlobalStatisticsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetFunctionUpstreamRequest) ProtoMessage() {}
+func (*GetGlobalStatisticsRequest) ProtoMessage() {}
 
-func (x *GetFunctionUpstreamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[29]
+func (x *GetGlobalStatisticsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1755,53 +751,423 @@ func (x *GetFunctionUpstreamRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetFunctionUpstreamRequest.ProtoReflect.Descriptor instead.
-func (*GetFunctionUpstreamRequest) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{29}
+// Deprecated: Use GetGlobalStatisticsRequest.ProtoReflect.Descriptor instead.
+func (*GetGlobalStatisticsRequest) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *GetFunctionUpstreamRequest) GetDbPath() string {
+// 全局统计信息响应
+type GetGlobalStatisticsResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TotalFunctions int32                  `protobuf:"varint,1,opt,name=total_functions,json=totalFunctions,proto3" json:"total_functions,omitempty"`
+	TotalPackages  int32                  `protobuf:"varint,2,opt,name=total_packages,json=totalPackages,proto3" json:"total_packages,omitempty"`
+	TotalEdges     int32                  `protobuf:"varint,3,opt,name=total_edges,json=totalEdges,proto3" json:"total_edges,omitempty"`
+	AvgCallDepth   float32                `protobuf:"fixed32,4,opt,name=avg_call_depth,json=avgCallDepth,proto3" json:"avg_call_depth,omitempty"`
+	MaxCallDepth   int32                  `protobuf:"varint,5,opt,name=max_call_depth,json=maxCallDepth,proto3" json:"max_call_depth,omitempty"`
+	HotFunctions   []*HotFunction         `protobuf:"bytes,6,rep,name=hot_functions,json=hotFunctions,proto3" json:"hot_functions,omitempty"`
+	PackageStats   []*PackageStatistic    `protobuf:"bytes,7,rep,name=package_stats,json=packageStats,proto3" json:"package_stats,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GetGlobalStatisticsResponse) Reset() {
+	*x = GetGlobalStatisticsResponse{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetGlobalStatisticsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetGlobalStatisticsResponse) ProtoMessage() {}
+
+func (x *GetGlobalStatisticsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[13]
 	if x != nil {
-		return x.DbPath
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return ""
+	return mi.MessageOf(x)
 }
 
-func (x *GetFunctionUpstreamRequest) GetFunctionKey() string {
-	if x != nil {
-		return x.FunctionKey
-	}
-	return ""
+// Deprecated: Use GetGlobalStatisticsResponse.ProtoReflect.Descriptor instead.
+func (*GetGlobalStatisticsResponse) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *GetFunctionUpstreamRequest) GetFunctionPackage() string {
+func (x *GetGlobalStatisticsResponse) GetTotalFunctions() int32 {
 	if x != nil {
-		return x.FunctionPackage
-	}
-	return ""
-}
-
-func (x *GetFunctionUpstreamRequest) GetDepth() int32 {
-	if x != nil {
-		return x.Depth
+		return x.TotalFunctions
 	}
 	return 0
+}
+
+func (x *GetGlobalStatisticsResponse) GetTotalPackages() int32 {
+	if x != nil {
+		return x.TotalPackages
+	}
+	return 0
+}
+
+func (x *GetGlobalStatisticsResponse) GetTotalEdges() int32 {
+	if x != nil {
+		return x.TotalEdges
+	}
+	return 0
+}
+
+func (x *GetGlobalStatisticsResponse) GetAvgCallDepth() float32 {
+	if x != nil {
+		return x.AvgCallDepth
+	}
+	return 0
+}
+
+func (x *GetGlobalStatisticsResponse) GetMaxCallDepth() int32 {
+	if x != nil {
+		return x.MaxCallDepth
+	}
+	return 0
+}
+
+func (x *GetGlobalStatisticsResponse) GetHotFunctions() []*HotFunction {
+	if x != nil {
+		return x.HotFunctions
+	}
+	return nil
+}
+
+func (x *GetGlobalStatisticsResponse) GetPackageStats() []*PackageStatistic {
+	if x != nil {
+		return x.PackageStats
+	}
+	return nil
+}
+
+// 热点函数信息
+type HotFunction struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Key             string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Package         string                 `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`
+	CallerCount     int32                  `protobuf:"varint,4,opt,name=caller_count,json=callerCount,proto3" json:"caller_count,omitempty"`              // 被调用次数
+	CalleeCount     int32                  `protobuf:"varint,5,opt,name=callee_count,json=calleeCount,proto3" json:"callee_count,omitempty"`              // 调用其他函数次数
+	ImportanceScore float32                `protobuf:"fixed32,6,opt,name=importance_score,json=importanceScore,proto3" json:"importance_score,omitempty"` // 重要性评分
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *HotFunction) Reset() {
+	*x = HotFunction{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HotFunction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HotFunction) ProtoMessage() {}
+
+func (x *HotFunction) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HotFunction.ProtoReflect.Descriptor instead.
+func (*HotFunction) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *HotFunction) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *HotFunction) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *HotFunction) GetPackage() string {
+	if x != nil {
+		return x.Package
+	}
+	return ""
+}
+
+func (x *HotFunction) GetCallerCount() int32 {
+	if x != nil {
+		return x.CallerCount
+	}
+	return 0
+}
+
+func (x *HotFunction) GetCalleeCount() int32 {
+	if x != nil {
+		return x.CalleeCount
+	}
+	return 0
+}
+
+func (x *HotFunction) GetImportanceScore() float32 {
+	if x != nil {
+		return x.ImportanceScore
+	}
+	return 0
+}
+
+// 包统计信息
+type PackageStatistic struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PackageName     string                 `protobuf:"bytes,1,opt,name=package_name,json=packageName,proto3" json:"package_name,omitempty"`
+	FunctionCount   int32                  `protobuf:"varint,2,opt,name=function_count,json=functionCount,proto3" json:"function_count,omitempty"`
+	InternalCalls   int32                  `protobuf:"varint,3,opt,name=internal_calls,json=internalCalls,proto3" json:"internal_calls,omitempty"`        // 包内调用
+	ExternalCalls   int32                  `protobuf:"varint,4,opt,name=external_calls,json=externalCalls,proto3" json:"external_calls,omitempty"`        // 跨包调用
+	ComplexityScore float32                `protobuf:"fixed32,5,opt,name=complexity_score,json=complexityScore,proto3" json:"complexity_score,omitempty"` // 复杂度评分
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *PackageStatistic) Reset() {
+	*x = PackageStatistic{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PackageStatistic) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PackageStatistic) ProtoMessage() {}
+
+func (x *PackageStatistic) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PackageStatistic.ProtoReflect.Descriptor instead.
+func (*PackageStatistic) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *PackageStatistic) GetPackageName() string {
+	if x != nil {
+		return x.PackageName
+	}
+	return ""
+}
+
+func (x *PackageStatistic) GetFunctionCount() int32 {
+	if x != nil {
+		return x.FunctionCount
+	}
+	return 0
+}
+
+func (x *PackageStatistic) GetInternalCalls() int32 {
+	if x != nil {
+		return x.InternalCalls
+	}
+	return 0
+}
+
+func (x *PackageStatistic) GetExternalCalls() int32 {
+	if x != nil {
+		return x.ExternalCalls
+	}
+	return 0
+}
+
+func (x *PackageStatistic) GetComplexityScore() float32 {
+	if x != nil {
+		return x.ComplexityScore
+	}
+	return 0
+}
+
+// 获取调用图请求
+type GetCallGraphRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RootFunction    string                 `protobuf:"bytes,1,opt,name=root_function,json=rootFunction,proto3" json:"root_function,omitempty"`           // 根函数（可选，为空则返回全图）
+	MaxDepth        int32                  `protobuf:"varint,2,opt,name=max_depth,json=maxDepth,proto3" json:"max_depth,omitempty"`                      // 最大深度（默认3）
+	IncludeExternal bool                   `protobuf:"varint,3,opt,name=include_external,json=includeExternal,proto3" json:"include_external,omitempty"` // 是否包含外部包调用
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GetCallGraphRequest) Reset() {
+	*x = GetCallGraphRequest{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCallGraphRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCallGraphRequest) ProtoMessage() {}
+
+func (x *GetCallGraphRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCallGraphRequest.ProtoReflect.Descriptor instead.
+func (*GetCallGraphRequest) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GetCallGraphRequest) GetRootFunction() string {
+	if x != nil {
+		return x.RootFunction
+	}
+	return ""
+}
+
+func (x *GetCallGraphRequest) GetMaxDepth() int32 {
+	if x != nil {
+		return x.MaxDepth
+	}
+	return 0
+}
+
+func (x *GetCallGraphRequest) GetIncludeExternal() bool {
+	if x != nil {
+		return x.IncludeExternal
+	}
+	return false
+}
+
+// 调用图响应
+type GetCallGraphResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Nodes         []*GraphNode           `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	Edges         []*GraphEdge           `protobuf:"bytes,2,rep,name=edges,proto3" json:"edges,omitempty"`
+	TotalNodes    int32                  `protobuf:"varint,3,opt,name=total_nodes,json=totalNodes,proto3" json:"total_nodes,omitempty"`
+	TotalEdges    int32                  `protobuf:"varint,4,opt,name=total_edges,json=totalEdges,proto3" json:"total_edges,omitempty"`
+	RootNode      string                 `protobuf:"bytes,5,opt,name=root_node,json=rootNode,proto3" json:"root_node,omitempty"` // 根节点ID
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCallGraphResponse) Reset() {
+	*x = GetCallGraphResponse{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCallGraphResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCallGraphResponse) ProtoMessage() {}
+
+func (x *GetCallGraphResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCallGraphResponse.ProtoReflect.Descriptor instead.
+func (*GetCallGraphResponse) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetCallGraphResponse) GetNodes() []*GraphNode {
+	if x != nil {
+		return x.Nodes
+	}
+	return nil
+}
+
+func (x *GetCallGraphResponse) GetEdges() []*GraphEdge {
+	if x != nil {
+		return x.Edges
+	}
+	return nil
+}
+
+func (x *GetCallGraphResponse) GetTotalNodes() int32 {
+	if x != nil {
+		return x.TotalNodes
+	}
+	return 0
+}
+
+func (x *GetCallGraphResponse) GetTotalEdges() int32 {
+	if x != nil {
+		return x.TotalEdges
+	}
+	return 0
+}
+
+func (x *GetCallGraphResponse) GetRootNode() string {
+	if x != nil {
+		return x.RootNode
+	}
+	return ""
 }
 
 // 图节点
 type GraphNode struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`                               // 函数唯一标识符(短格式key)
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                             // 函数名称
-	Package       string                 `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`                       // 包名
-	CallCount     int32                  `protobuf:"varint,4,opt,name=call_count,json=callCount,proto3" json:"call_count,omitempty"` // 调用次数
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                      // 节点唯一ID (function key)
+	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`                                // 显示标签 (function name)
+	Package       string                 `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`                            // 包名
+	FullName      string                 `protobuf:"bytes,4,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`          // 完整函数名
+	Signature     string                 `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`                        // 函数签名
+	Doc           string                 `protobuf:"bytes,6,opt,name=doc,proto3" json:"doc,omitempty"`                                    // 文档
+	Position      *NodePosition          `protobuf:"bytes,7,opt,name=position,proto3" json:"position,omitempty"`                          // 位置信息
+	Metrics       *NodeMetrics           `protobuf:"bytes,8,opt,name=metrics,proto3" json:"metrics,omitempty"`                            // 度量信息
+	Type          NodeType               `protobuf:"varint,9,opt,name=type,proto3,enum=staticanalysis.v1.NodeType" json:"type,omitempty"` // 节点类型
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GraphNode) Reset() {
 	*x = GraphNode{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[30]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1813,7 +1179,7 @@ func (x *GraphNode) String() string {
 func (*GraphNode) ProtoMessage() {}
 
 func (x *GraphNode) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[30]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1826,19 +1192,19 @@ func (x *GraphNode) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GraphNode.ProtoReflect.Descriptor instead.
 func (*GraphNode) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{30}
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *GraphNode) GetKey() string {
+func (x *GraphNode) GetId() string {
 	if x != nil {
-		return x.Key
+		return x.Id
 	}
 	return ""
 }
 
-func (x *GraphNode) GetName() string {
+func (x *GraphNode) GetLabel() string {
 	if x != nil {
-		return x.Name
+		return x.Label
 	}
 	return ""
 }
@@ -1850,9 +1216,174 @@ func (x *GraphNode) GetPackage() string {
 	return ""
 }
 
-func (x *GraphNode) GetCallCount() int32 {
+func (x *GraphNode) GetFullName() string {
 	if x != nil {
-		return x.CallCount
+		return x.FullName
+	}
+	return ""
+}
+
+func (x *GraphNode) GetSignature() string {
+	if x != nil {
+		return x.Signature
+	}
+	return ""
+}
+
+func (x *GraphNode) GetDoc() string {
+	if x != nil {
+		return x.Doc
+	}
+	return ""
+}
+
+func (x *GraphNode) GetPosition() *NodePosition {
+	if x != nil {
+		return x.Position
+	}
+	return nil
+}
+
+func (x *GraphNode) GetMetrics() *NodeMetrics {
+	if x != nil {
+		return x.Metrics
+	}
+	return nil
+}
+
+func (x *GraphNode) GetType() NodeType {
+	if x != nil {
+		return x.Type
+	}
+	return NodeType_NORMAL
+}
+
+// 节点位置信息
+type NodePosition struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	StartLine     int32                  `protobuf:"varint,2,opt,name=start_line,json=startLine,proto3" json:"start_line,omitempty"`
+	EndLine       int32                  `protobuf:"varint,3,opt,name=end_line,json=endLine,proto3" json:"end_line,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodePosition) Reset() {
+	*x = NodePosition{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodePosition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodePosition) ProtoMessage() {}
+
+func (x *NodePosition) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodePosition.ProtoReflect.Descriptor instead.
+func (*NodePosition) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *NodePosition) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *NodePosition) GetStartLine() int32 {
+	if x != nil {
+		return x.StartLine
+	}
+	return 0
+}
+
+func (x *NodePosition) GetEndLine() int32 {
+	if x != nil {
+		return x.EndLine
+	}
+	return 0
+}
+
+// 节点度量信息
+type NodeMetrics struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CallerCount   int32                  `protobuf:"varint,1,opt,name=caller_count,json=callerCount,proto3" json:"caller_count,omitempty"` // 调用者数量
+	CalleeCount   int32                  `protobuf:"varint,2,opt,name=callee_count,json=calleeCount,proto3" json:"callee_count,omitempty"` // 被调用者数量
+	DepthLevel    int32                  `protobuf:"varint,3,opt,name=depth_level,json=depthLevel,proto3" json:"depth_level,omitempty"`    // 调用深度
+	Centrality    float32                `protobuf:"fixed32,4,opt,name=centrality,proto3" json:"centrality,omitempty"`                     // 中心性评分
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeMetrics) Reset() {
+	*x = NodeMetrics{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeMetrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeMetrics) ProtoMessage() {}
+
+func (x *NodeMetrics) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeMetrics.ProtoReflect.Descriptor instead.
+func (*NodeMetrics) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *NodeMetrics) GetCallerCount() int32 {
+	if x != nil {
+		return x.CallerCount
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetCalleeCount() int32 {
+	if x != nil {
+		return x.CalleeCount
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetDepthLevel() int32 {
+	if x != nil {
+		return x.DepthLevel
+	}
+	return 0
+}
+
+func (x *NodeMetrics) GetCentrality() float32 {
+	if x != nil {
+		return x.Centrality
 	}
 	return 0
 }
@@ -1860,16 +1391,19 @@ func (x *GraphNode) GetCallCount() int32 {
 // 图边
 type GraphEdge struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Source        string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"` // 源节点Key
-	Target        string                 `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"` // 目标节点Key
-	Value         int32                  `protobuf:"varint,3,opt,name=value,proto3" json:"value,omitempty"`  // 边权重
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                 // 边唯一ID
+	Source        string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`                         // 源节点ID
+	Target        string                 `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`                         // 目标节点ID
+	CallType      string                 `protobuf:"bytes,4,opt,name=call_type,json=callType,proto3" json:"call_type,omitempty"`     // 调用类型
+	CallCount     int32                  `protobuf:"varint,5,opt,name=call_count,json=callCount,proto3" json:"call_count,omitempty"` // 调用次数（动态分析时使用）
+	CallSites     []*CallSite            `protobuf:"bytes,6,rep,name=call_sites,json=callSites,proto3" json:"call_sites,omitempty"`  // 调用点信息
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GraphEdge) Reset() {
 	*x = GraphEdge{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[31]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1881,7 +1415,7 @@ func (x *GraphEdge) String() string {
 func (*GraphEdge) ProtoMessage() {}
 
 func (x *GraphEdge) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[31]
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1894,7 +1428,14 @@ func (x *GraphEdge) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GraphEdge.ProtoReflect.Descriptor instead.
 func (*GraphEdge) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{31}
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *GraphEdge) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *GraphEdge) GetSource() string {
@@ -1911,37 +1452,51 @@ func (x *GraphEdge) GetTarget() string {
 	return ""
 }
 
-func (x *GraphEdge) GetValue() int32 {
+func (x *GraphEdge) GetCallType() string {
 	if x != nil {
-		return x.Value
+		return x.CallType
+	}
+	return ""
+}
+
+func (x *GraphEdge) GetCallCount() int32 {
+	if x != nil {
+		return x.CallCount
 	}
 	return 0
 }
 
-// 获取函数上游调用关系响应
-type GetFunctionUpstreamResponse struct {
+func (x *GraphEdge) GetCallSites() []*CallSite {
+	if x != nil {
+		return x.CallSites
+	}
+	return nil
+}
+
+// 调用点信息
+type CallSite struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Nodes         []*GraphNode           `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"` // 图节点
-	Edges         []*GraphEdge           `protobuf:"bytes,2,rep,name=edges,proto3" json:"edges,omitempty"` // 图边
+	File          string                 `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	Line          int32                  `protobuf:"varint,2,opt,name=line,proto3" json:"line,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetFunctionUpstreamResponse) Reset() {
-	*x = GetFunctionUpstreamResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[32]
+func (x *CallSite) Reset() {
+	*x = CallSite{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetFunctionUpstreamResponse) String() string {
+func (x *CallSite) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetFunctionUpstreamResponse) ProtoMessage() {}
+func (*CallSite) ProtoMessage() {}
 
-func (x *GetFunctionUpstreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[32]
+func (x *CallSite) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1952,51 +1507,408 @@ func (x *GetFunctionUpstreamResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetFunctionUpstreamResponse.ProtoReflect.Descriptor instead.
-func (*GetFunctionUpstreamResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{32}
+// Deprecated: Use CallSite.ProtoReflect.Descriptor instead.
+func (*CallSite) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *GetFunctionUpstreamResponse) GetNodes() []*GraphNode {
+func (x *CallSite) GetFile() string {
 	if x != nil {
-		return x.Nodes
+		return x.File
+	}
+	return ""
+}
+
+func (x *CallSite) GetLine() int32 {
+	if x != nil {
+		return x.Line
+	}
+	return 0
+}
+
+// 获取包依赖关系请求
+type GetPackageDependenciesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPackageDependenciesRequest) Reset() {
+	*x = GetPackageDependenciesRequest{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPackageDependenciesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPackageDependenciesRequest) ProtoMessage() {}
+
+func (x *GetPackageDependenciesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPackageDependenciesRequest.ProtoReflect.Descriptor instead.
+func (*GetPackageDependenciesRequest) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{23}
+}
+
+// 包依赖关系响应
+type GetPackageDependenciesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Packages      []*PackageNode         `protobuf:"bytes,1,rep,name=packages,proto3" json:"packages,omitempty"`
+	Dependencies  []*PackageDependency   `protobuf:"bytes,2,rep,name=dependencies,proto3" json:"dependencies,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPackageDependenciesResponse) Reset() {
+	*x = GetPackageDependenciesResponse{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPackageDependenciesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPackageDependenciesResponse) ProtoMessage() {}
+
+func (x *GetPackageDependenciesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPackageDependenciesResponse.ProtoReflect.Descriptor instead.
+func (*GetPackageDependenciesResponse) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *GetPackageDependenciesResponse) GetPackages() []*PackageNode {
+	if x != nil {
+		return x.Packages
 	}
 	return nil
 }
 
-func (x *GetFunctionUpstreamResponse) GetEdges() []*GraphEdge {
+func (x *GetPackageDependenciesResponse) GetDependencies() []*PackageDependency {
 	if x != nil {
-		return x.Edges
+		return x.Dependencies
 	}
 	return nil
 }
 
-// 获取函数下游调用关系请求
-type GetFunctionDownstreamRequest struct {
+// 包节点
+type PackageNode struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	FunctionCount     int32                  `protobuf:"varint,2,opt,name=function_count,json=functionCount,proto3" json:"function_count,omitempty"`
+	InternalCallCount int32                  `protobuf:"varint,3,opt,name=internal_call_count,json=internalCallCount,proto3" json:"internal_call_count,omitempty"`
+	ExternalCallCount int32                  `protobuf:"varint,4,opt,name=external_call_count,json=externalCallCount,proto3" json:"external_call_count,omitempty"`
+	Complexity        float32                `protobuf:"fixed32,5,opt,name=complexity,proto3" json:"complexity,omitempty"`
+	SubPackages       []string               `protobuf:"bytes,6,rep,name=sub_packages,json=subPackages,proto3" json:"sub_packages,omitempty"` // 子包列表
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *PackageNode) Reset() {
+	*x = PackageNode{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PackageNode) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PackageNode) ProtoMessage() {}
+
+func (x *PackageNode) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PackageNode.ProtoReflect.Descriptor instead.
+func (*PackageNode) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *PackageNode) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PackageNode) GetFunctionCount() int32 {
+	if x != nil {
+		return x.FunctionCount
+	}
+	return 0
+}
+
+func (x *PackageNode) GetInternalCallCount() int32 {
+	if x != nil {
+		return x.InternalCallCount
+	}
+	return 0
+}
+
+func (x *PackageNode) GetExternalCallCount() int32 {
+	if x != nil {
+		return x.ExternalCallCount
+	}
+	return 0
+}
+
+func (x *PackageNode) GetComplexity() float32 {
+	if x != nil {
+		return x.Complexity
+	}
+	return 0
+}
+
+func (x *PackageNode) GetSubPackages() []string {
+	if x != nil {
+		return x.SubPackages
+	}
+	return nil
+}
+
+// 包依赖关系
+type PackageDependency struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	SourcePackage      string                 `protobuf:"bytes,1,opt,name=source_package,json=sourcePackage,proto3" json:"source_package,omitempty"`
+	TargetPackage      string                 `protobuf:"bytes,2,opt,name=target_package,json=targetPackage,proto3" json:"target_package,omitempty"`
+	CallCount          int32                  `protobuf:"varint,3,opt,name=call_count,json=callCount,proto3" json:"call_count,omitempty"`                             // 调用次数
+	DependencyStrength float32                `protobuf:"fixed32,4,opt,name=dependency_strength,json=dependencyStrength,proto3" json:"dependency_strength,omitempty"` // 依赖强度
+	CallFunctions      []string               `protobuf:"bytes,5,rep,name=call_functions,json=callFunctions,proto3" json:"call_functions,omitempty"`                  // 涉及的调用函数
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *PackageDependency) Reset() {
+	*x = PackageDependency{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PackageDependency) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PackageDependency) ProtoMessage() {}
+
+func (x *PackageDependency) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PackageDependency.ProtoReflect.Descriptor instead.
+func (*PackageDependency) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *PackageDependency) GetSourcePackage() string {
+	if x != nil {
+		return x.SourcePackage
+	}
+	return ""
+}
+
+func (x *PackageDependency) GetTargetPackage() string {
+	if x != nil {
+		return x.TargetPackage
+	}
+	return ""
+}
+
+func (x *PackageDependency) GetCallCount() int32 {
+	if x != nil {
+		return x.CallCount
+	}
+	return 0
+}
+
+func (x *PackageDependency) GetDependencyStrength() float32 {
+	if x != nil {
+		return x.DependencyStrength
+	}
+	return 0
+}
+
+func (x *PackageDependency) GetCallFunctions() []string {
+	if x != nil {
+		return x.CallFunctions
+	}
+	return nil
+}
+
+// 获取热点函数请求
+type GetHotFunctionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`                // 返回数量限制（默认10）
+	SortBy        string                 `protobuf:"bytes,2,opt,name=sort_by,json=sortBy,proto3" json:"sort_by,omitempty"` // 排序方式：caller_count, callee_count, importance
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetHotFunctionsRequest) Reset() {
+	*x = GetHotFunctionsRequest{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetHotFunctionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetHotFunctionsRequest) ProtoMessage() {}
+
+func (x *GetHotFunctionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetHotFunctionsRequest.ProtoReflect.Descriptor instead.
+func (*GetHotFunctionsRequest) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetHotFunctionsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetHotFunctionsRequest) GetSortBy() string {
+	if x != nil {
+		return x.SortBy
+	}
+	return ""
+}
+
+// 热点函数响应
+type GetHotFunctionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Functions     []*DetailedHotFunction `protobuf:"bytes,1,rep,name=functions,proto3" json:"functions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetHotFunctionsResponse) Reset() {
+	*x = GetHotFunctionsResponse{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetHotFunctionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetHotFunctionsResponse) ProtoMessage() {}
+
+func (x *GetHotFunctionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetHotFunctionsResponse.ProtoReflect.Descriptor instead.
+func (*GetHotFunctionsResponse) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *GetHotFunctionsResponse) GetFunctions() []*DetailedHotFunction {
+	if x != nil {
+		return x.Functions
+	}
+	return nil
+}
+
+// 详细热点函数信息
+type DetailedHotFunction struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	DbPath          string                 `protobuf:"bytes,1,opt,name=db_path,json=dbPath,proto3" json:"db_path,omitempty"`                            // 数据库路径
-	FunctionKey     string                 `protobuf:"bytes,2,opt,name=function_key,json=functionKey,proto3" json:"function_key,omitempty"`             // 函数唯一标识符(短格式key)
-	FunctionPackage string                 `protobuf:"bytes,3,opt,name=function_package,json=functionPackage,proto3" json:"function_package,omitempty"` // 函数包名
-	Depth           int32                  `protobuf:"varint,4,opt,name=depth,proto3" json:"depth,omitempty"`                                           // 查询深度，默认为2
+	Key             string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Package         string                 `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`
+	Signature       string                 `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
+	Doc             string                 `protobuf:"bytes,5,opt,name=doc,proto3" json:"doc,omitempty"`
+	Position        *NodePosition          `protobuf:"bytes,6,opt,name=position,proto3" json:"position,omitempty"`
+	CallerCount     int32                  `protobuf:"varint,7,opt,name=caller_count,json=callerCount,proto3" json:"caller_count,omitempty"`
+	CalleeCount     int32                  `protobuf:"varint,8,opt,name=callee_count,json=calleeCount,proto3" json:"callee_count,omitempty"`
+	ImportanceScore float32                `protobuf:"fixed32,9,opt,name=importance_score,json=importanceScore,proto3" json:"importance_score,omitempty"`
+	TopCallers      []string               `protobuf:"bytes,10,rep,name=top_callers,json=topCallers,proto3" json:"top_callers,omitempty"` // 主要调用者
+	TopCallees      []string               `protobuf:"bytes,11,rep,name=top_callees,json=topCallees,proto3" json:"top_callees,omitempty"` // 主要被调用者
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *GetFunctionDownstreamRequest) Reset() {
-	*x = GetFunctionDownstreamRequest{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[33]
+func (x *DetailedHotFunction) Reset() {
+	*x = DetailedHotFunction{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetFunctionDownstreamRequest) String() string {
+func (x *DetailedHotFunction) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetFunctionDownstreamRequest) ProtoMessage() {}
+func (*DetailedHotFunction) ProtoMessage() {}
 
-func (x *GetFunctionDownstreamRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[33]
+func (x *DetailedHotFunction) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2007,634 +1919,111 @@ func (x *GetFunctionDownstreamRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetFunctionDownstreamRequest.ProtoReflect.Descriptor instead.
-func (*GetFunctionDownstreamRequest) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{33}
+// Deprecated: Use DetailedHotFunction.ProtoReflect.Descriptor instead.
+func (*DetailedHotFunction) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *GetFunctionDownstreamRequest) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
-}
-
-func (x *GetFunctionDownstreamRequest) GetFunctionKey() string {
-	if x != nil {
-		return x.FunctionKey
-	}
-	return ""
-}
-
-func (x *GetFunctionDownstreamRequest) GetFunctionPackage() string {
-	if x != nil {
-		return x.FunctionPackage
-	}
-	return ""
-}
-
-func (x *GetFunctionDownstreamRequest) GetDepth() int32 {
-	if x != nil {
-		return x.Depth
-	}
-	return 0
-}
-
-// 获取函数下游调用关系响应
-type GetFunctionDownstreamResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Nodes         []*GraphNode           `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"` // 图节点
-	Edges         []*GraphEdge           `protobuf:"bytes,2,rep,name=edges,proto3" json:"edges,omitempty"` // 图边
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionDownstreamResponse) Reset() {
-	*x = GetFunctionDownstreamResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[34]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionDownstreamResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionDownstreamResponse) ProtoMessage() {}
-
-func (x *GetFunctionDownstreamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[34]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionDownstreamResponse.ProtoReflect.Descriptor instead.
-func (*GetFunctionDownstreamResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{34}
-}
-
-func (x *GetFunctionDownstreamResponse) GetNodes() []*GraphNode {
-	if x != nil {
-		return x.Nodes
-	}
-	return nil
-}
-
-func (x *GetFunctionDownstreamResponse) GetEdges() []*GraphEdge {
-	if x != nil {
-		return x.Edges
-	}
-	return nil
-}
-
-// 获取函数全链路调用关系请求
-type GetFunctionFullChainRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=db_path,json=dbPath,proto3" json:"db_path,omitempty"`                // 数据库路径
-	FunctionKey   string                 `protobuf:"bytes,2,opt,name=function_key,json=functionKey,proto3" json:"function_key,omitempty"` // 函数唯一标识符(短格式key)
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionFullChainRequest) Reset() {
-	*x = GetFunctionFullChainRequest{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[35]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionFullChainRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionFullChainRequest) ProtoMessage() {}
-
-func (x *GetFunctionFullChainRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[35]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionFullChainRequest.ProtoReflect.Descriptor instead.
-func (*GetFunctionFullChainRequest) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{35}
-}
-
-func (x *GetFunctionFullChainRequest) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
-}
-
-func (x *GetFunctionFullChainRequest) GetFunctionKey() string {
-	if x != nil {
-		return x.FunctionKey
-	}
-	return ""
-}
-
-// 获取函数全链路调用关系响应
-type GetFunctionFullChainResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Nodes         []*GraphNode           `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"` // 图节点
-	Edges         []*GraphEdge           `protobuf:"bytes,2,rep,name=edges,proto3" json:"edges,omitempty"` // 图边
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionFullChainResponse) Reset() {
-	*x = GetFunctionFullChainResponse{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[36]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionFullChainResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionFullChainResponse) ProtoMessage() {}
-
-func (x *GetFunctionFullChainResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[36]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionFullChainResponse.ProtoReflect.Descriptor instead.
-func (*GetFunctionFullChainResponse) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{36}
-}
-
-func (x *GetFunctionFullChainResponse) GetNodes() []*GraphNode {
-	if x != nil {
-		return x.Nodes
-	}
-	return nil
-}
-
-func (x *GetFunctionFullChainResponse) GetEdges() []*GraphEdge {
-	if x != nil {
-		return x.Edges
-	}
-	return nil
-}
-
-// 获取树状图请求
-type GetTreeGraphReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DbPath        string                 `protobuf:"bytes,1,opt,name=db_path,json=dbPath,proto3" json:"db_path,omitempty"`                // 数据库路径
-	FunctionKey   string                 `protobuf:"bytes,2,opt,name=function_key,json=functionKey,proto3" json:"function_key,omitempty"` // 函数唯一标识符(短格式key)
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetTreeGraphReq) Reset() {
-	*x = GetTreeGraphReq{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[37]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetTreeGraphReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetTreeGraphReq) ProtoMessage() {}
-
-func (x *GetTreeGraphReq) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[37]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetTreeGraphReq.ProtoReflect.Descriptor instead.
-func (*GetTreeGraphReq) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{37}
-}
-
-func (x *GetTreeGraphReq) GetDbPath() string {
-	if x != nil {
-		return x.DbPath
-	}
-	return ""
-}
-
-func (x *GetTreeGraphReq) GetFunctionKey() string {
-	if x != nil {
-		return x.FunctionKey
-	}
-	return ""
-}
-
-// 树状图节点
-type TreeNode struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`            // 节点名称
-	Value         int64                  `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`         // 值，只在tooltip中显示
-	Collapsed     bool                   `protobuf:"varint,3,opt,name=collapsed,proto3" json:"collapsed,omitempty"` // 是否默认折叠
-	Children      []*TreeNode            `protobuf:"bytes,4,rep,name=children,proto3" json:"children,omitempty"`    // 子节点
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TreeNode) Reset() {
-	*x = TreeNode{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[38]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TreeNode) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TreeNode) ProtoMessage() {}
-
-func (x *TreeNode) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[38]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TreeNode.ProtoReflect.Descriptor instead.
-func (*TreeNode) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{38}
-}
-
-func (x *TreeNode) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *TreeNode) GetValue() int64 {
-	if x != nil {
-		return x.Value
-	}
-	return 0
-}
-
-func (x *TreeNode) GetCollapsed() bool {
-	if x != nil {
-		return x.Collapsed
-	}
-	return false
-}
-
-func (x *TreeNode) GetChildren() []*TreeNode {
-	if x != nil {
-		return x.Children
-	}
-	return nil
-}
-
-// 获取树状图响应
-type GetTreeGraphReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Root          *TreeNode              `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"` // 根节点
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetTreeGraphReply) Reset() {
-	*x = GetTreeGraphReply{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[39]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetTreeGraphReply) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetTreeGraphReply) ProtoMessage() {}
-
-func (x *GetTreeGraphReply) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[39]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetTreeGraphReply.ProtoReflect.Descriptor instead.
-func (*GetTreeGraphReply) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{39}
-}
-
-func (x *GetTreeGraphReply) GetRoot() *TreeNode {
-	if x != nil {
-		return x.Root
-	}
-	return nil
-}
-
-type GetHotFunctionsReply_HotFunction struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`                             // 函数名称
-	Package       string                 `protobuf:"bytes,2,opt,name=package,proto3" json:"package,omitempty"`                       // 包名
-	CallCount     int32                  `protobuf:"varint,3,opt,name=call_count,json=callCount,proto3" json:"call_count,omitempty"` // 调用次数
-	TotalTime     string                 `protobuf:"bytes,4,opt,name=total_time,json=totalTime,proto3" json:"total_time,omitempty"`  // 总耗时
-	AvgTime       string                 `protobuf:"bytes,5,opt,name=avg_time,json=avgTime,proto3" json:"avg_time,omitempty"`        // 平均耗时
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetHotFunctionsReply_HotFunction) Reset() {
-	*x = GetHotFunctionsReply_HotFunction{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[40]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetHotFunctionsReply_HotFunction) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetHotFunctionsReply_HotFunction) ProtoMessage() {}
-
-func (x *GetHotFunctionsReply_HotFunction) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[40]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetHotFunctionsReply_HotFunction.ProtoReflect.Descriptor instead.
-func (*GetHotFunctionsReply_HotFunction) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{12, 0}
-}
-
-func (x *GetHotFunctionsReply_HotFunction) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *GetHotFunctionsReply_HotFunction) GetPackage() string {
-	if x != nil {
-		return x.Package
-	}
-	return ""
-}
-
-func (x *GetHotFunctionsReply_HotFunction) GetCallCount() int32 {
-	if x != nil {
-		return x.CallCount
-	}
-	return 0
-}
-
-func (x *GetHotFunctionsReply_HotFunction) GetTotalTime() string {
-	if x != nil {
-		return x.TotalTime
-	}
-	return ""
-}
-
-func (x *GetHotFunctionsReply_HotFunction) GetAvgTime() string {
-	if x != nil {
-		return x.AvgTime
-	}
-	return ""
-}
-
-type GetFunctionAnalysisReply_FunctionNode struct {
-	state         protoimpl.MessageState                   `protogen:"open.v1"`
-	Id            string                                   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                 // 节点ID
-	Name          string                                   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                             // 函数名称
-	Package       string                                   `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`                       // 包名
-	CallCount     int32                                    `protobuf:"varint,4,opt,name=call_count,json=callCount,proto3" json:"call_count,omitempty"` // 调用次数
-	AvgTime       string                                   `protobuf:"bytes,5,opt,name=avg_time,json=avgTime,proto3" json:"avg_time,omitempty"`        // 平均耗时
-	Children      []*GetFunctionAnalysisReply_FunctionNode `protobuf:"bytes,6,rep,name=children,proto3" json:"children,omitempty"`                     // 子节点
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) Reset() {
-	*x = GetFunctionAnalysisReply_FunctionNode{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[41]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionAnalysisReply_FunctionNode) ProtoMessage() {}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[41]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionAnalysisReply_FunctionNode.ProtoReflect.Descriptor instead.
-func (*GetFunctionAnalysisReply_FunctionNode) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{14, 0}
-}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) GetPackage() string {
-	if x != nil {
-		return x.Package
-	}
-	return ""
-}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) GetCallCount() int32 {
-	if x != nil {
-		return x.CallCount
-	}
-	return 0
-}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) GetAvgTime() string {
-	if x != nil {
-		return x.AvgTime
-	}
-	return ""
-}
-
-func (x *GetFunctionAnalysisReply_FunctionNode) GetChildren() []*GetFunctionAnalysisReply_FunctionNode {
-	if x != nil {
-		return x.Children
-	}
-	return nil
-}
-
-type GetFunctionCallGraphReply_GraphNode struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`                               // 函数唯一标识符(短格式key)
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                             // 函数名称
-	Package       string                 `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`                       // 包名
-	CallCount     int32                  `protobuf:"varint,4,opt,name=call_count,json=callCount,proto3" json:"call_count,omitempty"` // 调用次数
-	AvgTime       string                 `protobuf:"bytes,5,opt,name=avg_time,json=avgTime,proto3" json:"avg_time,omitempty"`        // 平均耗时
-	NodeType      string                 `protobuf:"bytes,6,opt,name=node_type,json=nodeType,proto3" json:"node_type,omitempty"`     // 节点类型: "root", "caller", "callee"
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetFunctionCallGraphReply_GraphNode) Reset() {
-	*x = GetFunctionCallGraphReply_GraphNode{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[42]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetFunctionCallGraphReply_GraphNode) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetFunctionCallGraphReply_GraphNode) ProtoMessage() {}
-
-func (x *GetFunctionCallGraphReply_GraphNode) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[42]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetFunctionCallGraphReply_GraphNode.ProtoReflect.Descriptor instead.
-func (*GetFunctionCallGraphReply_GraphNode) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{16, 0}
-}
-
-func (x *GetFunctionCallGraphReply_GraphNode) GetKey() string {
+func (x *DetailedHotFunction) GetKey() string {
 	if x != nil {
 		return x.Key
 	}
 	return ""
 }
 
-func (x *GetFunctionCallGraphReply_GraphNode) GetName() string {
+func (x *DetailedHotFunction) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *GetFunctionCallGraphReply_GraphNode) GetPackage() string {
+func (x *DetailedHotFunction) GetPackage() string {
 	if x != nil {
 		return x.Package
 	}
 	return ""
 }
 
-func (x *GetFunctionCallGraphReply_GraphNode) GetCallCount() int32 {
+func (x *DetailedHotFunction) GetSignature() string {
 	if x != nil {
-		return x.CallCount
+		return x.Signature
+	}
+	return ""
+}
+
+func (x *DetailedHotFunction) GetDoc() string {
+	if x != nil {
+		return x.Doc
+	}
+	return ""
+}
+
+func (x *DetailedHotFunction) GetPosition() *NodePosition {
+	if x != nil {
+		return x.Position
+	}
+	return nil
+}
+
+func (x *DetailedHotFunction) GetCallerCount() int32 {
+	if x != nil {
+		return x.CallerCount
 	}
 	return 0
 }
 
-func (x *GetFunctionCallGraphReply_GraphNode) GetAvgTime() string {
+func (x *DetailedHotFunction) GetCalleeCount() int32 {
 	if x != nil {
-		return x.AvgTime
+		return x.CalleeCount
 	}
-	return ""
+	return 0
 }
 
-func (x *GetFunctionCallGraphReply_GraphNode) GetNodeType() string {
+func (x *DetailedHotFunction) GetImportanceScore() float32 {
 	if x != nil {
-		return x.NodeType
+		return x.ImportanceScore
 	}
-	return ""
+	return 0
 }
 
-type GetFunctionCallGraphReply_GraphEdge struct {
+func (x *DetailedHotFunction) GetTopCallers() []string {
+	if x != nil {
+		return x.TopCallers
+	}
+	return nil
+}
+
+func (x *DetailedHotFunction) GetTopCallees() []string {
+	if x != nil {
+		return x.TopCallees
+	}
+	return nil
+}
+
+// 获取函数详细信息请求
+type GetFunctionDetailsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Source        string                 `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`                     // 源节点Key
-	Target        string                 `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`                     // 目标节点Key
-	Label         string                 `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"`                       // 边标签
-	EdgeType      string                 `protobuf:"bytes,4,opt,name=edge_type,json=edgeType,proto3" json:"edge_type,omitempty"` // 边类型: "caller_to_root", "root_to_callee"
+	FunctionKey   string                 `protobuf:"bytes,1,opt,name=function_key,json=functionKey,proto3" json:"function_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetFunctionCallGraphReply_GraphEdge) Reset() {
-	*x = GetFunctionCallGraphReply_GraphEdge{}
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[43]
+func (x *GetFunctionDetailsRequest) Reset() {
+	*x = GetFunctionDetailsRequest{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetFunctionCallGraphReply_GraphEdge) String() string {
+func (x *GetFunctionDetailsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetFunctionCallGraphReply_GraphEdge) ProtoMessage() {}
+func (*GetFunctionDetailsRequest) ProtoMessage() {}
 
-func (x *GetFunctionCallGraphReply_GraphEdge) ProtoReflect() protoreflect.Message {
-	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[43]
+func (x *GetFunctionDetailsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2645,35 +2034,566 @@ func (x *GetFunctionCallGraphReply_GraphEdge) ProtoReflect() protoreflect.Messag
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetFunctionCallGraphReply_GraphEdge.ProtoReflect.Descriptor instead.
-func (*GetFunctionCallGraphReply_GraphEdge) Descriptor() ([]byte, []int) {
-	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{16, 1}
+// Deprecated: Use GetFunctionDetailsRequest.ProtoReflect.Descriptor instead.
+func (*GetFunctionDetailsRequest) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{30}
 }
 
-func (x *GetFunctionCallGraphReply_GraphEdge) GetSource() string {
+func (x *GetFunctionDetailsRequest) GetFunctionKey() string {
 	if x != nil {
-		return x.Source
+		return x.FunctionKey
 	}
 	return ""
 }
 
-func (x *GetFunctionCallGraphReply_GraphEdge) GetTarget() string {
+// 函数详细信息响应
+type GetFunctionDetailsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Function      *FunctionDetail        `protobuf:"bytes,1,opt,name=function,proto3" json:"function,omitempty"`
+	Callers       []*FunctionDetail      `protobuf:"bytes,2,rep,name=callers,proto3" json:"callers,omitempty"` // 调用者列表
+	Callees       []*FunctionDetail      `protobuf:"bytes,3,rep,name=callees,proto3" json:"callees,omitempty"` // 被调用者列表
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFunctionDetailsResponse) Reset() {
+	*x = GetFunctionDetailsResponse{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFunctionDetailsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFunctionDetailsResponse) ProtoMessage() {}
+
+func (x *GetFunctionDetailsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[31]
 	if x != nil {
-		return x.Target
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFunctionDetailsResponse.ProtoReflect.Descriptor instead.
+func (*GetFunctionDetailsResponse) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *GetFunctionDetailsResponse) GetFunction() *FunctionDetail {
+	if x != nil {
+		return x.Function
+	}
+	return nil
+}
+
+func (x *GetFunctionDetailsResponse) GetCallers() []*FunctionDetail {
+	if x != nil {
+		return x.Callers
+	}
+	return nil
+}
+
+func (x *GetFunctionDetailsResponse) GetCallees() []*FunctionDetail {
+	if x != nil {
+		return x.Callees
+	}
+	return nil
+}
+
+// 函数详细信息
+type FunctionDetail struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Package       string                 `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`
+	FullName      string                 `protobuf:"bytes,4,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	Signature     string                 `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`
+	Doc           string                 `protobuf:"bytes,6,opt,name=doc,proto3" json:"doc,omitempty"`
+	Position      *NodePosition          `protobuf:"bytes,7,opt,name=position,proto3" json:"position,omitempty"`
+	Metrics       *NodeMetrics           `protobuf:"bytes,8,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	CallSites     []*CallSite            `protobuf:"bytes,9,rep,name=call_sites,json=callSites,proto3" json:"call_sites,omitempty"` // 如果是调用关系，显示调用点
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FunctionDetail) Reset() {
+	*x = FunctionDetail{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FunctionDetail) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FunctionDetail) ProtoMessage() {}
+
+func (x *FunctionDetail) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FunctionDetail.ProtoReflect.Descriptor instead.
+func (*FunctionDetail) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *FunctionDetail) GetKey() string {
+	if x != nil {
+		return x.Key
 	}
 	return ""
 }
 
-func (x *GetFunctionCallGraphReply_GraphEdge) GetLabel() string {
+func (x *FunctionDetail) GetName() string {
 	if x != nil {
-		return x.Label
+		return x.Name
 	}
 	return ""
 }
 
-func (x *GetFunctionCallGraphReply_GraphEdge) GetEdgeType() string {
+func (x *FunctionDetail) GetPackage() string {
 	if x != nil {
-		return x.EdgeType
+		return x.Package
+	}
+	return ""
+}
+
+func (x *FunctionDetail) GetFullName() string {
+	if x != nil {
+		return x.FullName
+	}
+	return ""
+}
+
+func (x *FunctionDetail) GetSignature() string {
+	if x != nil {
+		return x.Signature
+	}
+	return ""
+}
+
+func (x *FunctionDetail) GetDoc() string {
+	if x != nil {
+		return x.Doc
+	}
+	return ""
+}
+
+func (x *FunctionDetail) GetPosition() *NodePosition {
+	if x != nil {
+		return x.Position
+	}
+	return nil
+}
+
+func (x *FunctionDetail) GetMetrics() *NodeMetrics {
+	if x != nil {
+		return x.Metrics
+	}
+	return nil
+}
+
+func (x *FunctionDetail) GetCallSites() []*CallSite {
+	if x != nil {
+		return x.CallSites
+	}
+	return nil
+}
+
+// 获取函数调用路径请求
+type GetFunctionCallPathsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FromFunction  string                 `protobuf:"bytes,1,opt,name=from_function,json=fromFunction,proto3" json:"from_function,omitempty"` // 起始函数
+	ToFunction    string                 `protobuf:"bytes,2,opt,name=to_function,json=toFunction,proto3" json:"to_function,omitempty"`       // 目标函数
+	MaxPaths      int32                  `protobuf:"varint,3,opt,name=max_paths,json=maxPaths,proto3" json:"max_paths,omitempty"`            // 最大路径数（默认5）
+	MaxDepth      int32                  `protobuf:"varint,4,opt,name=max_depth,json=maxDepth,proto3" json:"max_depth,omitempty"`            // 最大深度（默认10）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFunctionCallPathsRequest) Reset() {
+	*x = GetFunctionCallPathsRequest{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFunctionCallPathsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFunctionCallPathsRequest) ProtoMessage() {}
+
+func (x *GetFunctionCallPathsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFunctionCallPathsRequest.ProtoReflect.Descriptor instead.
+func (*GetFunctionCallPathsRequest) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *GetFunctionCallPathsRequest) GetFromFunction() string {
+	if x != nil {
+		return x.FromFunction
+	}
+	return ""
+}
+
+func (x *GetFunctionCallPathsRequest) GetToFunction() string {
+	if x != nil {
+		return x.ToFunction
+	}
+	return ""
+}
+
+func (x *GetFunctionCallPathsRequest) GetMaxPaths() int32 {
+	if x != nil {
+		return x.MaxPaths
+	}
+	return 0
+}
+
+func (x *GetFunctionCallPathsRequest) GetMaxDepth() int32 {
+	if x != nil {
+		return x.MaxDepth
+	}
+	return 0
+}
+
+// 函数调用路径响应
+type GetFunctionCallPathsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Paths         []*CallPath            `protobuf:"bytes,1,rep,name=paths,proto3" json:"paths,omitempty"`
+	HasMore       bool                   `protobuf:"varint,2,opt,name=has_more,json=hasMore,proto3" json:"has_more,omitempty"` // 是否还有更多路径
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFunctionCallPathsResponse) Reset() {
+	*x = GetFunctionCallPathsResponse{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFunctionCallPathsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFunctionCallPathsResponse) ProtoMessage() {}
+
+func (x *GetFunctionCallPathsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFunctionCallPathsResponse.ProtoReflect.Descriptor instead.
+func (*GetFunctionCallPathsResponse) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *GetFunctionCallPathsResponse) GetPaths() []*CallPath {
+	if x != nil {
+		return x.Paths
+	}
+	return nil
+}
+
+func (x *GetFunctionCallPathsResponse) GetHasMore() bool {
+	if x != nil {
+		return x.HasMore
+	}
+	return false
+}
+
+// 调用路径
+type CallPath struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FunctionKeys  []string               `protobuf:"bytes,1,rep,name=function_keys,json=functionKeys,proto3" json:"function_keys,omitempty"` // 路径上的函数key序列
+	PathLength    int32                  `protobuf:"varint,2,opt,name=path_length,json=pathLength,proto3" json:"path_length,omitempty"`      // 路径长度
+	Confidence    float32                `protobuf:"fixed32,3,opt,name=confidence,proto3" json:"confidence,omitempty"`                       // 路径可信度
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CallPath) Reset() {
+	*x = CallPath{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CallPath) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CallPath) ProtoMessage() {}
+
+func (x *CallPath) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CallPath.ProtoReflect.Descriptor instead.
+func (*CallPath) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *CallPath) GetFunctionKeys() []string {
+	if x != nil {
+		return x.FunctionKeys
+	}
+	return nil
+}
+
+func (x *CallPath) GetPathLength() int32 {
+	if x != nil {
+		return x.PathLength
+	}
+	return 0
+}
+
+func (x *CallPath) GetConfidence() float32 {
+	if x != nil {
+		return x.Confidence
+	}
+	return 0
+}
+
+// 获取Init函数列表请求
+type GetInitFunctionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`                                     // 返回数量限制（默认50）
+	PackageFilter string                 `protobuf:"bytes,2,opt,name=package_filter,json=packageFilter,proto3" json:"package_filter,omitempty"` // 包名过滤器（可选）
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInitFunctionsRequest) Reset() {
+	*x = GetInitFunctionsRequest{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInitFunctionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInitFunctionsRequest) ProtoMessage() {}
+
+func (x *GetInitFunctionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInitFunctionsRequest.ProtoReflect.Descriptor instead.
+func (*GetInitFunctionsRequest) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *GetInitFunctionsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetInitFunctionsRequest) GetPackageFilter() string {
+	if x != nil {
+		return x.PackageFilter
+	}
+	return ""
+}
+
+// 获取Init函数列表响应
+type GetInitFunctionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	InitFunctions []*InitFunction        `protobuf:"bytes,1,rep,name=init_functions,json=initFunctions,proto3" json:"init_functions,omitempty"`
+	TotalCount    int32                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"` // 总数量
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInitFunctionsResponse) Reset() {
+	*x = GetInitFunctionsResponse{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInitFunctionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInitFunctionsResponse) ProtoMessage() {}
+
+func (x *GetInitFunctionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInitFunctionsResponse.ProtoReflect.Descriptor instead.
+func (*GetInitFunctionsResponse) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *GetInitFunctionsResponse) GetInitFunctions() []*InitFunction {
+	if x != nil {
+		return x.InitFunctions
+	}
+	return nil
+}
+
+func (x *GetInitFunctionsResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+// Init函数信息
+type InitFunction struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`                           // 函数唯一标识
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                         // 函数名称（通常是 "init"）
+	Package       string                 `protobuf:"bytes,3,opt,name=package,proto3" json:"package,omitempty"`                   // 所属包名
+	Position      *NodePosition          `protobuf:"bytes,4,opt,name=position,proto3" json:"position,omitempty"`                 // 位置信息
+	Signature     string                 `protobuf:"bytes,5,opt,name=signature,proto3" json:"signature,omitempty"`               // 函数签名
+	Doc           string                 `protobuf:"bytes,6,opt,name=doc,proto3" json:"doc,omitempty"`                           // 文档注释
+	FullName      string                 `protobuf:"bytes,7,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"` // 完整函数名
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InitFunction) Reset() {
+	*x = InitFunction{}
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InitFunction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InitFunction) ProtoMessage() {}
+
+func (x *InitFunction) ProtoReflect() protoreflect.Message {
+	mi := &file_staticanalysis_v1_staticanalysis_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InitFunction.ProtoReflect.Descriptor instead.
+func (*InitFunction) Descriptor() ([]byte, []int) {
+	return file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *InitFunction) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *InitFunction) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *InitFunction) GetPackage() string {
+	if x != nil {
+		return x.Package
+	}
+	return ""
+}
+
+func (x *InitFunction) GetPosition() *NodePosition {
+	if x != nil {
+		return x.Position
+	}
+	return nil
+}
+
+func (x *InitFunction) GetSignature() string {
+	if x != nil {
+		return x.Signature
+	}
+	return ""
+}
+
+func (x *InitFunction) GetDoc() string {
+	if x != nil {
+		return x.Doc
+	}
+	return ""
+}
+
+func (x *InitFunction) GetFullName() string {
+	if x != nil {
+		return x.FullName
 	}
 	return ""
 }
@@ -2708,186 +2628,199 @@ const file_staticanalysis_v1_staticanalysis_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1a\n" +
 	"\bprogress\x18\x03 \x01(\x02R\bprogress\"/\n" +
 	"\x14AnalyzeDbFileRequest\x12\x17\n" +
-	"\adb_path\x18\x01 \x01(\tR\x06dbPath\"Y\n" +
-	"\x11PackageDependency\x12\x16\n" +
-	"\x06source\x18\x01 \x01(\tR\x06source\x12\x16\n" +
-	"\x06target\x18\x02 \x01(\tR\x06target\x12\x14\n" +
-	"\x05count\x18\x03 \x01(\x05R\x05count\"l\n" +
-	"\vHotFunction\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\apackage\x18\x03 \x01(\tR\apackage\x12\x1d\n" +
-	"\n" +
-	"call_count\x18\x04 \x01(\x05R\tcallCount\"\xa6\x02\n" +
+	"\adb_path\x18\x01 \x01(\tR\x06dbPath\"\x88\x01\n" +
 	"\x15AnalyzeDbFileResponse\x12'\n" +
 	"\x0ftotal_functions\x18\x01 \x01(\x05R\x0etotalFunctions\x12\x1f\n" +
 	"\vtotal_calls\x18\x02 \x01(\x05R\n" +
 	"totalCalls\x12%\n" +
-	"\x0etotal_packages\x18\x03 \x01(\x05R\rtotalPackages\x12W\n" +
-	"\x14package_dependencies\x18\x04 \x03(\v2$.staticanalysis.v1.PackageDependencyR\x13packageDependencies\x12C\n" +
-	"\rhot_functions\x18\x05 \x03(\v2\x1e.staticanalysis.v1.HotFunctionR\fhotFunctions\"-\n" +
-	"\x12GetHotFunctionsReq\x12\x17\n" +
-	"\asort_by\x18\x01 \x01(\tR\x06sortBy\"\x80\x02\n" +
-	"\x14GetHotFunctionsReply\x12Q\n" +
-	"\tfunctions\x18\x01 \x03(\v23.staticanalysis.v1.GetHotFunctionsReply.HotFunctionR\tfunctions\x1a\x94\x01\n" +
-	"\vHotFunction\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\apackage\x18\x02 \x01(\tR\apackage\x12\x1d\n" +
-	"\n" +
-	"call_count\x18\x03 \x01(\x05R\tcallCount\x12\x1d\n" +
-	"\n" +
-	"total_time\x18\x04 \x01(\tR\ttotalTime\x12\x19\n" +
-	"\bavg_time\x18\x05 \x01(\tR\aavgTime\"d\n" +
-	"\x16GetFunctionAnalysisReq\x12\"\n" +
-	"\ffunctionName\x18\x01 \x01(\tR\ffunctionName\x12\x12\n" +
-	"\x04type\x18\x02 \x01(\tR\x04type\x12\x12\n" +
-	"\x04path\x18\x03 \x01(\tR\x04path\"\xcf\x02\n" +
-	"\x18GetFunctionAnalysisReply\x12T\n" +
-	"\bcallData\x18\x01 \x03(\v28.staticanalysis.v1.GetFunctionAnalysisReply.FunctionNodeR\bcallData\x1a\xdc\x01\n" +
-	"\fFunctionNode\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\apackage\x18\x03 \x01(\tR\apackage\x12\x1d\n" +
-	"\n" +
-	"call_count\x18\x04 \x01(\x05R\tcallCount\x12\x19\n" +
-	"\bavg_time\x18\x05 \x01(\tR\aavgTime\x12T\n" +
-	"\bchildren\x18\x06 \x03(\v28.staticanalysis.v1.GetFunctionAnalysisReply.FunctionNodeR\bchildren\"p\n" +
-	"\x17GetFunctionCallGraphReq\x12!\n" +
-	"\ffunction_key\x18\x01 \x01(\tR\vfunctionKey\x12\x14\n" +
-	"\x05depth\x18\x02 \x01(\x05R\x05depth\x12\x1c\n" +
-	"\tdirection\x18\x03 \x01(\tR\tdirection\"\xcc\x03\n" +
-	"\x19GetFunctionCallGraphReply\x12L\n" +
-	"\x05nodes\x18\x01 \x03(\v26.staticanalysis.v1.GetFunctionCallGraphReply.GraphNodeR\x05nodes\x12L\n" +
-	"\x05edges\x18\x02 \x03(\v26.staticanalysis.v1.GetFunctionCallGraphReply.GraphEdgeR\x05edges\x1a\xa2\x01\n" +
-	"\tGraphNode\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\apackage\x18\x03 \x01(\tR\apackage\x12\x1d\n" +
-	"\n" +
-	"call_count\x18\x04 \x01(\x05R\tcallCount\x12\x19\n" +
-	"\bavg_time\x18\x05 \x01(\tR\aavgTime\x12\x1b\n" +
-	"\tnode_type\x18\x06 \x01(\tR\bnodeType\x1an\n" +
-	"\tGraphEdge\x12\x16\n" +
-	"\x06source\x18\x01 \x01(\tR\x06source\x12\x16\n" +
-	"\x06target\x18\x02 \x01(\tR\x06target\x12\x14\n" +
-	"\x05label\x18\x03 \x01(\tR\x05label\x12\x1b\n" +
-	"\tedge_type\x18\x04 \x01(\tR\bedgeType\"\xae\x02\n" +
-	"\x10GitLabRepository\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
-	"\tfull_name\x18\x03 \x01(\tR\bfullName\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\x12%\n" +
-	"\x0edefault_branch\x18\x05 \x01(\tR\rdefaultBranch\x12\x17\n" +
-	"\aweb_url\x18\x06 \x01(\tR\x06webUrl\x12\x17\n" +
-	"\assh_url\x18\a \x01(\tR\x06sshUrl\x12\x19\n" +
-	"\bhttp_url\x18\b \x01(\tR\ahttpUrl\x12\x1e\n" +
-	"\n" +
-	"visibility\x18\t \x01(\tR\n" +
-	"visibility\x12#\n" +
-	"\rlast_activity\x18\n" +
-	" \x01(\tR\flastActivity\"\x1f\n" +
-	"\x1dListGitLabRepositoriesRequest\"i\n" +
-	"\x1eListGitLabRepositoriesResponse\x12G\n" +
-	"\frepositories\x18\x01 \x03(\v2#.staticanalysis.v1.GitLabRepositoryR\frepositories\"Q\n" +
-	"\x1cCloneGitLabRepositoryRequest\x12\x19\n" +
-	"\brepo_url\x18\x01 \x01(\tR\arepoUrl\x12\x16\n" +
-	"\x06branch\x18\x02 \x01(\tR\x06branch\"r\n" +
-	"\x1dCloneGitLabRepositoryResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1d\n" +
-	"\n" +
-	"target_dir\x18\x03 \x01(\tR\ttargetDir\"i\n" +
-	"\x1dGetPackageDependenciesRequest\x12\x17\n" +
-	"\adb_path\x18\x01 \x01(\tR\x06dbPath\x12\x12\n" +
-	"\x04page\x18\x02 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"\xd0\x01\n" +
-	"\x1eGetPackageDependenciesResponse\x12H\n" +
-	"\fdependencies\x18\x01 \x03(\v2$.staticanalysis.v1.PackageDependencyR\fdependencies\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\x12\x12\n" +
-	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
-	"\n" +
-	"page_count\x18\x05 \x01(\x05R\tpageCount\"b\n" +
-	"\x16GetHotFunctionsRequest\x12\x17\n" +
-	"\adb_path\x18\x01 \x01(\tR\x06dbPath\x12\x12\n" +
-	"\x04page\x18\x02 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"\xbd\x01\n" +
-	"\x17GetHotFunctionsResponse\x12<\n" +
-	"\tfunctions\x18\x01 \x03(\v2\x1e.staticanalysis.v1.HotFunctionR\tfunctions\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x05R\x05total\x12\x12\n" +
-	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
-	"\n" +
-	"page_count\x18\x05 \x01(\x05R\tpageCount\"m\n" +
+	"\x0etotal_packages\x18\x03 \x01(\x05R\rtotalPackages\"m\n" +
 	"\fFunctionInfo\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\apackage\x18\x03 \x01(\tR\apackage\x12\x1d\n" +
 	"\n" +
-	"call_count\x18\x04 \x01(\x05R\tcallCount\"G\n" +
-	"\x16SearchFunctionsRequest\x12\x17\n" +
-	"\adb_path\x18\x01 \x01(\tR\x06dbPath\x12\x14\n" +
-	"\x05query\x18\x02 \x01(\tR\x05query\"X\n" +
+	"call_count\x18\x04 \x01(\x05R\tcallCount\".\n" +
+	"\x16SearchFunctionsRequest\x12\x14\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"X\n" +
 	"\x17SearchFunctionsResponse\x12=\n" +
-	"\tfunctions\x18\x01 \x03(\v2\x1f.staticanalysis.v1.FunctionInfoR\tfunctions\"\x99\x01\n" +
-	"\x1aGetFunctionUpstreamRequest\x12\x17\n" +
-	"\adb_path\x18\x01 \x01(\tR\x06dbPath\x12!\n" +
-	"\ffunction_key\x18\x02 \x01(\tR\vfunctionKey\x12)\n" +
-	"\x10function_package\x18\x03 \x01(\tR\x0ffunctionPackage\x12\x14\n" +
-	"\x05depth\x18\x04 \x01(\x05R\x05depth\"j\n" +
-	"\tGraphNode\x12\x10\n" +
+	"\tfunctions\x18\x01 \x03(\v2\x1f.staticanalysis.v1.FunctionInfoR\tfunctions\"\x1c\n" +
+	"\x1aGetGlobalStatisticsRequest\"\xe9\x02\n" +
+	"\x1bGetGlobalStatisticsResponse\x12'\n" +
+	"\x0ftotal_functions\x18\x01 \x01(\x05R\x0etotalFunctions\x12%\n" +
+	"\x0etotal_packages\x18\x02 \x01(\x05R\rtotalPackages\x12\x1f\n" +
+	"\vtotal_edges\x18\x03 \x01(\x05R\n" +
+	"totalEdges\x12$\n" +
+	"\x0eavg_call_depth\x18\x04 \x01(\x02R\favgCallDepth\x12$\n" +
+	"\x0emax_call_depth\x18\x05 \x01(\x05R\fmaxCallDepth\x12C\n" +
+	"\rhot_functions\x18\x06 \x03(\v2\x1e.staticanalysis.v1.HotFunctionR\fhotFunctions\x12H\n" +
+	"\rpackage_stats\x18\a \x03(\v2#.staticanalysis.v1.PackageStatisticR\fpackageStats\"\xbe\x01\n" +
+	"\vHotFunction\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\apackage\x18\x03 \x01(\tR\apackage\x12\x1d\n" +
+	"\apackage\x18\x03 \x01(\tR\apackage\x12!\n" +
+	"\fcaller_count\x18\x04 \x01(\x05R\vcallerCount\x12!\n" +
+	"\fcallee_count\x18\x05 \x01(\x05R\vcalleeCount\x12)\n" +
+	"\x10importance_score\x18\x06 \x01(\x02R\x0fimportanceScore\"\xd5\x01\n" +
+	"\x10PackageStatistic\x12!\n" +
+	"\fpackage_name\x18\x01 \x01(\tR\vpackageName\x12%\n" +
+	"\x0efunction_count\x18\x02 \x01(\x05R\rfunctionCount\x12%\n" +
+	"\x0einternal_calls\x18\x03 \x01(\x05R\rinternalCalls\x12%\n" +
+	"\x0eexternal_calls\x18\x04 \x01(\x05R\rexternalCalls\x12)\n" +
+	"\x10complexity_score\x18\x05 \x01(\x02R\x0fcomplexityScore\"\x82\x01\n" +
+	"\x13GetCallGraphRequest\x12#\n" +
+	"\rroot_function\x18\x01 \x01(\tR\frootFunction\x12\x1b\n" +
+	"\tmax_depth\x18\x02 \x01(\x05R\bmaxDepth\x12)\n" +
+	"\x10include_external\x18\x03 \x01(\bR\x0fincludeExternal\"\xdd\x01\n" +
+	"\x14GetCallGraphResponse\x122\n" +
+	"\x05nodes\x18\x01 \x03(\v2\x1c.staticanalysis.v1.GraphNodeR\x05nodes\x122\n" +
+	"\x05edges\x18\x02 \x03(\v2\x1c.staticanalysis.v1.GraphEdgeR\x05edges\x12\x1f\n" +
+	"\vtotal_nodes\x18\x03 \x01(\x05R\n" +
+	"totalNodes\x12\x1f\n" +
+	"\vtotal_edges\x18\x04 \x01(\x05R\n" +
+	"totalEdges\x12\x1b\n" +
+	"\troot_node\x18\x05 \x01(\tR\brootNode\"\xc0\x02\n" +
+	"\tGraphNode\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x18\n" +
+	"\apackage\x18\x03 \x01(\tR\apackage\x12\x1b\n" +
+	"\tfull_name\x18\x04 \x01(\tR\bfullName\x12\x1c\n" +
+	"\tsignature\x18\x05 \x01(\tR\tsignature\x12\x10\n" +
+	"\x03doc\x18\x06 \x01(\tR\x03doc\x12;\n" +
+	"\bposition\x18\a \x01(\v2\x1f.staticanalysis.v1.NodePositionR\bposition\x128\n" +
+	"\ametrics\x18\b \x01(\v2\x1e.staticanalysis.v1.NodeMetricsR\ametrics\x12/\n" +
+	"\x04type\x18\t \x01(\x0e2\x1b.staticanalysis.v1.NodeTypeR\x04type\"d\n" +
+	"\fNodePosition\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x1d\n" +
 	"\n" +
-	"call_count\x18\x04 \x01(\x05R\tcallCount\"Q\n" +
-	"\tGraphEdge\x12\x16\n" +
-	"\x06source\x18\x01 \x01(\tR\x06source\x12\x16\n" +
-	"\x06target\x18\x02 \x01(\tR\x06target\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\x05R\x05value\"\x85\x01\n" +
-	"\x1bGetFunctionUpstreamResponse\x122\n" +
-	"\x05nodes\x18\x01 \x03(\v2\x1c.staticanalysis.v1.GraphNodeR\x05nodes\x122\n" +
-	"\x05edges\x18\x02 \x03(\v2\x1c.staticanalysis.v1.GraphEdgeR\x05edges\"\x9b\x01\n" +
-	"\x1cGetFunctionDownstreamRequest\x12\x17\n" +
-	"\adb_path\x18\x01 \x01(\tR\x06dbPath\x12!\n" +
-	"\ffunction_key\x18\x02 \x01(\tR\vfunctionKey\x12)\n" +
-	"\x10function_package\x18\x03 \x01(\tR\x0ffunctionPackage\x12\x14\n" +
-	"\x05depth\x18\x04 \x01(\x05R\x05depth\"\x87\x01\n" +
-	"\x1dGetFunctionDownstreamResponse\x122\n" +
-	"\x05nodes\x18\x01 \x03(\v2\x1c.staticanalysis.v1.GraphNodeR\x05nodes\x122\n" +
-	"\x05edges\x18\x02 \x03(\v2\x1c.staticanalysis.v1.GraphEdgeR\x05edges\"Y\n" +
-	"\x1bGetFunctionFullChainRequest\x12\x17\n" +
-	"\adb_path\x18\x01 \x01(\tR\x06dbPath\x12!\n" +
-	"\ffunction_key\x18\x02 \x01(\tR\vfunctionKey\"\x86\x01\n" +
-	"\x1cGetFunctionFullChainResponse\x122\n" +
-	"\x05nodes\x18\x01 \x03(\v2\x1c.staticanalysis.v1.GraphNodeR\x05nodes\x122\n" +
-	"\x05edges\x18\x02 \x03(\v2\x1c.staticanalysis.v1.GraphEdgeR\x05edges\"M\n" +
-	"\x0fGetTreeGraphReq\x12\x17\n" +
-	"\adb_path\x18\x01 \x01(\tR\x06dbPath\x12!\n" +
-	"\ffunction_key\x18\x02 \x01(\tR\vfunctionKey\"\x8b\x01\n" +
-	"\bTreeNode\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05value\x12\x1c\n" +
-	"\tcollapsed\x18\x03 \x01(\bR\tcollapsed\x127\n" +
-	"\bchildren\x18\x04 \x03(\v2\x1b.staticanalysis.v1.TreeNodeR\bchildren\"D\n" +
-	"\x11GetTreeGraphReply\x12/\n" +
-	"\x04root\x18\x01 \x01(\v2\x1b.staticanalysis.v1.TreeNodeR\x04root2\xcb\x12\n" +
+	"start_line\x18\x02 \x01(\x05R\tstartLine\x12\x19\n" +
+	"\bend_line\x18\x03 \x01(\x05R\aendLine\"\x94\x01\n" +
+	"\vNodeMetrics\x12!\n" +
+	"\fcaller_count\x18\x01 \x01(\x05R\vcallerCount\x12!\n" +
+	"\fcallee_count\x18\x02 \x01(\x05R\vcalleeCount\x12\x1f\n" +
+	"\vdepth_level\x18\x03 \x01(\x05R\n" +
+	"depthLevel\x12\x1e\n" +
+	"\n" +
+	"centrality\x18\x04 \x01(\x02R\n" +
+	"centrality\"\xc3\x01\n" +
+	"\tGraphEdge\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06source\x18\x02 \x01(\tR\x06source\x12\x16\n" +
+	"\x06target\x18\x03 \x01(\tR\x06target\x12\x1b\n" +
+	"\tcall_type\x18\x04 \x01(\tR\bcallType\x12\x1d\n" +
+	"\n" +
+	"call_count\x18\x05 \x01(\x05R\tcallCount\x12:\n" +
+	"\n" +
+	"call_sites\x18\x06 \x03(\v2\x1b.staticanalysis.v1.CallSiteR\tcallSites\"2\n" +
+	"\bCallSite\x12\x12\n" +
+	"\x04file\x18\x01 \x01(\tR\x04file\x12\x12\n" +
+	"\x04line\x18\x02 \x01(\x05R\x04line\"\x1f\n" +
+	"\x1dGetPackageDependenciesRequest\"\xa6\x01\n" +
+	"\x1eGetPackageDependenciesResponse\x12:\n" +
+	"\bpackages\x18\x01 \x03(\v2\x1e.staticanalysis.v1.PackageNodeR\bpackages\x12H\n" +
+	"\fdependencies\x18\x02 \x03(\v2$.staticanalysis.v1.PackageDependencyR\fdependencies\"\xeb\x01\n" +
+	"\vPackageNode\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
+	"\x0efunction_count\x18\x02 \x01(\x05R\rfunctionCount\x12.\n" +
+	"\x13internal_call_count\x18\x03 \x01(\x05R\x11internalCallCount\x12.\n" +
+	"\x13external_call_count\x18\x04 \x01(\x05R\x11externalCallCount\x12\x1e\n" +
+	"\n" +
+	"complexity\x18\x05 \x01(\x02R\n" +
+	"complexity\x12!\n" +
+	"\fsub_packages\x18\x06 \x03(\tR\vsubPackages\"\xd8\x01\n" +
+	"\x11PackageDependency\x12%\n" +
+	"\x0esource_package\x18\x01 \x01(\tR\rsourcePackage\x12%\n" +
+	"\x0etarget_package\x18\x02 \x01(\tR\rtargetPackage\x12\x1d\n" +
+	"\n" +
+	"call_count\x18\x03 \x01(\x05R\tcallCount\x12/\n" +
+	"\x13dependency_strength\x18\x04 \x01(\x02R\x12dependencyStrength\x12%\n" +
+	"\x0ecall_functions\x18\x05 \x03(\tR\rcallFunctions\"G\n" +
+	"\x16GetHotFunctionsRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x17\n" +
+	"\asort_by\x18\x02 \x01(\tR\x06sortBy\"_\n" +
+	"\x17GetHotFunctionsResponse\x12D\n" +
+	"\tfunctions\x18\x01 \x03(\v2&.staticanalysis.v1.DetailedHotFunctionR\tfunctions\"\xf5\x02\n" +
+	"\x13DetailedHotFunction\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\apackage\x18\x03 \x01(\tR\apackage\x12\x1c\n" +
+	"\tsignature\x18\x04 \x01(\tR\tsignature\x12\x10\n" +
+	"\x03doc\x18\x05 \x01(\tR\x03doc\x12;\n" +
+	"\bposition\x18\x06 \x01(\v2\x1f.staticanalysis.v1.NodePositionR\bposition\x12!\n" +
+	"\fcaller_count\x18\a \x01(\x05R\vcallerCount\x12!\n" +
+	"\fcallee_count\x18\b \x01(\x05R\vcalleeCount\x12)\n" +
+	"\x10importance_score\x18\t \x01(\x02R\x0fimportanceScore\x12\x1f\n" +
+	"\vtop_callers\x18\n" +
+	" \x03(\tR\n" +
+	"topCallers\x12\x1f\n" +
+	"\vtop_callees\x18\v \x03(\tR\n" +
+	"topCallees\">\n" +
+	"\x19GetFunctionDetailsRequest\x12!\n" +
+	"\ffunction_key\x18\x01 \x01(\tR\vfunctionKey\"\xd5\x01\n" +
+	"\x1aGetFunctionDetailsResponse\x12=\n" +
+	"\bfunction\x18\x01 \x01(\v2!.staticanalysis.v1.FunctionDetailR\bfunction\x12;\n" +
+	"\acallers\x18\x02 \x03(\v2!.staticanalysis.v1.FunctionDetailR\acallers\x12;\n" +
+	"\acallees\x18\x03 \x03(\v2!.staticanalysis.v1.FunctionDetailR\acallees\"\xd0\x02\n" +
+	"\x0eFunctionDetail\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\apackage\x18\x03 \x01(\tR\apackage\x12\x1b\n" +
+	"\tfull_name\x18\x04 \x01(\tR\bfullName\x12\x1c\n" +
+	"\tsignature\x18\x05 \x01(\tR\tsignature\x12\x10\n" +
+	"\x03doc\x18\x06 \x01(\tR\x03doc\x12;\n" +
+	"\bposition\x18\a \x01(\v2\x1f.staticanalysis.v1.NodePositionR\bposition\x128\n" +
+	"\ametrics\x18\b \x01(\v2\x1e.staticanalysis.v1.NodeMetricsR\ametrics\x12:\n" +
+	"\n" +
+	"call_sites\x18\t \x03(\v2\x1b.staticanalysis.v1.CallSiteR\tcallSites\"\x9d\x01\n" +
+	"\x1bGetFunctionCallPathsRequest\x12#\n" +
+	"\rfrom_function\x18\x01 \x01(\tR\ffromFunction\x12\x1f\n" +
+	"\vto_function\x18\x02 \x01(\tR\n" +
+	"toFunction\x12\x1b\n" +
+	"\tmax_paths\x18\x03 \x01(\x05R\bmaxPaths\x12\x1b\n" +
+	"\tmax_depth\x18\x04 \x01(\x05R\bmaxDepth\"l\n" +
+	"\x1cGetFunctionCallPathsResponse\x121\n" +
+	"\x05paths\x18\x01 \x03(\v2\x1b.staticanalysis.v1.CallPathR\x05paths\x12\x19\n" +
+	"\bhas_more\x18\x02 \x01(\bR\ahasMore\"p\n" +
+	"\bCallPath\x12#\n" +
+	"\rfunction_keys\x18\x01 \x03(\tR\ffunctionKeys\x12\x1f\n" +
+	"\vpath_length\x18\x02 \x01(\x05R\n" +
+	"pathLength\x12\x1e\n" +
+	"\n" +
+	"confidence\x18\x03 \x01(\x02R\n" +
+	"confidence\"V\n" +
+	"\x17GetInitFunctionsRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12%\n" +
+	"\x0epackage_filter\x18\x02 \x01(\tR\rpackageFilter\"\x83\x01\n" +
+	"\x18GetInitFunctionsResponse\x12F\n" +
+	"\x0einit_functions\x18\x01 \x03(\v2\x1f.staticanalysis.v1.InitFunctionR\rinitFunctions\x12\x1f\n" +
+	"\vtotal_count\x18\x02 \x01(\x05R\n" +
+	"totalCount\"\xd8\x01\n" +
+	"\fInitFunction\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\apackage\x18\x03 \x01(\tR\apackage\x12;\n" +
+	"\bposition\x18\x04 \x01(\v2\x1f.staticanalysis.v1.NodePositionR\bposition\x12\x1c\n" +
+	"\tsignature\x18\x05 \x01(\tR\tsignature\x12\x10\n" +
+	"\x03doc\x18\x06 \x01(\tR\x03doc\x12\x1b\n" +
+	"\tfull_name\x18\a \x01(\tR\bfullName*C\n" +
+	"\bNodeType\x12\n" +
+	"\n" +
+	"\x06NORMAL\x10\x00\x12\x0f\n" +
+	"\vENTRY_POINT\x10\x01\x12\f\n" +
+	"\bHOT_SPOT\x10\x02\x12\f\n" +
+	"\bEXTERNAL\x10\x032\xa5\x0e\n" +
 	"\x0eStaticAnalysis\x12\x88\x01\n" +
 	"\x10GetStaticDbFiles\x12*.staticanalysis.v1.GetStaticDbFilesRequest\x1a+.staticanalysis.v1.GetStaticDbFilesResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/api/static/dbfiles\x12\xa5\x01\n" +
 	"\x15GetAnalysisTaskStatus\x12/.staticanalysis.v1.GetAnalysisTaskStatusRequest\x1a0.staticanalysis.v1.GetAnalysisTaskStatusResponse\")\x82\xd3\xe4\x93\x02#\x12!/api/static/task/{task_id}/status\x12\x96\x01\n" +
 	"\x12AnalyzeProjectPath\x12,.staticanalysis.v1.AnalyzeProjectPathRequest\x1a-.staticanalysis.v1.AnalyzeProjectPathResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/static/analyze/path\x12\x82\x01\n" +
-	"\rAnalyzeDbFile\x12'.staticanalysis.v1.AnalyzeDbFileRequest\x1a(.staticanalysis.v1.AnalyzeDbFileResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/static/analyze\x12\x97\x01\n" +
-	"\x13GetFunctionAnalysis\x12).staticanalysis.v1.GetFunctionAnalysisReq\x1a+.staticanalysis.v1.GetFunctionAnalysisReply\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/static/function/analysis\x12\xc4\x01\n" +
-	"\x14GetFunctionCallGraph\x12*.staticanalysis.v1.GetFunctionCallGraphReq\x1a,.staticanalysis.v1.GetFunctionCallGraphReply\"R\x82\xd3\xe4\x93\x02LZ\x1fb\x01*\x12\x1a/api/static/function/graph\x12)/api/static/function/{function_key}/graph\x12\xa6\x01\n" +
-	"\x16ListGitLabRepositories\x120.staticanalysis.v1.ListGitLabRepositoriesRequest\x1a1.staticanalysis.v1.ListGitLabRepositoriesResponse\"'\x82\xd3\xe4\x93\x02!\x12\x1f/api/static/gitlab/repositories\x12\x9f\x01\n" +
-	"\x15CloneGitLabRepository\x12/.staticanalysis.v1.CloneGitLabRepositoryRequest\x1a0.staticanalysis.v1.CloneGitLabRepositoryResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/static/gitlab/clone\x12\xaa\x01\n" +
-	"\x16GetPackageDependencies\x120.staticanalysis.v1.GetPackageDependenciesRequest\x1a1.staticanalysis.v1.GetPackageDependenciesResponse\"+\x82\xd3\xe4\x93\x02%:\x01*\" /api/static/package-dependencies\x12\x8e\x01\n" +
-	"\x0fGetHotFunctions\x12).staticanalysis.v1.GetHotFunctionsRequest\x1a*.staticanalysis.v1.GetHotFunctionsResponse\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/static/hot-functions\x12\x91\x01\n" +
-	"\x0fSearchFunctions\x12).staticanalysis.v1.SearchFunctionsRequest\x1a*.staticanalysis.v1.SearchFunctionsResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/api/static/search-functions\x12\x9e\x01\n" +
-	"\x13GetFunctionUpstream\x12-.staticanalysis.v1.GetFunctionUpstreamRequest\x1a..staticanalysis.v1.GetFunctionUpstreamResponse\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/static/function-upstream\x12\xa6\x01\n" +
-	"\x15GetFunctionDownstream\x12/.staticanalysis.v1.GetFunctionDownstreamRequest\x1a0.staticanalysis.v1.GetFunctionDownstreamResponse\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/api/static/function-downstream\x12\xa2\x01\n" +
-	"\x14GetFunctionFullChain\x12..staticanalysis.v1.GetFunctionFullChainRequest\x1a/.staticanalysis.v1.GetFunctionFullChainResponse\")\x82\xd3\xe4\x93\x02#:\x01*\"\x1e/api/static/function-fullchain\x12{\n" +
-	"\fGetTreeGraph\x12\".staticanalysis.v1.GetTreeGraphReq\x1a$.staticanalysis.v1.GetTreeGraphReply\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/api/static/tree-graphB8Z6github.com/toheart/goanalysis/api/staticanalysis/v1;v1b\x06proto3"
+	"\rAnalyzeDbFile\x12'.staticanalysis.v1.AnalyzeDbFileRequest\x1a(.staticanalysis.v1.AnalyzeDbFileResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/static/analyze\x12\x91\x01\n" +
+	"\x0fSearchFunctions\x12).staticanalysis.v1.SearchFunctionsRequest\x1a*.staticanalysis.v1.SearchFunctionsResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/api/static/search-functions\x12\x98\x01\n" +
+	"\x13GetGlobalStatistics\x12-.staticanalysis.v1.GetGlobalStatisticsRequest\x1a..staticanalysis.v1.GetGlobalStatisticsResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/static/viz/statistics\x12\x85\x01\n" +
+	"\fGetCallGraph\x12&.staticanalysis.v1.GetCallGraphRequest\x1a'.staticanalysis.v1.GetCallGraphResponse\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/static/viz/callgraph\x12\x9f\x01\n" +
+	"\x16GetPackageDependencies\x120.staticanalysis.v1.GetPackageDependenciesRequest\x1a1.staticanalysis.v1.GetPackageDependenciesResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/api/static/viz/packages\x12\x8e\x01\n" +
+	"\x0fGetHotFunctions\x12).staticanalysis.v1.GetHotFunctionsRequest\x1a*.staticanalysis.v1.GetHotFunctionsResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/static/viz/hotfunctions\x12\xa2\x01\n" +
+	"\x12GetFunctionDetails\x12,.staticanalysis.v1.GetFunctionDetailsRequest\x1a-.staticanalysis.v1.GetFunctionDetailsResponse\"/\x82\xd3\xe4\x93\x02)\x12'/api/static/viz/function/{function_key}\x12\x9d\x01\n" +
+	"\x14GetFunctionCallPaths\x12..staticanalysis.v1.GetFunctionCallPathsRequest\x1a/.staticanalysis.v1.GetFunctionCallPathsResponse\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/static/viz/callpaths\x12\x92\x01\n" +
+	"\x10GetInitFunctions\x12*.staticanalysis.v1.GetInitFunctionsRequest\x1a+.staticanalysis.v1.GetInitFunctionsResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/api/static/viz/initfunctionsB8Z6github.com/toheart/goanalysis/api/staticanalysis/v1;v1b\x06proto3"
 
 var (
 	file_staticanalysis_v1_staticanalysis_proto_rawDescOnce sync.Once
@@ -2901,109 +2834,103 @@ func file_staticanalysis_v1_staticanalysis_proto_rawDescGZIP() []byte {
 	return file_staticanalysis_v1_staticanalysis_proto_rawDescData
 }
 
-var file_staticanalysis_v1_staticanalysis_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
+var file_staticanalysis_v1_staticanalysis_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_staticanalysis_v1_staticanalysis_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_staticanalysis_v1_staticanalysis_proto_goTypes = []any{
-	(*GetStaticDbFilesRequest)(nil),               // 0: staticanalysis.v1.GetStaticDbFilesRequest
-	(*DbFileInfo)(nil),                            // 1: staticanalysis.v1.DbFileInfo
-	(*GetStaticDbFilesResponse)(nil),              // 2: staticanalysis.v1.GetStaticDbFilesResponse
-	(*AnalyzeProjectPathRequest)(nil),             // 3: staticanalysis.v1.AnalyzeProjectPathRequest
-	(*AnalyzeProjectPathResponse)(nil),            // 4: staticanalysis.v1.AnalyzeProjectPathResponse
-	(*GetAnalysisTaskStatusRequest)(nil),          // 5: staticanalysis.v1.GetAnalysisTaskStatusRequest
-	(*GetAnalysisTaskStatusResponse)(nil),         // 6: staticanalysis.v1.GetAnalysisTaskStatusResponse
-	(*AnalyzeDbFileRequest)(nil),                  // 7: staticanalysis.v1.AnalyzeDbFileRequest
-	(*PackageDependency)(nil),                     // 8: staticanalysis.v1.PackageDependency
-	(*HotFunction)(nil),                           // 9: staticanalysis.v1.HotFunction
-	(*AnalyzeDbFileResponse)(nil),                 // 10: staticanalysis.v1.AnalyzeDbFileResponse
-	(*GetHotFunctionsReq)(nil),                    // 11: staticanalysis.v1.GetHotFunctionsReq
-	(*GetHotFunctionsReply)(nil),                  // 12: staticanalysis.v1.GetHotFunctionsReply
-	(*GetFunctionAnalysisReq)(nil),                // 13: staticanalysis.v1.GetFunctionAnalysisReq
-	(*GetFunctionAnalysisReply)(nil),              // 14: staticanalysis.v1.GetFunctionAnalysisReply
-	(*GetFunctionCallGraphReq)(nil),               // 15: staticanalysis.v1.GetFunctionCallGraphReq
-	(*GetFunctionCallGraphReply)(nil),             // 16: staticanalysis.v1.GetFunctionCallGraphReply
-	(*GitLabRepository)(nil),                      // 17: staticanalysis.v1.GitLabRepository
-	(*ListGitLabRepositoriesRequest)(nil),         // 18: staticanalysis.v1.ListGitLabRepositoriesRequest
-	(*ListGitLabRepositoriesResponse)(nil),        // 19: staticanalysis.v1.ListGitLabRepositoriesResponse
-	(*CloneGitLabRepositoryRequest)(nil),          // 20: staticanalysis.v1.CloneGitLabRepositoryRequest
-	(*CloneGitLabRepositoryResponse)(nil),         // 21: staticanalysis.v1.CloneGitLabRepositoryResponse
-	(*GetPackageDependenciesRequest)(nil),         // 22: staticanalysis.v1.GetPackageDependenciesRequest
-	(*GetPackageDependenciesResponse)(nil),        // 23: staticanalysis.v1.GetPackageDependenciesResponse
-	(*GetHotFunctionsRequest)(nil),                // 24: staticanalysis.v1.GetHotFunctionsRequest
-	(*GetHotFunctionsResponse)(nil),               // 25: staticanalysis.v1.GetHotFunctionsResponse
-	(*FunctionInfo)(nil),                          // 26: staticanalysis.v1.FunctionInfo
-	(*SearchFunctionsRequest)(nil),                // 27: staticanalysis.v1.SearchFunctionsRequest
-	(*SearchFunctionsResponse)(nil),               // 28: staticanalysis.v1.SearchFunctionsResponse
-	(*GetFunctionUpstreamRequest)(nil),            // 29: staticanalysis.v1.GetFunctionUpstreamRequest
-	(*GraphNode)(nil),                             // 30: staticanalysis.v1.GraphNode
-	(*GraphEdge)(nil),                             // 31: staticanalysis.v1.GraphEdge
-	(*GetFunctionUpstreamResponse)(nil),           // 32: staticanalysis.v1.GetFunctionUpstreamResponse
-	(*GetFunctionDownstreamRequest)(nil),          // 33: staticanalysis.v1.GetFunctionDownstreamRequest
-	(*GetFunctionDownstreamResponse)(nil),         // 34: staticanalysis.v1.GetFunctionDownstreamResponse
-	(*GetFunctionFullChainRequest)(nil),           // 35: staticanalysis.v1.GetFunctionFullChainRequest
-	(*GetFunctionFullChainResponse)(nil),          // 36: staticanalysis.v1.GetFunctionFullChainResponse
-	(*GetTreeGraphReq)(nil),                       // 37: staticanalysis.v1.GetTreeGraphReq
-	(*TreeNode)(nil),                              // 38: staticanalysis.v1.TreeNode
-	(*GetTreeGraphReply)(nil),                     // 39: staticanalysis.v1.GetTreeGraphReply
-	(*GetHotFunctionsReply_HotFunction)(nil),      // 40: staticanalysis.v1.GetHotFunctionsReply.HotFunction
-	(*GetFunctionAnalysisReply_FunctionNode)(nil), // 41: staticanalysis.v1.GetFunctionAnalysisReply.FunctionNode
-	(*GetFunctionCallGraphReply_GraphNode)(nil),   // 42: staticanalysis.v1.GetFunctionCallGraphReply.GraphNode
-	(*GetFunctionCallGraphReply_GraphEdge)(nil),   // 43: staticanalysis.v1.GetFunctionCallGraphReply.GraphEdge
+	(NodeType)(0),                          // 0: staticanalysis.v1.NodeType
+	(*GetStaticDbFilesRequest)(nil),        // 1: staticanalysis.v1.GetStaticDbFilesRequest
+	(*DbFileInfo)(nil),                     // 2: staticanalysis.v1.DbFileInfo
+	(*GetStaticDbFilesResponse)(nil),       // 3: staticanalysis.v1.GetStaticDbFilesResponse
+	(*AnalyzeProjectPathRequest)(nil),      // 4: staticanalysis.v1.AnalyzeProjectPathRequest
+	(*AnalyzeProjectPathResponse)(nil),     // 5: staticanalysis.v1.AnalyzeProjectPathResponse
+	(*GetAnalysisTaskStatusRequest)(nil),   // 6: staticanalysis.v1.GetAnalysisTaskStatusRequest
+	(*GetAnalysisTaskStatusResponse)(nil),  // 7: staticanalysis.v1.GetAnalysisTaskStatusResponse
+	(*AnalyzeDbFileRequest)(nil),           // 8: staticanalysis.v1.AnalyzeDbFileRequest
+	(*AnalyzeDbFileResponse)(nil),          // 9: staticanalysis.v1.AnalyzeDbFileResponse
+	(*FunctionInfo)(nil),                   // 10: staticanalysis.v1.FunctionInfo
+	(*SearchFunctionsRequest)(nil),         // 11: staticanalysis.v1.SearchFunctionsRequest
+	(*SearchFunctionsResponse)(nil),        // 12: staticanalysis.v1.SearchFunctionsResponse
+	(*GetGlobalStatisticsRequest)(nil),     // 13: staticanalysis.v1.GetGlobalStatisticsRequest
+	(*GetGlobalStatisticsResponse)(nil),    // 14: staticanalysis.v1.GetGlobalStatisticsResponse
+	(*HotFunction)(nil),                    // 15: staticanalysis.v1.HotFunction
+	(*PackageStatistic)(nil),               // 16: staticanalysis.v1.PackageStatistic
+	(*GetCallGraphRequest)(nil),            // 17: staticanalysis.v1.GetCallGraphRequest
+	(*GetCallGraphResponse)(nil),           // 18: staticanalysis.v1.GetCallGraphResponse
+	(*GraphNode)(nil),                      // 19: staticanalysis.v1.GraphNode
+	(*NodePosition)(nil),                   // 20: staticanalysis.v1.NodePosition
+	(*NodeMetrics)(nil),                    // 21: staticanalysis.v1.NodeMetrics
+	(*GraphEdge)(nil),                      // 22: staticanalysis.v1.GraphEdge
+	(*CallSite)(nil),                       // 23: staticanalysis.v1.CallSite
+	(*GetPackageDependenciesRequest)(nil),  // 24: staticanalysis.v1.GetPackageDependenciesRequest
+	(*GetPackageDependenciesResponse)(nil), // 25: staticanalysis.v1.GetPackageDependenciesResponse
+	(*PackageNode)(nil),                    // 26: staticanalysis.v1.PackageNode
+	(*PackageDependency)(nil),              // 27: staticanalysis.v1.PackageDependency
+	(*GetHotFunctionsRequest)(nil),         // 28: staticanalysis.v1.GetHotFunctionsRequest
+	(*GetHotFunctionsResponse)(nil),        // 29: staticanalysis.v1.GetHotFunctionsResponse
+	(*DetailedHotFunction)(nil),            // 30: staticanalysis.v1.DetailedHotFunction
+	(*GetFunctionDetailsRequest)(nil),      // 31: staticanalysis.v1.GetFunctionDetailsRequest
+	(*GetFunctionDetailsResponse)(nil),     // 32: staticanalysis.v1.GetFunctionDetailsResponse
+	(*FunctionDetail)(nil),                 // 33: staticanalysis.v1.FunctionDetail
+	(*GetFunctionCallPathsRequest)(nil),    // 34: staticanalysis.v1.GetFunctionCallPathsRequest
+	(*GetFunctionCallPathsResponse)(nil),   // 35: staticanalysis.v1.GetFunctionCallPathsResponse
+	(*CallPath)(nil),                       // 36: staticanalysis.v1.CallPath
+	(*GetInitFunctionsRequest)(nil),        // 37: staticanalysis.v1.GetInitFunctionsRequest
+	(*GetInitFunctionsResponse)(nil),       // 38: staticanalysis.v1.GetInitFunctionsResponse
+	(*InitFunction)(nil),                   // 39: staticanalysis.v1.InitFunction
 }
 var file_staticanalysis_v1_staticanalysis_proto_depIdxs = []int32{
-	1,  // 0: staticanalysis.v1.GetStaticDbFilesResponse.files:type_name -> staticanalysis.v1.DbFileInfo
-	8,  // 1: staticanalysis.v1.AnalyzeDbFileResponse.package_dependencies:type_name -> staticanalysis.v1.PackageDependency
-	9,  // 2: staticanalysis.v1.AnalyzeDbFileResponse.hot_functions:type_name -> staticanalysis.v1.HotFunction
-	40, // 3: staticanalysis.v1.GetHotFunctionsReply.functions:type_name -> staticanalysis.v1.GetHotFunctionsReply.HotFunction
-	41, // 4: staticanalysis.v1.GetFunctionAnalysisReply.callData:type_name -> staticanalysis.v1.GetFunctionAnalysisReply.FunctionNode
-	42, // 5: staticanalysis.v1.GetFunctionCallGraphReply.nodes:type_name -> staticanalysis.v1.GetFunctionCallGraphReply.GraphNode
-	43, // 6: staticanalysis.v1.GetFunctionCallGraphReply.edges:type_name -> staticanalysis.v1.GetFunctionCallGraphReply.GraphEdge
-	17, // 7: staticanalysis.v1.ListGitLabRepositoriesResponse.repositories:type_name -> staticanalysis.v1.GitLabRepository
-	8,  // 8: staticanalysis.v1.GetPackageDependenciesResponse.dependencies:type_name -> staticanalysis.v1.PackageDependency
-	9,  // 9: staticanalysis.v1.GetHotFunctionsResponse.functions:type_name -> staticanalysis.v1.HotFunction
-	26, // 10: staticanalysis.v1.SearchFunctionsResponse.functions:type_name -> staticanalysis.v1.FunctionInfo
-	30, // 11: staticanalysis.v1.GetFunctionUpstreamResponse.nodes:type_name -> staticanalysis.v1.GraphNode
-	31, // 12: staticanalysis.v1.GetFunctionUpstreamResponse.edges:type_name -> staticanalysis.v1.GraphEdge
-	30, // 13: staticanalysis.v1.GetFunctionDownstreamResponse.nodes:type_name -> staticanalysis.v1.GraphNode
-	31, // 14: staticanalysis.v1.GetFunctionDownstreamResponse.edges:type_name -> staticanalysis.v1.GraphEdge
-	30, // 15: staticanalysis.v1.GetFunctionFullChainResponse.nodes:type_name -> staticanalysis.v1.GraphNode
-	31, // 16: staticanalysis.v1.GetFunctionFullChainResponse.edges:type_name -> staticanalysis.v1.GraphEdge
-	38, // 17: staticanalysis.v1.TreeNode.children:type_name -> staticanalysis.v1.TreeNode
-	38, // 18: staticanalysis.v1.GetTreeGraphReply.root:type_name -> staticanalysis.v1.TreeNode
-	41, // 19: staticanalysis.v1.GetFunctionAnalysisReply.FunctionNode.children:type_name -> staticanalysis.v1.GetFunctionAnalysisReply.FunctionNode
-	0,  // 20: staticanalysis.v1.StaticAnalysis.GetStaticDbFiles:input_type -> staticanalysis.v1.GetStaticDbFilesRequest
-	5,  // 21: staticanalysis.v1.StaticAnalysis.GetAnalysisTaskStatus:input_type -> staticanalysis.v1.GetAnalysisTaskStatusRequest
-	3,  // 22: staticanalysis.v1.StaticAnalysis.AnalyzeProjectPath:input_type -> staticanalysis.v1.AnalyzeProjectPathRequest
-	7,  // 23: staticanalysis.v1.StaticAnalysis.AnalyzeDbFile:input_type -> staticanalysis.v1.AnalyzeDbFileRequest
-	13, // 24: staticanalysis.v1.StaticAnalysis.GetFunctionAnalysis:input_type -> staticanalysis.v1.GetFunctionAnalysisReq
-	15, // 25: staticanalysis.v1.StaticAnalysis.GetFunctionCallGraph:input_type -> staticanalysis.v1.GetFunctionCallGraphReq
-	18, // 26: staticanalysis.v1.StaticAnalysis.ListGitLabRepositories:input_type -> staticanalysis.v1.ListGitLabRepositoriesRequest
-	20, // 27: staticanalysis.v1.StaticAnalysis.CloneGitLabRepository:input_type -> staticanalysis.v1.CloneGitLabRepositoryRequest
-	22, // 28: staticanalysis.v1.StaticAnalysis.GetPackageDependencies:input_type -> staticanalysis.v1.GetPackageDependenciesRequest
-	24, // 29: staticanalysis.v1.StaticAnalysis.GetHotFunctions:input_type -> staticanalysis.v1.GetHotFunctionsRequest
-	27, // 30: staticanalysis.v1.StaticAnalysis.SearchFunctions:input_type -> staticanalysis.v1.SearchFunctionsRequest
-	29, // 31: staticanalysis.v1.StaticAnalysis.GetFunctionUpstream:input_type -> staticanalysis.v1.GetFunctionUpstreamRequest
-	33, // 32: staticanalysis.v1.StaticAnalysis.GetFunctionDownstream:input_type -> staticanalysis.v1.GetFunctionDownstreamRequest
-	35, // 33: staticanalysis.v1.StaticAnalysis.GetFunctionFullChain:input_type -> staticanalysis.v1.GetFunctionFullChainRequest
-	37, // 34: staticanalysis.v1.StaticAnalysis.GetTreeGraph:input_type -> staticanalysis.v1.GetTreeGraphReq
-	2,  // 35: staticanalysis.v1.StaticAnalysis.GetStaticDbFiles:output_type -> staticanalysis.v1.GetStaticDbFilesResponse
-	6,  // 36: staticanalysis.v1.StaticAnalysis.GetAnalysisTaskStatus:output_type -> staticanalysis.v1.GetAnalysisTaskStatusResponse
-	4,  // 37: staticanalysis.v1.StaticAnalysis.AnalyzeProjectPath:output_type -> staticanalysis.v1.AnalyzeProjectPathResponse
-	10, // 38: staticanalysis.v1.StaticAnalysis.AnalyzeDbFile:output_type -> staticanalysis.v1.AnalyzeDbFileResponse
-	14, // 39: staticanalysis.v1.StaticAnalysis.GetFunctionAnalysis:output_type -> staticanalysis.v1.GetFunctionAnalysisReply
-	16, // 40: staticanalysis.v1.StaticAnalysis.GetFunctionCallGraph:output_type -> staticanalysis.v1.GetFunctionCallGraphReply
-	19, // 41: staticanalysis.v1.StaticAnalysis.ListGitLabRepositories:output_type -> staticanalysis.v1.ListGitLabRepositoriesResponse
-	21, // 42: staticanalysis.v1.StaticAnalysis.CloneGitLabRepository:output_type -> staticanalysis.v1.CloneGitLabRepositoryResponse
-	23, // 43: staticanalysis.v1.StaticAnalysis.GetPackageDependencies:output_type -> staticanalysis.v1.GetPackageDependenciesResponse
-	25, // 44: staticanalysis.v1.StaticAnalysis.GetHotFunctions:output_type -> staticanalysis.v1.GetHotFunctionsResponse
-	28, // 45: staticanalysis.v1.StaticAnalysis.SearchFunctions:output_type -> staticanalysis.v1.SearchFunctionsResponse
-	32, // 46: staticanalysis.v1.StaticAnalysis.GetFunctionUpstream:output_type -> staticanalysis.v1.GetFunctionUpstreamResponse
-	34, // 47: staticanalysis.v1.StaticAnalysis.GetFunctionDownstream:output_type -> staticanalysis.v1.GetFunctionDownstreamResponse
-	36, // 48: staticanalysis.v1.StaticAnalysis.GetFunctionFullChain:output_type -> staticanalysis.v1.GetFunctionFullChainResponse
-	39, // 49: staticanalysis.v1.StaticAnalysis.GetTreeGraph:output_type -> staticanalysis.v1.GetTreeGraphReply
-	35, // [35:50] is the sub-list for method output_type
-	20, // [20:35] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	2,  // 0: staticanalysis.v1.GetStaticDbFilesResponse.files:type_name -> staticanalysis.v1.DbFileInfo
+	10, // 1: staticanalysis.v1.SearchFunctionsResponse.functions:type_name -> staticanalysis.v1.FunctionInfo
+	15, // 2: staticanalysis.v1.GetGlobalStatisticsResponse.hot_functions:type_name -> staticanalysis.v1.HotFunction
+	16, // 3: staticanalysis.v1.GetGlobalStatisticsResponse.package_stats:type_name -> staticanalysis.v1.PackageStatistic
+	19, // 4: staticanalysis.v1.GetCallGraphResponse.nodes:type_name -> staticanalysis.v1.GraphNode
+	22, // 5: staticanalysis.v1.GetCallGraphResponse.edges:type_name -> staticanalysis.v1.GraphEdge
+	20, // 6: staticanalysis.v1.GraphNode.position:type_name -> staticanalysis.v1.NodePosition
+	21, // 7: staticanalysis.v1.GraphNode.metrics:type_name -> staticanalysis.v1.NodeMetrics
+	0,  // 8: staticanalysis.v1.GraphNode.type:type_name -> staticanalysis.v1.NodeType
+	23, // 9: staticanalysis.v1.GraphEdge.call_sites:type_name -> staticanalysis.v1.CallSite
+	26, // 10: staticanalysis.v1.GetPackageDependenciesResponse.packages:type_name -> staticanalysis.v1.PackageNode
+	27, // 11: staticanalysis.v1.GetPackageDependenciesResponse.dependencies:type_name -> staticanalysis.v1.PackageDependency
+	30, // 12: staticanalysis.v1.GetHotFunctionsResponse.functions:type_name -> staticanalysis.v1.DetailedHotFunction
+	20, // 13: staticanalysis.v1.DetailedHotFunction.position:type_name -> staticanalysis.v1.NodePosition
+	33, // 14: staticanalysis.v1.GetFunctionDetailsResponse.function:type_name -> staticanalysis.v1.FunctionDetail
+	33, // 15: staticanalysis.v1.GetFunctionDetailsResponse.callers:type_name -> staticanalysis.v1.FunctionDetail
+	33, // 16: staticanalysis.v1.GetFunctionDetailsResponse.callees:type_name -> staticanalysis.v1.FunctionDetail
+	20, // 17: staticanalysis.v1.FunctionDetail.position:type_name -> staticanalysis.v1.NodePosition
+	21, // 18: staticanalysis.v1.FunctionDetail.metrics:type_name -> staticanalysis.v1.NodeMetrics
+	23, // 19: staticanalysis.v1.FunctionDetail.call_sites:type_name -> staticanalysis.v1.CallSite
+	36, // 20: staticanalysis.v1.GetFunctionCallPathsResponse.paths:type_name -> staticanalysis.v1.CallPath
+	39, // 21: staticanalysis.v1.GetInitFunctionsResponse.init_functions:type_name -> staticanalysis.v1.InitFunction
+	20, // 22: staticanalysis.v1.InitFunction.position:type_name -> staticanalysis.v1.NodePosition
+	1,  // 23: staticanalysis.v1.StaticAnalysis.GetStaticDbFiles:input_type -> staticanalysis.v1.GetStaticDbFilesRequest
+	6,  // 24: staticanalysis.v1.StaticAnalysis.GetAnalysisTaskStatus:input_type -> staticanalysis.v1.GetAnalysisTaskStatusRequest
+	4,  // 25: staticanalysis.v1.StaticAnalysis.AnalyzeProjectPath:input_type -> staticanalysis.v1.AnalyzeProjectPathRequest
+	8,  // 26: staticanalysis.v1.StaticAnalysis.AnalyzeDbFile:input_type -> staticanalysis.v1.AnalyzeDbFileRequest
+	11, // 27: staticanalysis.v1.StaticAnalysis.SearchFunctions:input_type -> staticanalysis.v1.SearchFunctionsRequest
+	13, // 28: staticanalysis.v1.StaticAnalysis.GetGlobalStatistics:input_type -> staticanalysis.v1.GetGlobalStatisticsRequest
+	17, // 29: staticanalysis.v1.StaticAnalysis.GetCallGraph:input_type -> staticanalysis.v1.GetCallGraphRequest
+	24, // 30: staticanalysis.v1.StaticAnalysis.GetPackageDependencies:input_type -> staticanalysis.v1.GetPackageDependenciesRequest
+	28, // 31: staticanalysis.v1.StaticAnalysis.GetHotFunctions:input_type -> staticanalysis.v1.GetHotFunctionsRequest
+	31, // 32: staticanalysis.v1.StaticAnalysis.GetFunctionDetails:input_type -> staticanalysis.v1.GetFunctionDetailsRequest
+	34, // 33: staticanalysis.v1.StaticAnalysis.GetFunctionCallPaths:input_type -> staticanalysis.v1.GetFunctionCallPathsRequest
+	37, // 34: staticanalysis.v1.StaticAnalysis.GetInitFunctions:input_type -> staticanalysis.v1.GetInitFunctionsRequest
+	3,  // 35: staticanalysis.v1.StaticAnalysis.GetStaticDbFiles:output_type -> staticanalysis.v1.GetStaticDbFilesResponse
+	7,  // 36: staticanalysis.v1.StaticAnalysis.GetAnalysisTaskStatus:output_type -> staticanalysis.v1.GetAnalysisTaskStatusResponse
+	5,  // 37: staticanalysis.v1.StaticAnalysis.AnalyzeProjectPath:output_type -> staticanalysis.v1.AnalyzeProjectPathResponse
+	9,  // 38: staticanalysis.v1.StaticAnalysis.AnalyzeDbFile:output_type -> staticanalysis.v1.AnalyzeDbFileResponse
+	12, // 39: staticanalysis.v1.StaticAnalysis.SearchFunctions:output_type -> staticanalysis.v1.SearchFunctionsResponse
+	14, // 40: staticanalysis.v1.StaticAnalysis.GetGlobalStatistics:output_type -> staticanalysis.v1.GetGlobalStatisticsResponse
+	18, // 41: staticanalysis.v1.StaticAnalysis.GetCallGraph:output_type -> staticanalysis.v1.GetCallGraphResponse
+	25, // 42: staticanalysis.v1.StaticAnalysis.GetPackageDependencies:output_type -> staticanalysis.v1.GetPackageDependenciesResponse
+	29, // 43: staticanalysis.v1.StaticAnalysis.GetHotFunctions:output_type -> staticanalysis.v1.GetHotFunctionsResponse
+	32, // 44: staticanalysis.v1.StaticAnalysis.GetFunctionDetails:output_type -> staticanalysis.v1.GetFunctionDetailsResponse
+	35, // 45: staticanalysis.v1.StaticAnalysis.GetFunctionCallPaths:output_type -> staticanalysis.v1.GetFunctionCallPathsResponse
+	38, // 46: staticanalysis.v1.StaticAnalysis.GetInitFunctions:output_type -> staticanalysis.v1.GetInitFunctionsResponse
+	35, // [35:47] is the sub-list for method output_type
+	23, // [23:35] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_staticanalysis_v1_staticanalysis_proto_init() }
@@ -3016,13 +2943,14 @@ func file_staticanalysis_v1_staticanalysis_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_staticanalysis_v1_staticanalysis_proto_rawDesc), len(file_staticanalysis_v1_staticanalysis_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   44,
+			NumEnums:      1,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_staticanalysis_v1_staticanalysis_proto_goTypes,
 		DependencyIndexes: file_staticanalysis_v1_staticanalysis_proto_depIdxs,
+		EnumInfos:         file_staticanalysis_v1_staticanalysis_proto_enumTypes,
 		MessageInfos:      file_staticanalysis_v1_staticanalysis_proto_msgTypes,
 	}.Build()
 	File_staticanalysis_v1_staticanalysis_proto = out.File

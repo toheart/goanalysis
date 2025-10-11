@@ -84,6 +84,67 @@ func (feu *FuncEdgeUpdate) SetNillableCalleeKey(s *string) *FuncEdgeUpdate {
 	return feu
 }
 
+// SetCallSiteFile sets the "call_site_file" field.
+func (feu *FuncEdgeUpdate) SetCallSiteFile(s string) *FuncEdgeUpdate {
+	feu.mutation.SetCallSiteFile(s)
+	return feu
+}
+
+// SetNillableCallSiteFile sets the "call_site_file" field if the given value is not nil.
+func (feu *FuncEdgeUpdate) SetNillableCallSiteFile(s *string) *FuncEdgeUpdate {
+	if s != nil {
+		feu.SetCallSiteFile(*s)
+	}
+	return feu
+}
+
+// ClearCallSiteFile clears the value of the "call_site_file" field.
+func (feu *FuncEdgeUpdate) ClearCallSiteFile() *FuncEdgeUpdate {
+	feu.mutation.ClearCallSiteFile()
+	return feu
+}
+
+// SetCallSiteLine sets the "call_site_line" field.
+func (feu *FuncEdgeUpdate) SetCallSiteLine(i int) *FuncEdgeUpdate {
+	feu.mutation.ResetCallSiteLine()
+	feu.mutation.SetCallSiteLine(i)
+	return feu
+}
+
+// SetNillableCallSiteLine sets the "call_site_line" field if the given value is not nil.
+func (feu *FuncEdgeUpdate) SetNillableCallSiteLine(i *int) *FuncEdgeUpdate {
+	if i != nil {
+		feu.SetCallSiteLine(*i)
+	}
+	return feu
+}
+
+// AddCallSiteLine adds i to the "call_site_line" field.
+func (feu *FuncEdgeUpdate) AddCallSiteLine(i int) *FuncEdgeUpdate {
+	feu.mutation.AddCallSiteLine(i)
+	return feu
+}
+
+// ClearCallSiteLine clears the value of the "call_site_line" field.
+func (feu *FuncEdgeUpdate) ClearCallSiteLine() *FuncEdgeUpdate {
+	feu.mutation.ClearCallSiteLine()
+	return feu
+}
+
+// SetCallType sets the "call_type" field.
+func (feu *FuncEdgeUpdate) SetCallType(s string) *FuncEdgeUpdate {
+	feu.mutation.SetCallType(s)
+	return feu
+}
+
+// SetNillableCallType sets the "call_type" field if the given value is not nil.
+func (feu *FuncEdgeUpdate) SetNillableCallType(s *string) *FuncEdgeUpdate {
+	if s != nil {
+		feu.SetCallType(*s)
+	}
+	return feu
+}
+
 // Mutation returns the FuncEdgeMutation object of the builder.
 func (feu *FuncEdgeUpdate) Mutation() *FuncEdgeMutation {
 	return feu.mutation
@@ -136,6 +197,24 @@ func (feu *FuncEdgeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := feu.mutation.CalleeKey(); ok {
 		_spec.SetField(funcedge.FieldCalleeKey, field.TypeString, value)
+	}
+	if value, ok := feu.mutation.CallSiteFile(); ok {
+		_spec.SetField(funcedge.FieldCallSiteFile, field.TypeString, value)
+	}
+	if feu.mutation.CallSiteFileCleared() {
+		_spec.ClearField(funcedge.FieldCallSiteFile, field.TypeString)
+	}
+	if value, ok := feu.mutation.CallSiteLine(); ok {
+		_spec.SetField(funcedge.FieldCallSiteLine, field.TypeInt, value)
+	}
+	if value, ok := feu.mutation.AddedCallSiteLine(); ok {
+		_spec.AddField(funcedge.FieldCallSiteLine, field.TypeInt, value)
+	}
+	if feu.mutation.CallSiteLineCleared() {
+		_spec.ClearField(funcedge.FieldCallSiteLine, field.TypeInt)
+	}
+	if value, ok := feu.mutation.CallType(); ok {
+		_spec.SetField(funcedge.FieldCallType, field.TypeString, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, feu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -209,6 +288,67 @@ func (feuo *FuncEdgeUpdateOne) SetCalleeKey(s string) *FuncEdgeUpdateOne {
 func (feuo *FuncEdgeUpdateOne) SetNillableCalleeKey(s *string) *FuncEdgeUpdateOne {
 	if s != nil {
 		feuo.SetCalleeKey(*s)
+	}
+	return feuo
+}
+
+// SetCallSiteFile sets the "call_site_file" field.
+func (feuo *FuncEdgeUpdateOne) SetCallSiteFile(s string) *FuncEdgeUpdateOne {
+	feuo.mutation.SetCallSiteFile(s)
+	return feuo
+}
+
+// SetNillableCallSiteFile sets the "call_site_file" field if the given value is not nil.
+func (feuo *FuncEdgeUpdateOne) SetNillableCallSiteFile(s *string) *FuncEdgeUpdateOne {
+	if s != nil {
+		feuo.SetCallSiteFile(*s)
+	}
+	return feuo
+}
+
+// ClearCallSiteFile clears the value of the "call_site_file" field.
+func (feuo *FuncEdgeUpdateOne) ClearCallSiteFile() *FuncEdgeUpdateOne {
+	feuo.mutation.ClearCallSiteFile()
+	return feuo
+}
+
+// SetCallSiteLine sets the "call_site_line" field.
+func (feuo *FuncEdgeUpdateOne) SetCallSiteLine(i int) *FuncEdgeUpdateOne {
+	feuo.mutation.ResetCallSiteLine()
+	feuo.mutation.SetCallSiteLine(i)
+	return feuo
+}
+
+// SetNillableCallSiteLine sets the "call_site_line" field if the given value is not nil.
+func (feuo *FuncEdgeUpdateOne) SetNillableCallSiteLine(i *int) *FuncEdgeUpdateOne {
+	if i != nil {
+		feuo.SetCallSiteLine(*i)
+	}
+	return feuo
+}
+
+// AddCallSiteLine adds i to the "call_site_line" field.
+func (feuo *FuncEdgeUpdateOne) AddCallSiteLine(i int) *FuncEdgeUpdateOne {
+	feuo.mutation.AddCallSiteLine(i)
+	return feuo
+}
+
+// ClearCallSiteLine clears the value of the "call_site_line" field.
+func (feuo *FuncEdgeUpdateOne) ClearCallSiteLine() *FuncEdgeUpdateOne {
+	feuo.mutation.ClearCallSiteLine()
+	return feuo
+}
+
+// SetCallType sets the "call_type" field.
+func (feuo *FuncEdgeUpdateOne) SetCallType(s string) *FuncEdgeUpdateOne {
+	feuo.mutation.SetCallType(s)
+	return feuo
+}
+
+// SetNillableCallType sets the "call_type" field if the given value is not nil.
+func (feuo *FuncEdgeUpdateOne) SetNillableCallType(s *string) *FuncEdgeUpdateOne {
+	if s != nil {
+		feuo.SetCallType(*s)
 	}
 	return feuo
 }
@@ -295,6 +435,24 @@ func (feuo *FuncEdgeUpdateOne) sqlSave(ctx context.Context) (_node *FuncEdge, er
 	}
 	if value, ok := feuo.mutation.CalleeKey(); ok {
 		_spec.SetField(funcedge.FieldCalleeKey, field.TypeString, value)
+	}
+	if value, ok := feuo.mutation.CallSiteFile(); ok {
+		_spec.SetField(funcedge.FieldCallSiteFile, field.TypeString, value)
+	}
+	if feuo.mutation.CallSiteFileCleared() {
+		_spec.ClearField(funcedge.FieldCallSiteFile, field.TypeString)
+	}
+	if value, ok := feuo.mutation.CallSiteLine(); ok {
+		_spec.SetField(funcedge.FieldCallSiteLine, field.TypeInt, value)
+	}
+	if value, ok := feuo.mutation.AddedCallSiteLine(); ok {
+		_spec.AddField(funcedge.FieldCallSiteLine, field.TypeInt, value)
+	}
+	if feuo.mutation.CallSiteLineCleared() {
+		_spec.ClearField(funcedge.FieldCallSiteLine, field.TypeInt)
+	}
+	if value, ok := feuo.mutation.CallType(); ok {
+		_spec.SetField(funcedge.FieldCallType, field.TypeString, value)
 	}
 	_node = &FuncEdge{config: feuo.config}
 	_spec.Assign = _node.assignValues

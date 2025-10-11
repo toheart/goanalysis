@@ -19,6 +19,12 @@ const (
 	FieldCallerKey = "caller_key"
 	// FieldCalleeKey holds the string denoting the calleekey field in the database.
 	FieldCalleeKey = "callee_key"
+	// FieldCallSiteFile holds the string denoting the call_site_file field in the database.
+	FieldCallSiteFile = "call_site_file"
+	// FieldCallSiteLine holds the string denoting the call_site_line field in the database.
+	FieldCallSiteLine = "call_site_line"
+	// FieldCallType holds the string denoting the call_type field in the database.
+	FieldCallType = "call_type"
 	// Table holds the table name of the funcedge in the database.
 	Table = "func_edges"
 )
@@ -30,6 +36,9 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldCallerKey,
 	FieldCalleeKey,
+	FieldCallSiteFile,
+	FieldCallSiteLine,
+	FieldCallType,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -41,6 +50,11 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// DefaultCallType holds the default value on creation for the "call_type" field.
+	DefaultCallType string
+)
 
 // OrderOption defines the ordering options for the FuncEdge queries.
 type OrderOption func(*sql.Selector)
@@ -68,4 +82,19 @@ func ByCallerKey(opts ...sql.OrderTermOption) OrderOption {
 // ByCalleeKey orders the results by the CalleeKey field.
 func ByCalleeKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCalleeKey, opts...).ToFunc()
+}
+
+// ByCallSiteFile orders the results by the call_site_file field.
+func ByCallSiteFile(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCallSiteFile, opts...).ToFunc()
+}
+
+// ByCallSiteLine orders the results by the call_site_line field.
+func ByCallSiteLine(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCallSiteLine, opts...).ToFunc()
+}
+
+// ByCallType orders the results by the call_type field.
+func ByCallType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCallType, opts...).ToFunc()
 }

@@ -21,10 +21,22 @@ type FuncNode struct {
 	Key string `json:"key,omitempty"`
 	// 完整的函数路径，如 crypto/hmac.New$1
 	FullName string `json:"full_name,omitempty"`
-	// Pkg holds the value of the "pkg" field.
+	// 包导入路径，如 net/http
 	Pkg string `json:"pkg,omitempty"`
+	// 完整包路径，用于关联 PackageNode
+	PkgPath string `json:"pkg_path,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// 源文件路径
+	Filename string `json:"filename,omitempty"`
+	// 函数开始行
+	StartLine int `json:"start_line,omitempty"`
+	// 函数结束行
+	EndLine int `json:"end_line,omitempty"`
+	// 函数签名，如 func(http.ResponseWriter, *http.Request)
+	Signature string `json:"signature,omitempty"`
+	// 函数的源代码（压缩存储）
+	SourceCode string `json:"source_code,omitempty"`
 	// CreatedAt holds the value of the "CreatedAt" field.
 	CreatedAt time.Time `json:"CreatedAt,omitempty"`
 	// UpdatedAt holds the value of the "UpdatedAt" field.
@@ -37,9 +49,9 @@ func (*FuncNode) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case funcnode.FieldID:
+		case funcnode.FieldID, funcnode.FieldStartLine, funcnode.FieldEndLine:
 			values[i] = new(sql.NullInt64)
-		case funcnode.FieldKey, funcnode.FieldFullName, funcnode.FieldPkg, funcnode.FieldName:
+		case funcnode.FieldKey, funcnode.FieldFullName, funcnode.FieldPkg, funcnode.FieldPkgPath, funcnode.FieldName, funcnode.FieldFilename, funcnode.FieldSignature, funcnode.FieldSourceCode:
 			values[i] = new(sql.NullString)
 		case funcnode.FieldCreatedAt, funcnode.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -82,11 +94,47 @@ func (fn *FuncNode) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				fn.Pkg = value.String
 			}
+		case funcnode.FieldPkgPath:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field pkg_path", values[i])
+			} else if value.Valid {
+				fn.PkgPath = value.String
+			}
 		case funcnode.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				fn.Name = value.String
+			}
+		case funcnode.FieldFilename:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field filename", values[i])
+			} else if value.Valid {
+				fn.Filename = value.String
+			}
+		case funcnode.FieldStartLine:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field start_line", values[i])
+			} else if value.Valid {
+				fn.StartLine = int(value.Int64)
+			}
+		case funcnode.FieldEndLine:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field end_line", values[i])
+			} else if value.Valid {
+				fn.EndLine = int(value.Int64)
+			}
+		case funcnode.FieldSignature:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field signature", values[i])
+			} else if value.Valid {
+				fn.Signature = value.String
+			}
+		case funcnode.FieldSourceCode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source_code", values[i])
+			} else if value.Valid {
+				fn.SourceCode = value.String
 			}
 		case funcnode.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -145,8 +193,26 @@ func (fn *FuncNode) String() string {
 	builder.WriteString("pkg=")
 	builder.WriteString(fn.Pkg)
 	builder.WriteString(", ")
+	builder.WriteString("pkg_path=")
+	builder.WriteString(fn.PkgPath)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(fn.Name)
+	builder.WriteString(", ")
+	builder.WriteString("filename=")
+	builder.WriteString(fn.Filename)
+	builder.WriteString(", ")
+	builder.WriteString("start_line=")
+	builder.WriteString(fmt.Sprintf("%v", fn.StartLine))
+	builder.WriteString(", ")
+	builder.WriteString("end_line=")
+	builder.WriteString(fmt.Sprintf("%v", fn.EndLine))
+	builder.WriteString(", ")
+	builder.WriteString("signature=")
+	builder.WriteString(fn.Signature)
+	builder.WriteString(", ")
+	builder.WriteString("source_code=")
+	builder.WriteString(fn.SourceCode)
 	builder.WriteString(", ")
 	builder.WriteString("CreatedAt=")
 	builder.WriteString(fn.CreatedAt.Format(time.ANSIC))

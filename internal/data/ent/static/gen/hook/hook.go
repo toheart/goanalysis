@@ -33,6 +33,30 @@ func (f FuncNodeFunc) Mutate(ctx context.Context, m gen.Mutation) (gen.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *gen.FuncNodeMutation", m)
 }
 
+// The PackageDepFunc type is an adapter to allow the use of ordinary
+// function as PackageDep mutator.
+type PackageDepFunc func(context.Context, *gen.PackageDepMutation) (gen.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PackageDepFunc) Mutate(ctx context.Context, m gen.Mutation) (gen.Value, error) {
+	if mv, ok := m.(*gen.PackageDepMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *gen.PackageDepMutation", m)
+}
+
+// The PkgFunc type is an adapter to allow the use of ordinary
+// function as Pkg mutator.
+type PkgFunc func(context.Context, *gen.PkgMutation) (gen.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PkgFunc) Mutate(ctx context.Context, m gen.Mutation) (gen.Value, error) {
+	if mv, ok := m.(*gen.PkgMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *gen.PkgMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, gen.Mutation) bool
 

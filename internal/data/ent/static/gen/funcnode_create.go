@@ -38,9 +38,93 @@ func (fnc *FuncNodeCreate) SetPkg(s string) *FuncNodeCreate {
 	return fnc
 }
 
+// SetPkgPath sets the "pkg_path" field.
+func (fnc *FuncNodeCreate) SetPkgPath(s string) *FuncNodeCreate {
+	fnc.mutation.SetPkgPath(s)
+	return fnc
+}
+
+// SetNillablePkgPath sets the "pkg_path" field if the given value is not nil.
+func (fnc *FuncNodeCreate) SetNillablePkgPath(s *string) *FuncNodeCreate {
+	if s != nil {
+		fnc.SetPkgPath(*s)
+	}
+	return fnc
+}
+
 // SetName sets the "name" field.
 func (fnc *FuncNodeCreate) SetName(s string) *FuncNodeCreate {
 	fnc.mutation.SetName(s)
+	return fnc
+}
+
+// SetFilename sets the "filename" field.
+func (fnc *FuncNodeCreate) SetFilename(s string) *FuncNodeCreate {
+	fnc.mutation.SetFilename(s)
+	return fnc
+}
+
+// SetNillableFilename sets the "filename" field if the given value is not nil.
+func (fnc *FuncNodeCreate) SetNillableFilename(s *string) *FuncNodeCreate {
+	if s != nil {
+		fnc.SetFilename(*s)
+	}
+	return fnc
+}
+
+// SetStartLine sets the "start_line" field.
+func (fnc *FuncNodeCreate) SetStartLine(i int) *FuncNodeCreate {
+	fnc.mutation.SetStartLine(i)
+	return fnc
+}
+
+// SetNillableStartLine sets the "start_line" field if the given value is not nil.
+func (fnc *FuncNodeCreate) SetNillableStartLine(i *int) *FuncNodeCreate {
+	if i != nil {
+		fnc.SetStartLine(*i)
+	}
+	return fnc
+}
+
+// SetEndLine sets the "end_line" field.
+func (fnc *FuncNodeCreate) SetEndLine(i int) *FuncNodeCreate {
+	fnc.mutation.SetEndLine(i)
+	return fnc
+}
+
+// SetNillableEndLine sets the "end_line" field if the given value is not nil.
+func (fnc *FuncNodeCreate) SetNillableEndLine(i *int) *FuncNodeCreate {
+	if i != nil {
+		fnc.SetEndLine(*i)
+	}
+	return fnc
+}
+
+// SetSignature sets the "signature" field.
+func (fnc *FuncNodeCreate) SetSignature(s string) *FuncNodeCreate {
+	fnc.mutation.SetSignature(s)
+	return fnc
+}
+
+// SetNillableSignature sets the "signature" field if the given value is not nil.
+func (fnc *FuncNodeCreate) SetNillableSignature(s *string) *FuncNodeCreate {
+	if s != nil {
+		fnc.SetSignature(*s)
+	}
+	return fnc
+}
+
+// SetSourceCode sets the "source_code" field.
+func (fnc *FuncNodeCreate) SetSourceCode(s string) *FuncNodeCreate {
+	fnc.mutation.SetSourceCode(s)
+	return fnc
+}
+
+// SetNillableSourceCode sets the "source_code" field if the given value is not nil.
+func (fnc *FuncNodeCreate) SetNillableSourceCode(s *string) *FuncNodeCreate {
+	if s != nil {
+		fnc.SetSourceCode(*s)
+	}
 	return fnc
 }
 
@@ -195,9 +279,33 @@ func (fnc *FuncNodeCreate) createSpec() (*FuncNode, *sqlgraph.CreateSpec) {
 		_spec.SetField(funcnode.FieldPkg, field.TypeString, value)
 		_node.Pkg = value
 	}
+	if value, ok := fnc.mutation.PkgPath(); ok {
+		_spec.SetField(funcnode.FieldPkgPath, field.TypeString, value)
+		_node.PkgPath = value
+	}
 	if value, ok := fnc.mutation.Name(); ok {
 		_spec.SetField(funcnode.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := fnc.mutation.Filename(); ok {
+		_spec.SetField(funcnode.FieldFilename, field.TypeString, value)
+		_node.Filename = value
+	}
+	if value, ok := fnc.mutation.StartLine(); ok {
+		_spec.SetField(funcnode.FieldStartLine, field.TypeInt, value)
+		_node.StartLine = value
+	}
+	if value, ok := fnc.mutation.EndLine(); ok {
+		_spec.SetField(funcnode.FieldEndLine, field.TypeInt, value)
+		_node.EndLine = value
+	}
+	if value, ok := fnc.mutation.Signature(); ok {
+		_spec.SetField(funcnode.FieldSignature, field.TypeString, value)
+		_node.Signature = value
+	}
+	if value, ok := fnc.mutation.SourceCode(); ok {
+		_spec.SetField(funcnode.FieldSourceCode, field.TypeString, value)
+		_node.SourceCode = value
 	}
 	if value, ok := fnc.mutation.CreatedAt(); ok {
 		_spec.SetField(funcnode.FieldCreatedAt, field.TypeTime, value)
