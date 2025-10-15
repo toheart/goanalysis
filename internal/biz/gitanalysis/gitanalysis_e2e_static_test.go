@@ -183,7 +183,7 @@ func TestE2E_MR_WithExample_RealLLM_MockGitLab(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new llm: %v", err)
 	}
-	analyzer := NewMRAnalyzerWithAdapters(cfg, llm, &e2eFakeGit{})
+	analyzer := NewMRAnalyzerWithProvider(cfg, llm, &e2eFakeGit{})
 
 	// 运行 MR 分析
 	res, err := analyzer.AnalyzeMR(1, 1, false)

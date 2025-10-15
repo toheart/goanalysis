@@ -2,7 +2,6 @@ package gitanalysis
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -12,11 +11,30 @@ import (
 	"sync"
 
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/sourcegraph/conc/pool"
 	"github.com/toheart/goanalysis/internal/biz/gitanalysis/dos"
 	"github.com/toheart/goanalysis/internal/conf"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
+
+// 构造新增文件的最小 unified diff，帮助 LLM 以统一输入格式分析
+// 中文注释：不追求完整 patch 语义，仅提供文件头与全部新增行，足以驱动函数识别与问题扫描
+func buildAddedUnifiedDiff(filename string, content string) string {
+	if filename == "" || content == "" {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("diff --git a/" + filename + " b/" + filename + "\n")
+	b.WriteString("new file mode 100644\n")
+	b.WriteString("--- /dev/null\n")
+	b.WriteString("+++ b/" + filename + "\n")
+	lines := strings.Split(content, "\n")
+	// 简单的 hunk 头，显示全部新增
+	b.WriteString("@@ 0,0 +1," + fmt.Sprintf("%d @@\n", len(lines)))
+	for _, l := range lines {
+		b.WriteString("+" + l + "\n")
+	}
+	return b.String()
+}
 
 // 定义一个结构体来存储文件处理结果
 type fileProcessResult struct {
@@ -38,41 +56,32 @@ type fileProcessTask struct {
 // MRAnalyzer GitLab MR分析器
 type MRAnalyzer struct {
 	sync.Mutex
-	conf   *conf.Biz
-	llm    LLMClient
-	logger *log.Helper
-	gCli   *gitlab.Client
-	git    GitLabAdapter
+	conf     *conf.Biz
+	provider dos.Provider
+	logger   *log.Helper
+	gCli     *gitlab.Client
+	git      GitLabAdapter
 }
 
 // NewMRAnalyzer 创建新的MR分析器
-func NewMRAnalyzer(conf *conf.Biz, gitlabClient *gitlab.Client) (*MRAnalyzer, error) {
+func NewMRAnalyzer(conf *conf.Biz, gitlabClient *gitlab.Client, provider dos.Provider) (*MRAnalyzer, error) {
 	log.Infof("gitlabURL: %s", conf.Gitlab.Url)
-	// 创建GitLab客户端
-	llm, err := NewLLMAnalyzer(
-		conf.Openai.ApiKey,
-		conf.Openai.ApiBase,
-		conf.Openai.Model,
-	)
-	if err != nil {
-		return nil, err
-	}
 	return &MRAnalyzer{
-		conf:   conf,
-		logger: log.NewHelper(log.With(log.GetLogger(), "module", "gitanalysis")),
-		llm:    llm,
-		gCli:   gitlabClient,
-		git:    newRealGitLabAdapter(gitlabClient),
+		conf:     conf,
+		logger:   log.NewHelper(log.With(log.GetLogger(), "module", "gitanalysis")),
+		provider: provider,
+		gCli:     gitlabClient,
+		git:      newRealGitLabAdapter(gitlabClient),
 	}, nil
 }
 
 // NewMRAnalyzerWithAdapters 仅用于测试，注入替身
-func NewMRAnalyzerWithAdapters(conf *conf.Biz, llm LLMClient, git GitLabAdapter) *MRAnalyzer {
+func NewMRAnalyzerWithProvider(conf *conf.Biz, provider dos.Provider, git GitLabAdapter) *MRAnalyzer {
 	return &MRAnalyzer{
-		conf:   conf,
-		logger: log.NewHelper(log.With(log.GetLogger(), "module", "gitanalysis")),
-		llm:    llm,
-		git:    git,
+		conf:     conf,
+		logger:   log.NewHelper(log.With(log.GetLogger(), "module", "gitanalysis")),
+		provider: provider,
+		git:      git,
 	}
 }
 
@@ -169,7 +178,24 @@ func (a *MRAnalyzer) fetchModifiedFile(task fileProcessTask) fileProcessResult {
 		ChangeType: task.ChangeType,
 	}
 
-	res, err := a.llm.AnalyzeFile(context.Background(), task.Content)
+	// 中文注释：为提升准确率，构造“函数级小 diff + 上下文”输入。
+	// 1) 从 MR 的 unified diff 作为主证据；
+	// 2) 尝试获取 Source 分支上的源码片段，以便模型判断边界/并发/错误处理等上下文。
+	input := task.Content
+	if task.ProjectID != 0 && task.Path != "" && task.Ref != "" {
+		if src, err := a.git.GetRawFile(task.ProjectID, task.Path, task.Ref); err == nil {
+			// 限制上下文体量，避免超长：仅截取前后 200 行以内（此处简化为前后若干 KB）。
+			// 中文注释：MVP 直接拼接；后续可按函数边界精确截取。
+			const maxCtx = 16 * 1024
+			ctxSnippet := src
+			if len(ctxSnippet) > maxCtx {
+				ctxSnippet = ctxSnippet[:maxCtx]
+			}
+			input = "# Unified Diff\n" + task.Content + "\n\n# Source Context (truncated)\n" + ctxSnippet
+		}
+	}
+
+	res, err := a.provider.AnalyzeFile(context.Background(), input)
 	if err != nil {
 		a.logger.Warnf("Failed to analyze file %s: %v", task.Filename, err)
 		result.Error = err
@@ -207,16 +233,33 @@ func (a *MRAnalyzer) fetchAndProcessFile(task fileProcessTask) fileProcessResult
 		return result
 	}
 
-	// 提取函数
+	// Added：使用 LLM 对新增源码进行函数级问题分析（通过合成的 unified diff）
+	if task.ChangeType == dos.Added {
+		diff := buildAddedUnifiedDiff(task.Filename, string(content))
+		if diff != "" {
+			lres, lerr := a.provider.AnalyzeFile(context.Background(), diff)
+			if lerr == nil {
+				for _, r := range lres {
+					// 中文注释：新增默认为有效改动
+					r.IsValid = true
+					if r.Reason == "" {
+						r.Reason = "新增函数"
+					}
+					result.Functions = append(result.Functions, r)
+				}
+				return result
+			}
+			a.logger.Warnf("LLM analyze added file failed %s: %v, fallback to AST", task.Filename, lerr)
+		}
+	}
+
+	// 其他情况（含 Deleted 或 LLM 失败回退）：AST 提取
 	functions, err := a.extractFunctions(string(content))
 	if err != nil {
 		a.logger.Warnf("Failed to extract functions from %s file %s: %v", string(task.ChangeType), task.Path, err)
 		result.Error = err
 		return result
 	}
-
-	// 根据变更类型标注函数语义与统计口径
-	// 中文注释：对新增/删除的函数，设置 IsValid 与 Reason，避免删除函数被计入有效改动
 	for _, fn := range functions {
 		switch task.ChangeType {
 		case dos.Added:
@@ -228,8 +271,6 @@ func (a *MRAnalyzer) fetchAndProcessFile(task fileProcessTask) fileProcessResult
 			if fn.Suggestion == "" {
 				fn.Suggestion = "检查潜在上游破坏性调用"
 			}
-		default:
-			// 其他类型维持提取默认值
 		}
 	}
 	result.Functions = functions
@@ -238,125 +279,9 @@ func (a *MRAnalyzer) fetchAndProcessFile(task fileProcessTask) fileProcessResult
 
 // AnalyzeMR 分析指定的MR
 func (a *MRAnalyzer) AnalyzeMR(projectID, mrID int, autoNotes bool) (*dos.MrAnalysisResult, error) {
+	// 中文注释：改为调用基于 Eino 的链式编排以提高清晰度与可观测性
 	a.logger.Infof("Analyzing MR #%d for project %d", mrID, projectID)
-	result := &dos.MrAnalysisResult{
-		MergeRequestID: mrID,
-		ProjectID:      projectID,
-	}
-
-	// 获取MR信息
-	mergeRequest, err := a.git.GetMergeRequest(projectID, mrID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get MR: %w", err)
-	}
-	a.logger.Infof("MR #%d: %s", mrID, mergeRequest.Title)
-
-	// 收集所有需要处理的任务
-	var tasks []fileProcessTask
-
-	// 分页获取MR变更
-	page := 1
-	for page > 0 {
-		mrWithChanges, nextPage, err := a.git.ListMergeRequestDiffs(projectID, mrID, page)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get MR changes: %w", err)
-		}
-		page = nextPage
-
-		// 处理变更文件
-		for _, change := range mrWithChanges {
-			// 仅处理Go文件
-			if !strings.HasSuffix(change.NewPath, ".go") && !strings.HasSuffix(change.OldPath, ".go") {
-				continue
-			}
-			if a.filterFileByName(change.NewPath) || a.filterFileByName(change.OldPath) {
-				continue
-			}
-
-			// 确定变更类型和文件名
-			var (
-				changeType dos.ChangeType
-				filename   string
-				ref        string
-				path       string
-				content    string
-			)
-
-			switch {
-			case change.NewFile:
-				changeType = dos.Added
-				filename = change.NewPath
-				ref = mergeRequest.SourceBranch
-				path = change.NewPath
-			case change.DeletedFile:
-				changeType = dos.Deleted
-				filename = change.OldPath
-				ref = mergeRequest.TargetBranch
-				path = change.OldPath
-			default:
-				changeType = dos.Modified
-				filename = change.NewPath
-				content = change.Diff
-				a.logger.Infof("Modified file %s detected, need AI analysis", filename)
-			}
-			result.AffectedFiles = append(result.AffectedFiles, dos.AffectedFile{
-				Filename:   filename,
-				ChangeType: changeType,
-			})
-			tasks = append(tasks, fileProcessTask{
-				ProjectID:  projectID,
-				Path:       path,
-				Ref:        ref,
-				ChangeType: changeType,
-				Filename:   filename,
-				Content:    content,
-			})
-		}
-	}
-
-	// 没有需要处理的任务，直接返回结果
-	if len(tasks) == 0 {
-		return result, nil
-	}
-	resultCh := make(chan fileProcessResult, 5)
-	go func() {
-		// 使用pool并发处理所有任务
-		p := pool.New().WithMaxGoroutines(10)
-		for _, task := range tasks {
-			task := task
-			p.Go(func() {
-				resultCh <- a.fetchAndProcessFile(task)
-			})
-		}
-		p.Wait()
-		close(resultCh)
-	}()
-	// 收集结果
-	for res := range resultCh {
-		if res.Error != nil {
-			a.logger.Errorf("Failed to process file %s: %v", res.Filename, res.Error)
-			continue
-		}
-		if len(res.Functions) > 0 {
-			affectedFunction := dos.AffectedFunction{
-				Filename:   res.Filename,
-				ChangeType: res.ChangeType,
-				Functions:  res.Functions,
-			}
-			result.AffectedFunctions = append(result.AffectedFunctions, affectedFunction)
-		}
-	}
-	a.logger.Infof("prepare to analyze MR: %s", mergeRequest.Title)
-	functions, _ := json.Marshal(result.AffectedFunctions)
-	// 最后进行Mr审查（JSON 返回）
-	llmReview, err := a.llm.AnalyzeMR(context.Background(), mergeRequest.Title, string(functions))
-	if err != nil {
-		return nil, fmt.Errorf("failed to analyze MR: %w", err)
-	}
-	// 回填结果契约
-	result.Review = llmReview.Review
-	result.TestSuggestions = llmReview.TestSuggestions
-	return result, nil
+	return a.analyzeMRWithEino(context.Background(), projectID, mrID, autoNotes)
 }
 
 // extractFunctions 从Go源代码中提取函数定义
@@ -409,19 +334,38 @@ func (a *MRAnalyzer) extractFunctions(src string) ([]*dos.Function, error) {
 
 // CreateMRNotes 创建MR的notes
 func (a *MRAnalyzer) CreateMRNotes(projectID int, mrID int, result *dos.MrAnalysisResult) error {
-	// 创建改动影响面评论
+	// 1) 总体评审 Review（有内容才输出）
+	if strings.TrimSpace(result.Review) != "" {
+		if err := a.git.CreateMergeRequestNote(projectID, mrID, result.Review); err != nil {
+			a.logger.Warnf("Failed to create review note: %v", err)
+		}
+	}
+
+	// 2) 改动影响面评论（始终输出）
 	if err := a.git.CreateMergeRequestNote(projectID, mrID, result.GetAffectedFilesMd()); err != nil {
 		return err
 	}
-	// 创建测试建议评论
-	if err := a.git.CreateMergeRequestNote(projectID, mrID, result.GetTestSuggestionsMd()); err != nil {
-		a.logger.Warnf("Failed to create test suggestions note: %v", err)
+
+	// 3) LLM 质量问题汇总（仅当存在问题时输出）
+	if md := result.GetLLMIssuesMd(); md != "" {
+		if err := a.git.CreateMergeRequestNote(projectID, mrID, md); err != nil {
+			a.logger.Warnf("Failed to create LLM issues note: %v", err)
+		}
 	}
-	// 创建结构化用例评论（若有）
+
+	// 4) 测试建议评论（有内容才输出）
+	if len(result.TestSuggestions) > 0 {
+		if err := a.git.CreateMergeRequestNote(projectID, mrID, result.GetTestSuggestionsMd()); err != nil {
+			a.logger.Warnf("Failed to create test suggestions note: %v", err)
+		}
+	}
+
+	// 5) 结构化用例评论（有内容才输出）
 	if len(result.TestCases) > 0 {
 		if err := a.git.CreateMergeRequestNote(projectID, mrID, result.GetTestCasesMd()); err != nil {
 			a.logger.Warnf("Failed to create test cases note: %v", err)
 		}
 	}
-	return a.git.CreateMergeRequestNote(projectID, mrID, result.Review)
+
+	return nil
 }

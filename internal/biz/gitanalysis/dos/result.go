@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -271,6 +272,98 @@ func (r *MrAnalysisResult) GetTestCasesMd() string {
 		steps := strings.Join(tc.Steps, "<br>")
 		expected := strings.Join(tc.Expected, "<br>")
 		sb.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s | %s |\n", tc.ID, tc.Module, tc.Title, pre, steps, expected, tc.Priority))
+	}
+	return sb.String()
+}
+
+// GetLLMIssuesMd 输出由 LLM 产出的函数级问题汇总（仅当存在问题时返回内容）
+// 中文注释：按严重级别 P0>P1>P2 排序，限制总条数，便于审查与整改
+func (r *MrAnalysisResult) GetLLMIssuesMd() string {
+	type item struct {
+		Severity string
+		File     string
+		Func     string
+		Title    string
+		Detail   string
+	}
+	var items []item
+	for _, af := range r.AffectedFunctions {
+		for _, fn := range af.Functions {
+			if len(fn.Issues) == 0 {
+				continue
+			}
+			for _, is := range fn.Issues {
+				items = append(items, item{
+					Severity: strings.ToUpper(is.Severity),
+					File:     af.Filename,
+					Func:     fn.FunctionName,
+					Title:    is.Title,
+					Detail:   is.Detail,
+				})
+			}
+		}
+	}
+	if len(items) == 0 {
+		return ""
+	}
+
+	rank := func(sev string) int {
+		switch strings.ToUpper(sev) {
+		case "P0":
+			return 0
+		case "P1":
+			return 1
+		default:
+			return 2
+		}
+	}
+	sort.Slice(items, func(i, j int) bool {
+		ri, rj := rank(items[i].Severity), rank(items[j].Severity)
+		if ri != rj {
+			return ri < rj
+		}
+		if items[i].File != items[j].File {
+			return items[i].File < items[j].File
+		}
+		if items[i].Func != items[j].Func {
+			return items[i].Func < items[j].Func
+		}
+		return items[i].Title < items[j].Title
+	})
+
+	// 统计
+	total, p0, p1, p2 := len(items), 0, 0, 0
+	for _, it := range items {
+		switch it.Severity {
+		case "P0":
+			p0++
+		case "P1":
+			p1++
+		default:
+			p2++
+		}
+	}
+
+	const maxItems = 50 // 中文注释：默认 Top-N，可后续从配置接入
+	limit := maxItems
+	if len(items) < limit {
+		limit = len(items)
+	}
+
+	var sb strings.Builder
+	sb.WriteString("## LLM 质量问题汇总\n\n")
+	sb.WriteString(fmt.Sprintf("- 总问题数: %d\n", total))
+	sb.WriteString(fmt.Sprintf("- P0: %d, P1: %d, P2: %d\n\n", p0, p1, p2))
+	sb.WriteString("### Top 问题（按严重级别优先）\n\n")
+	for i := 0; i < limit; i++ {
+		it := items[i]
+		sb.WriteString(fmt.Sprintf("- [%s] `%s:%s` - %s\n", it.Severity, it.File, it.Func, it.Title))
+		if it.Detail != "" {
+			sb.WriteString(fmt.Sprintf("  - 详情: %s\n", it.Detail))
+		}
+	}
+	if limit < len(items) {
+		sb.WriteString(fmt.Sprintf("\n其余 %d 条问题已省略。\n", len(items)-limit))
 	}
 	return sb.String()
 }

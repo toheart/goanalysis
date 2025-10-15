@@ -16,6 +16,7 @@ import (
 	"github.com/toheart/goanalysis/internal/biz/gitanalysis"
 	"github.com/toheart/goanalysis/internal/conf"
 	"github.com/toheart/goanalysis/internal/data"
+	einoprovider "github.com/toheart/goanalysis/internal/data/llm/eino"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -113,7 +114,17 @@ func (m *MRCommand) Run(cmd *cobra.Command, args []string) {
 	}
 
 	data := data.NewData(log.DefaultLogger)
-	gitAnalysis := gitanalysis.NewGitAnalysis(bc.Biz, data)
+	// 中文注释：使用 EinoProvider，允许第三方通过 WithModel 形式注入自定义 LLM
+	provider, err := einoprovider.NewEinoProvider(
+		bc.Biz.Openai.ApiKey,
+		bc.Biz.Openai.ApiBase,
+		bc.Biz.Openai.Model,
+	)
+	if err != nil {
+		fmt.Printf("init eino provider failed: %v\n", err)
+		os.Exit(1)
+	}
+	gitAnalysis := gitanalysis.NewGitAnalysis(bc.Biz, data, provider)
 	// 执行 MR 分析
 	fmt.Printf("start analyzing gitlab mr #%d...\n", m.mrID)
 	result, err := gitAnalysis.MRAnalyzer(m.projectID, m.mrID, m.autoNotes)

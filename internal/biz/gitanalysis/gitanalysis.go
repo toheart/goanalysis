@@ -2,7 +2,6 @@ package gitanalysis
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,126 +22,34 @@ import (
 )
 
 type GitAnalysis struct {
-	conf   *conf.Biz
-	logger *log.Helper
-	gCli   *gitapi.Client
-	data   *data.Data
+	conf     *conf.Biz
+	logger   *log.Helper
+	gCli     *gitapi.Client
+	data     *data.Data
+	provider dos.Provider
 }
 
-func NewGitAnalysis(conf *conf.Biz, data *data.Data) *GitAnalysis {
+func NewGitAnalysis(conf *conf.Biz, data *data.Data, provider dos.Provider) *GitAnalysis {
 	gitClient, err := gitapi.NewClient(conf.Gitlab.Token, gitapi.WithBaseURL(conf.Gitlab.Url))
 	if err != nil {
 		panic(err)
 	}
 	return &GitAnalysis{
-		conf:   conf,
-		logger: log.NewHelper(log.GetLogger()),
-		gCli:   gitClient,
-		data:   data,
+		conf:     conf,
+		logger:   log.NewHelper(log.GetLogger()),
+		gCli:     gitClient,
+		data:     data,
+		provider: provider,
 	}
 }
 
+// NewGitAnalysisWithProvider 允许第三方注入自定义的 dos.Provider
+// 中文注释：第三方在其程序中实现 Provider 接口，并通过此构造注入
+// 兼容构造函数已移除
+
 func (g *GitAnalysis) MRAnalyzer(projectID, mrID int, autoNotes bool) (*dos.MrAnalysisResult, error) {
-
-	analyzer, err := NewMRAnalyzer(g.conf, g.gCli)
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取合并请求信息
-	mergeRequest, err := analyzer.GetMergeRequest(projectID, mrID)
-	if err != nil {
-		return nil, err
-	}
-
-	// 获取项目信息
-	project, _, err := g.gCli.Projects.GetProject(projectID, &gitapi.GetProjectOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	// 先进行 MR 分析，得到变更类型列表，便于判断是否需要 Target 分支分析
-	result, err := analyzer.AnalyzeMR(projectID, mrID, autoNotes)
-	if err != nil {
-		return nil, err
-	}
-	hasDeleted := false
-	for _, f := range result.AffectedFiles {
-		if f.ChangeType == dos.Deleted {
-			hasDeleted = true
-			break
-		}
-	}
-
-	// 克隆并分析 Source 分支（合入后的形态）
-	if _, err = g.CloneRepository(project, mergeRequest.SourceBranch); err != nil {
-		return nil, err
-	}
-	dbPathSource, err := g.RepoCallGraph(project, "")
-	if err != nil {
-		return nil, err
-	}
-	if err := g.AnalyzeFunctionCallRelations(dbPathSource, result); err != nil {
-		g.logger.Warnf("failed to analyze function call relations: %v", err)
-	}
-
-	// 如存在删除变更，再分析 Target 分支（现网形态，用于定位破坏性调用点）
-	if hasDeleted {
-		// 中文注释：优先无切换读取远端引用的提交哈希，命中 DB 则直接复用，避免 checkout
-		var dbPathTarget string
-		targetCommit, refErr := g.getRemoteCommitHash(project, mergeRequest.TargetBranch)
-		if refErr == nil {
-			candidate := g.CallDbPath(strconv.Itoa(projectID), targetCommit)
-			if _, stErr := os.Stat(candidate); stErr == nil {
-				g.logger.Infof("reuse existing target callgraph db: %s", candidate)
-				dbPathTarget = candidate
-			}
-		}
-		if dbPathTarget == "" {
-			// 回退：切换到 Target 分支并生成/复用 DB
-			if _, err = g.CloneRepository(project, mergeRequest.TargetBranch); err != nil {
-				return nil, err
-			}
-			p, err := g.RepoCallGraph(project, "")
-			if err != nil {
-				return nil, err
-			}
-			dbPathTarget = p
-		}
-		if err := g.analyzeDeletedFunctionCallRelations(dbPathTarget, result); err != nil {
-			g.logger.Warnf("failed to analyze deleted function callers: %v", err)
-		}
-	}
-
-	// 基于分析结果计算影响指标
-	g.computeImpact(result)
-
-	// 在拥有上游调用链与影响面后，生成结构化测试用例
-	// 将受影响函数与调用链序列化传递给 LLM，生成专用测试用例
-	if len(result.AffectedFunctions) > 0 {
-		// 序列化上下文（仅必要字段）
-		b, _ := json.Marshal(struct {
-			AffectedFunctions []dos.AffectedFunction `json:"affected_functions"`
-			Impact            dos.ImpactAnalysis     `json:"impact"`
-		}{AffectedFunctions: result.AffectedFunctions, Impact: result.Impact})
-
-		// 生成测试用例
-		cases, err := analyzer.llm.GenerateTestCases(context.Background(), mergeRequest.Title, string(b))
-		if err != nil {
-			g.logger.Warnf("failed to generate test cases: %v", err)
-		} else {
-			result.TestCases = cases
-		}
-	}
-
-	// 自动发布 MR 笔记（包含影响面、建议、用例与 Review）
-	if autoNotes {
-		if err := analyzer.CreateMRNotes(projectID, mrID, result); err != nil {
-			g.logger.Warnf("failed to create MR notes: %v", err)
-		}
-	}
-
-	return result, nil
+	// 中文注释：切换为端到端 Eino 编排实现
+	return g.analyzeMRFullWithEino(context.Background(), projectID, mrID, autoNotes)
 }
 
 // RepoCallGraph 对仓库进行静态分析
@@ -266,15 +173,23 @@ func (g *GitAnalysis) CloneRepository(project *gitapi.Project, branchName string
 			return nil, fmt.Errorf("get worktree failed: %w", err)
 		}
 
-		// 优先直接切换（本地存在时）
-		if err := worktree.Checkout(&git.CheckoutOptions{Branch: plumbing.NewBranchReferenceName(branchName)}); err != nil {
-			// 本地不存在：基于远端引用创建本地分支
-			remoteRef := plumbing.NewRemoteReferenceName("origin", branchName)
-			rref, rerr := repo.Reference(remoteRef, true)
+		localRefName := plumbing.NewBranchReferenceName(branchName)
+		remoteRefName := plumbing.NewRemoteReferenceName("origin", branchName)
+
+		// 探测本地分支是否存在
+		_, localErr := repo.Reference(localRefName, true)
+		if localErr == nil {
+			// 本地已存在：强制切换，避免工作区脏导致失败
+			if err := worktree.Checkout(&git.CheckoutOptions{Branch: localRefName, Force: true}); err != nil {
+				return nil, fmt.Errorf("switch to existing local branch failed: %w", err)
+			}
+		} else {
+			// 本地不存在：尝试从远端创建
+			rref, rerr := repo.Reference(remoteRefName, true)
 			if rerr != nil {
 				return nil, fmt.Errorf("switch to branch %s failed: reference not found", branchName)
 			}
-			if err := worktree.Checkout(&git.CheckoutOptions{Branch: plumbing.NewBranchReferenceName(branchName), Create: true, Hash: rref.Hash(), Force: true}); err != nil {
+			if err := worktree.Checkout(&git.CheckoutOptions{Branch: localRefName, Create: true, Hash: rref.Hash(), Force: true}); err != nil {
 				return nil, fmt.Errorf("create local branch from remote failed: %w", err)
 			}
 		}
@@ -286,6 +201,15 @@ func (g *GitAnalysis) CloneRepository(project *gitapi.Project, branchName string
 
 func (g *GitAnalysis) ClonePath(name string) string {
 	return filepath.Join(g.conf.Gitlab.CloneDir, name)
+}
+
+// ClonePathWithSuffix 返回带后缀的克隆目录路径（用于独立克隆目标分支）
+// 中文注释：避免在同一工作副本切换分支，减少 Windows 文件锁冲突
+func (g *GitAnalysis) ClonePathWithSuffix(name string, suffix string) string {
+	if suffix == "" {
+		return g.ClonePath(name)
+	}
+	return filepath.Join(g.conf.Gitlab.CloneDir, name+suffix)
 }
 
 func (g *GitAnalysis) CallDbPath(projectID string, commit string) string {
@@ -310,6 +234,86 @@ func (g *GitAnalysis) getRemoteCommitHash(project *gitapi.Project, branch string
 		return "", err
 	}
 	return ref.Hash().String(), nil
+}
+
+// CloneRepositoryTo 在独立目录克隆指定分支，避免在同一工作区切换分支导致的文件占用
+// 返回：repo、cloneDir
+func (g *GitAnalysis) CloneRepositoryTo(project *gitapi.Project, branchName string, dirSuffix string) (*git.Repository, string, error) {
+	cloneDir := g.ClonePathWithSuffix(project.Name, dirSuffix)
+
+	// 若目录已存在，直接删除以避免旧分支残留导致的切换失败
+	if _, err := os.Stat(cloneDir); err == nil {
+		g.logger.Infof("remove existing clone directory: %s", cloneDir)
+		if rmErr := os.RemoveAll(cloneDir); rmErr != nil {
+			return nil, "", fmt.Errorf("remove existing clone directory failed: %w", rmErr)
+		}
+	}
+
+	if err := os.MkdirAll(filepath.Dir(cloneDir), 0755); err != nil {
+		return nil, "", fmt.Errorf("create parent directory failed: %w", err)
+	}
+
+	g.logger.Infof("clone %s branch %s to %s", project.HTTPURLToRepo, branchName, cloneDir)
+	repo, err := git.PlainClone(cloneDir, false, &git.CloneOptions{
+		URL:           project.HTTPURLToRepo,
+		Progress:      os.Stdout,
+		Auth:          &http.BasicAuth{Username: "git", Password: g.conf.Gitlab.Token},
+		ReferenceName: plumbing.NewBranchReferenceName(branchName),
+		SingleBranch:  true,
+		Depth:         0,
+	})
+	if err != nil {
+		return nil, "", fmt.Errorf("clone repository to target dir failed: %w", err)
+	}
+	return repo, cloneDir, nil
+}
+
+// RepoCallGraphInDir 在指定 repoDir 上执行静态分析，生成/复用 DB
+func (g *GitAnalysis) RepoCallGraphInDir(project *gitapi.Project, repoDir string) (string, error) {
+	g.logger.Infof("static analysis repo in dir: %s", repoDir)
+
+	statusChan := make(chan []byte, 100)
+	defer close(statusChan)
+	go func() {
+		for status := range statusChan {
+			g.logger.Info(string(status))
+		}
+	}()
+
+	repo, err := git.PlainOpen(repoDir)
+	if err != nil {
+		return "", fmt.Errorf("open repo failed: %w", err)
+	}
+	ref, err := repo.Head()
+	if err != nil {
+		return "", fmt.Errorf("get HEAD failed: %w", err)
+	}
+	dbPath := g.CallDbPath(strconv.Itoa(project.ID), ref.Hash().String())
+	if _, err := os.Stat(dbPath); err == nil {
+		g.logger.Infof("reuse existing callgraph db: %s", dbPath)
+		return dbPath, nil
+	}
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+		return "", fmt.Errorf("prepare db directory failed: %w", err)
+	}
+
+	dbStore, err := g.data.GetFuncNodeDB(dbPath)
+	if err != nil {
+		return "", fmt.Errorf("init db failed: %w", err)
+	}
+
+	pa := callgraph.NewProgramAnalysis(
+		repoDir,
+		g.logger,
+		dbStore,
+		callgraph.WithAlgo(callgraph.CallGraphTypeVta),
+		callgraph.WithIgnorePaths("vendor,third_party"),
+	)
+	if err := pa.Execute(context.Background(), statusChan); err != nil {
+		return "", fmt.Errorf("call graph analysis failed: %w", err)
+	}
+	g.logger.Info("call graph analysis done")
+	return dbPath, nil
 }
 
 // AnalyzeFunctionCallRelations 分析函数调用关系，为MR分析结果中的有效改动函数查找上级调用者
